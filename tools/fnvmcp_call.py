@@ -49,7 +49,8 @@ def main(argv):
     spec_path = (START / argv[0]).resolve()
     args = json.loads(argv[2]) if len(argv) > 2 else {}
     out = asyncio.run(call(spec_path, argv[1], args))
-    print(json.dumps(out, indent=1)[:20000])
+    # FNVMCP_FULL=1: the whole answer on one line (for scripts), else the first 20,000 characters
+    print(json.dumps(out) if os.environ.get('FNVMCP_FULL') else json.dumps(out, indent=1)[:20000])
     return 0 if out.get('ok', True) else 1
 
 

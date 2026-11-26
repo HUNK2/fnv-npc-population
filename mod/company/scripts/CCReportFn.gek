@@ -29,6 +29,13 @@ int iRun
 int iN
 string_var sP1
 string_var sS
+string_var sWa
+string_var sWb
+int iRuns
+int iRan
+int iEv
+int iTG
+int iDg
 array_var aPage
 
 begin Function {}
@@ -55,23 +62,54 @@ begin Function {}
 	let iPrepaid := GetVariable "iPrepaid" CCCore
 	let iRun := GetVariable "iRun" CCCore
 	let aPage := GetArrayVariable "aPage" CCCore
+	let iRuns := GetVariable "iDayRuns" CCCore
+	let iRan := GetVariable "iDayRoad" CCCore
+	let iEv := GetVariable "iEvRoad" CCCore
+	let iTG := GetVariable "iDayConTG" CCCore
 	; the morning report, page 1: the bookkeeper's letter
 	if iDayWagon == 0
 		let sP1 := "Boss. The wagon is in the lender's yard, so nothing moved."
 	elseif iDayCrew == 0
 		let sP1 := "Boss. We have no driver on the books, so the wagon stayed in the yard."
-	elseif iDayMode == 2
-		let sP1 := "Boss. The wagon stayed home today, as the memo said: bandit sign on the Primm road."
-	elseif iDayOut + iDayBack == 0
-		let sP1 := "Boss. The wagon went to Primm and back with no cargo: nothing paid the trip."
+	elseif iDayMode == 2 && iRuns == 0
+		let sWa := call CCTextFn 1 iEv
+		let sP1 := sv_Construct "Boss. The wagon stayed home today, as the memo said: bandit sign on the %z." sWa
+	elseif iRuns > 1 || iDayMode == 2
+		if iRuns == 1
+			let sP1 := sv_Construct "Boss. 1 wagon ran: %.0f crates out, %.0f back." iDayOut iDayBack
+		else
+			let sP1 := sv_Construct "Boss. %.0f wagons ran: %.0f crates out, %.0f back." iRuns iDayOut iDayBack
+		endif
+		if iDayMode == 2
+			if iEv == 2
+				let sP1 := sP1 + " The Sloan wagon stayed home, as the memo said."
+			elseif iEv == 3
+				let sP1 := sP1 + " The Outpost wagon stayed home, as the memo said."
+			else
+				let sP1 := sP1 + " The Primm wagon stayed home, as the memo said."
+			endif
+		endif
 	else
-		let sP1 := sv_Construct "Boss. The wagon took %.0f crates to Primm and brought %.0f back." iDayOut iDayBack
+		if iRan == 2
+			let sWa := "Sloan"
+		elseif iRan == 3
+			let sWa := "the Outpost"
+		else
+			let sWa := "Primm"
+		endif
+		if iDayOut + iDayBack == 0
+			let sP1 := sv_Construct "Boss. The wagon went to %z and back with no cargo: nothing paid the trip." sWa
+		else
+			let sP1 := sv_Construct "Boss. The wagon took %.0f crates to %z and brought %.0f back." iDayOut sWa iDayBack
+		endif
 	endif
 	if iDayMode == 1
 		let sP1 := sP1 + " We hired a gun for the road."
 	endif
 	if iDayEvent == 1
-		let sP1 := sP1 + " Bandits tried the Primm road and our guard drove them off."
+		let sWa := call CCTextFn 1 iEv
+		let sS := sv_Construct " Bandits tried the %z and our guard drove them off." sWa
+		let sP1 := sP1 + sS
 	elseif iDayEvent == 2
 		let sS := sv_Construct " Bandits robbed the wagon on the way back: %.0f caps lost." iDayLoss
 		let sP1 := sP1 + sS
@@ -92,27 +130,41 @@ begin Function {}
 		let sS := sv_Construct " We paid %.0f off the loan." iPrepaid
 		let sP1 := sP1 + sS
 	endif
+	; the contract's town and good: CCCore iDayConTG = town * 100 + good
+	let iN := Floor (iTG / 100)
+	let sWa := call CCTextFn 3 iN
+	let iN := iTG % 100
+	let sWb := call CCTextFn 4 iN
 	if iDaySigned > 0
-		let sS := sv_Construct " We signed the Primm water contract at %.0f." iDaySigned
+		let sS := sv_Construct " We signed the %z %z contract at %.0f." sWa sWb iDaySigned
 		let sP1 := sP1 + sS
 	endif
 	if iDayCon == 1
-		let sP1 := sP1 + " Primm got its water."
+		let sS := sv_Construct " %z got its %z." sWa sWb
 	elseif iDayCon == 2
-		let sP1 := sP1 + " We missed the Primm water delivery."
+		let sS := sv_Construct " We missed the %z %z delivery." sWa sWb
 	elseif iDayCon == 11
-		let sP1 := sP1 + " Primm got its water: the contract is done."
+		let sS := sv_Construct " %z got its %z: the contract is done." sWa sWb
 	elseif iDayCon == 12
-		let sP1 := sP1 + " We missed the last Primm delivery: the contract is done."
+		let sS := sv_Construct " We missed the last %z delivery: the contract is done." sWa
 	elseif iDayCon == 3
-		let sP1 := sP1 + " Primm walked away from our counter."
+		let sS := sv_Construct " %z walked away from our counter." sWa
+	endif
+	if iDayCon
+		let sP1 := sP1 + sS
 	endif
 	let aPage[0] := sP1
 
 	; page 2: the numbers and tomorrow's forecast
 	set iN to iDaySales - iDayCosts
 	if iForecast == 1
-		let sS := sv_Construct "Day %.0f: sales %.0f, costs %.0f, net %.0f. Cash %.0f, runway %.0fd. Bills in %.0fd, about %.0f. Tomorrow: bandit sign on the Primm road, about 60 strong, our cover %.0f." iDay iDaySales iDayCosts iN iCash iRun iDtb iEst iCover
+		let iEv := call CCRoadsFn 1 (iDay + 1)
+		let sWa := call CCTextFn 1 iEv
+		set iDg to 60
+		if iEv == 2
+			set iDg to 30
+		endif
+		let sS := sv_Construct "Day %.0f: sales %.0f, costs %.0f, net %.0f. Cash %.0f, runway %.0fd. Bills in %.0fd, about %.0f. Tomorrow: bandit sign on the %z, about %.0f strong, our cover %.0f." iDay iDaySales iDayCosts iN iCash iRun iDtb iEst sWa iDg iCover
 	elseif iForecast == 0
 		let sS := sv_Construct "Day %.0f: sales %.0f, costs %.0f, net %.0f. Cash %.0f, runway %.0fd. Bills in %.0fd, about %.0f. Tomorrow: the road looks quiet." iDay iDaySales iDayCosts iN iCash iRun iDtb iEst
 	else

@@ -6,7 +6,8 @@ for saves: a save stores script variables by index, so old indices keep their va
 ones start at zero. This tool checks that the source's declarations keep the cached ones as an
 unchanged prefix (same names, same order, same kinds), then drops that script's cache entry so the
 next in-game compile is accepted. Anything else (renamed, removed, reordered or retyped variables)
-is refused.
+is refused. A user-defined function (a script with a "begin Function" block) keeps no variables in
+a save, so any change to its list is accepted.
 
     python tools/allow_new_vars.py <spec.json> <ScriptEditorID>
 
@@ -31,6 +32,11 @@ def declared(text):
         if m:
             out.append((m[2].casefold(), KINDS[m[1].lower()]))
     return out
+
+
+def is_function(text):
+    """A user-defined function: its variables live only while it runs, never in a save."""
+    return re.search(r'^\s*begin\s+function\b', text, re.I | re.M) is not None
 
 
 def cached_layout(entry):
@@ -69,7 +75,7 @@ def main(argv):
         print('%s has no cache entry; nothing to do.' % edid)
         return 0
     old, new = cached_layout(cache[edid]), declared(source)
-    reason = check(old, new)
+    reason = None if is_function(source) else check(old, new)
     if reason:
         print('Refused: %s.\n old: %s\n new: %s' % (reason, [n for _, n, _ in old], [n for n, _ in new]))
         return 1

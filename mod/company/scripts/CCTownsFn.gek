@@ -1,0 +1,145 @@
+scn CCTownsFn
+
+; The M2 Towns screen, CCTerm screen 16 (tools/terminal_model.py towns_row, town_rows, manager_rows,
+; manager_click, sell_rows, sell_click). Rows 0 to 3: each town's level and trust; row 4 the
+; bookkeeper, row 5 the route manager (CCCore iBookkeeper 1 Strict / 2 Normal / 3 Lenient, iRouteMgr
+; 1 Safe / 2 Balanced / 3 Fast; 0: none; the bookkeeper opens at tier 2, the route manager at tier 3);
+; from tier 2 rows 6 and 7 sell the company a crate (10 purified water for 160, 10 healing powder for
+; 80, Company.buy_from_player: from operating cash, 10 crates a day, into Goodsprings' warehouse).
+; iAct 0: draw the screen; returns the row BACK goes in. iAct 1: the front page's TOWNS row (13).
+; iAct 2: a click on row iA: row 4 or 5 hires that manager with the middle policy, or moves to the next;
+; row 6 or 7 sells a crate.
+
+int iAct
+int iA
+int iOut
+int iTier
+int iK
+int iN
+int iM
+int iLv
+array_var aTr
+array_var aLv
+array_var aTN
+array_var aLN
+array_var aPN
+string_var sWa
+string_var sWb
+int iLeft
+int iPrice
+int iCash
+array_var aWh
+
+begin Function {iAct iA}
+	set iOut to 0
+	let iTier := GetVariable "iTier" CCCore
+	let aTr := GetArrayVariable "aTrust" CCCore
+	if iAct == 1
+		set iN to 0
+		set iK to 0
+		while iK < 4
+			if eval (aTr[iK] >= 50)
+				set iN to iN + 1
+			endif
+			set iK to iK + 1
+		loop
+		let iM := ((GetVariable "iBookkeeper" CCCore) > 0) + ((GetVariable "iRouteMgr" CCCore) > 0)
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 13 %qTOWNS    %.0f trusted, managers %.0f of 2%q" iN iM
+	elseif iAct == 0
+		let aLv := GetArrayVariable "aLevel" CCCore
+		let aTN := Ar_List "Goodsprings    ", "Primm          ", "Sloan          ", "Mojave Outpost "
+		let aLN := Ar_List "Camp    ", "Hamlet  ", "Village ", "Town    "
+		set iK to 0
+		while iK < 4
+			let sWa := aTN[iK]
+			let iLv := aLv[iK]
+			let sWb := aLN[iLv]
+			let iN := aTr[iK]
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q%z %z trust %.0f%q" iK sWa sWb iN
+			set iK to iK + 1
+		loop
+		; the managers
+		let iN := GetVariable "iBookkeeper" CCCore
+		let aPN := Ar_List "", "Strict", "Normal", "Lenient"
+		if iN
+			let sWa := aPN[iN]
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 4 %qBOOKKEEPER  %z  (select: change)%q" sWa
+		elseif iTier < 2
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 4 %qBOOKKEEPER  opens at tier 2%q"
+		else
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 4 %qBOOKKEEPER  HIRE, 40 a day%q"
+		endif
+		let iN := GetVariable "iRouteMgr" CCCore
+		let aPN := Ar_List "", "Safe", "Balanced", "Fast"
+		if iN
+			let sWa := aPN[iN]
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 5 %qROUTE MGR   %z  (select: change)%q" sWa
+		elseif iTier < 3
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 5 %qROUTE MGR   opens at tier 3%q"
+		else
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 5 %qROUTE MGR   HIRE, 40 a day%q"
+		endif
+		set iOut to 6
+		if iTier >= 2
+			set iLeft to 10
+			if (GetVariable "iBoughtDay" CCCore) == (GetVariable "iDay" CCCore)
+				let iLeft := 10 - (GetVariable "iBoughtToday" CCCore)
+			endif
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 6 %qSELL 10 purified water: 160 (%.0f left)%q" iLeft
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 7 %qSELL 10 healing powder: 80 (%.0f left)%q" iLeft
+			set iOut to 8
+		endif
+	elseif iAct == 2 && (GetVariable "iEnded" CCCore) == 0
+		if iA == 4
+			let iN := GetVariable "iBookkeeper" CCCore
+			if iN
+				set iN to iN % 3 + 1
+				SetVariable "iBookkeeper" iN CCCore
+			elseif iTier >= 2
+				SetVariable "iBookkeeper" 2 CCCore
+			endif
+		elseif iA == 5
+			let iN := GetVariable "iRouteMgr" CCCore
+			if iN
+				set iN to iN % 3 + 1
+				SetVariable "iRouteMgr" iN CCCore
+			elseif iTier >= 3
+				SetVariable "iRouteMgr" 2 CCCore
+			endif
+		elseif (iA == 6 || iA == 7) && iTier >= 2
+			let iN := GetVariable "iDay" CCCore
+			if (GetVariable "iBoughtDay" CCCore) != iN
+				SetVariable "iBoughtDay" iN CCCore
+				SetVariable "iBoughtToday" 0 CCCore
+			endif
+			let iLeft := 10 - (GetVariable "iBoughtToday" CCCore)
+			let iCash := GetVariable "iCash" CCCore
+			set iPrice to 160
+			if iA == 7
+				set iPrice to 80
+			endif
+			if iA == 6
+				let iM := player.GetItemCount WaterPurified
+			else
+				let iM := player.GetItemCount NVHealingPowder
+			endif
+			if iLeft > 0 && iCash >= iPrice && iM >= 10
+				if iA == 6
+					player.RemoveItem WaterPurified 10 1
+				else
+					player.RemoveItem NVHealingPowder 10 1
+				endif
+				player.AddItem Caps001 iPrice 1
+				set iCash to iCash - iPrice
+				SetVariable "iCash" iCash CCCore
+				let iN := (GetVariable "iBoughtToday" CCCore) + 1
+				SetVariable "iBoughtToday" iN CCCore
+				let aWh := GetArrayVariable "aWh" CCCore
+				let iK := iA - 6
+				let aWh[iK] := aWh[iK] + 1
+			endif
+		endif
+		set iOut to 1
+	endif
+	SetFunctionValue iOut
+end

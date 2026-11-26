@@ -1,10 +1,12 @@
 scn CCCoverFn
 
 ; The crew's cover on the road (tools/company_model.py Company.cover): 0 without a driver, else 15 for
-; the driver plus, for each guard, 30 and a fifth of the skill over 50 (rounded down).
+; the driver plus, for each guard, 30 and a fifth of the skill over 50 (rounded down) and the guard's
+; trait (M2: Cautious 5, Reckless 10, NCR veteran 10, Steady 5). Traders and clerks give no cover.
 
 array_var aR
 array_var aS
+array_var aT
 int iK
 int iN
 int iDriver
@@ -12,14 +14,20 @@ int iDriver
 begin Function {}
 	let aR := GetArrayVariable "aStaffRole" CCCore
 	let aS := GetArrayVariable "aStaffSkill" CCCore
+	let aT := GetArrayVariable "aStaffTrait" CCCore
 	set iN to 0
 	set iDriver to 0
 	set iK to 0
 	while iK < ar_Size aR
 		if eval (aR[iK] == 0)
 			set iDriver to 1
-		else
+		elseif eval (aR[iK] == 1)
 			let iN += 30 + Floor ((aS[iK] - 50) / 5)
+			if eval (aT[iK] == 2 || aT[iK] == 8)
+				set iN to iN + 5
+			elseif eval (aT[iK] == 3 || aT[iK] == 5)
+				set iN to iN + 10
+			endif
 		endif
 		set iK to iK + 1
 	loop

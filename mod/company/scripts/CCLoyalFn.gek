@@ -1,0 +1,34 @@
+scn CCLoyalFn
+
+; One loyalty change for staff member iIdx (tools/company_model.py Company._loyal): clamped to 0..100,
+; the reason kept on the person's page (CCCore aStaffWhy[iIdx]: the last 4, "paid on time +5").
+
+int iIdx
+int iChange
+string_var sWhy
+string_var sR
+array_var aSL
+array_var aWhy
+array_var aR
+
+begin Function {iIdx iChange sWhy}
+	let aSL := GetArrayVariable "aStaffLoyal" CCCore
+	let aWhy := GetArrayVariable "aStaffWhy" CCCore
+	let aSL[iIdx] += iChange
+	if eval (aSL[iIdx] > 100)
+		let aSL[iIdx] := 100
+	elseif eval (aSL[iIdx] < 0)
+		let aSL[iIdx] := 0
+	endif
+	let aR := aWhy[iIdx]
+	if iChange > 0
+		let sR := sv_Construct "%z +%.0f" sWhy iChange
+	else
+		let sR := sv_Construct "%z %.0f" sWhy iChange
+	endif
+	ar_Append aR sR
+	while (ar_Size aR) > 4
+		ar_Erase aR 0
+	loop
+	SetFunctionValue 1
+end

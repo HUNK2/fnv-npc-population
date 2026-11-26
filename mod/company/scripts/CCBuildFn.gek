@@ -1,13 +1,16 @@
 scn CCBuildFn
 
-; Tier 2 buildings (tools/company_model.py Company.can_build, build; tools/terminal_model.py
-; chains_row, build_rows). Works on CCCore's variables by name.
-; iAct 0: draw the Build screen's rows 0 to 4 (money, then purifier, apothecary, well rig, forager
-;         hut: the cost, or BUILT; before tier 2, what tier 2 needs); returns 5, the row BACK goes in.
-; iAct 1 to 4: build that one: from tier 2, once, paid from owner money first, then cash; a raw site
-;         comes with a hand. Returns 1 if built.
-; iAct 5: draw the front page's CHAINS row (row 6).
-; iAct 6: tier 2 in the world: the office by the Prospector Saloon and the Primm stall appear.
+; Buildings (tools/company_model.py Company.can_build, build; tools/terminal_model.py chains_row,
+; build_rows, BUILD_TEXT). Works on CCCore's variables by name.
+; Building k (1 to 10, cm.BUILD_ROWS): 1 purifier (workshop 0), 2 apothecary (workshop 1), 3 well rig
+; (site 0), 4 forager (site 1), 5 corral (site 2), 6 sand pit (site 3), 7 scrap yard (site 4): tier 2;
+; 8 smokehouse (workshop 2), 9 quarry (site 5), 10 stone yard (workshop 3): tier 3; 9 and 10 need the
+; Quarry Junction deed (CCCore iDeedQuarry). Workshops cost 300, sites 200 and come with a hand.
+; iAct 0: draw the Build screen's rows 0 to 10 (money, then each building: BUILT, its cost, "tier 3" or
+;         "deed"; before tier 2, what tier 2 needs in rows 0 to 4); returns the row BACK goes in.
+; iAct 1 to 10: build that one: once, paid from owner money first, then cash. Returns 1 if built.
+; iAct 11: draw the front page's CHAINS row (row 6), over the buildings open at the tier.
+; iAct 12: tier 2 in the world: the office by the Prospector Saloon and the Primm stall appear.
 
 int iAct
 int iOut
@@ -18,13 +21,24 @@ int iCost
 int iBuilt
 int iK
 int iN
+int iM
 int iFrom
+int iWs
+int iIdx
+int iNeed
+int iDeed
 array_var aW
 array_var aS
+array_var aKind
+array_var aIdx
+array_var aTr
+array_var aTxt
 string_var sS
+string_var sT
 array_var aWh
 array_var aT
 array_var aSt
+array_var aAnchor
 int iDay
 
 begin Function {iAct}
@@ -32,18 +46,36 @@ begin Function {iAct}
 	let iTier := GetVariable "iTier" CCCore
 	let iCash := GetVariable "iCash" CCCore
 	let iOwner := GetVariable "iOwner" CCCore
+	let iDeed := GetVariable "iDeedQuarry" CCCore
 	let aW := GetArrayVariable "aWorkshops" CCCore
 	let aS := GetArrayVariable "aSites" CCCore
+	; per building 1 to 10 (entry 0 unused): 1 a workshop, 0 a site; its index; its tier
+	let aKind := Ar_List 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1
+	let aIdx := Ar_List 0, 0, 1, 0, 1, 2, 3, 4, 2, 5, 3
+	let aTr := Ar_List 0, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3
 
-	if iAct == 5
+	if iAct == 11
 		if iTier < 2
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 6 %qCHAINS   none yet (tier 2)%q"
 		else
-			let iN := aW[0] + aW[1] + aS[0] + aS[1]
-			Console "SetTerminalMenuItemText CCOfficeTerm 1 6 %qCHAINS   %.0f of 4 built%q" iN
+			set iN to 0
+			set iM to 0
+			set iK to 1
+			while iK <= 10
+				if eval (aTr[iK] <= iTier)
+					set iM to iM + 1
+					if eval (aKind[iK])
+						let iN += aW[aIdx[iK]]
+					else
+						let iN += aS[aIdx[iK]]
+					endif
+				endif
+				set iK to iK + 1
+			loop
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 6 %qCHAINS   %.0f of %.0f built%q" iN iM
 		endif
 
-	elseif iAct == 6
+	elseif iAct == 12
 		CCOfficeShackRef.Enable
 		CCOfficeDoorRef.Enable
 		CCPrimmStallCartRef.Enable
@@ -57,9 +89,15 @@ begin Function {iAct}
 		let aWh := GetArrayVariable "aWh" CCCore
 		let aT := GetArrayVariable "aTrust" CCCore
 		let aSt := GetArrayVariable "aStrikes" CCCore
+		let aAnchor := GetArrayVariable "aAnchor" CCCore
 		let iDay := GetVariable "iDay" CCCore
-		let iN := iCash + iOwner + 200 * aWh[0] + 100 * aWh[1] + 200 * aWh[2] + 100 * aWh[3] + 60 * aWh[4] + 150 * aWh[5]
+		let iN := iCash + iOwner
 		let iN += (GetVariable "iAssets" CCCore) - (GetVariable "iLoan" CCCore) - (GetVariable "iArrears" CCCore) - (GetVariable "iOwnerPaidIn" CCCore)
+		set iK to 0
+		while iK < ar_Size aWh
+			let iN += aAnchor[iK % 12] * aWh[iK]
+			set iK to iK + 1
+		loop
 		Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qTIER 2 (Outfit) NEEDS ALL OF THESE:%q"
 		Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qWORTH    %.0f of 1500 earned%q" iN
 		let iN := aT[0]
@@ -82,52 +120,59 @@ begin Function {iAct}
 
 	elseif iAct == 0
 		Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qMONEY  cash %.0f, own money %.0f%q" iCash iOwner
+		let aTxt := Ar_List "", "PURIFIER   5 dirty > 4 water  ", "APOTHECARY 1 herbs > 1 powder ", "WELL RIG   4 dirty water a day", "FORAGER    4 herbs a day      ", "CORRAL     4 brahmin a day    ", "SAND PIT   4 sand a day, PR   ", "SCRAP YARD 4 scrap a day, PR  ", "SMOKEHOUSE 1 brahmin > 4 meat ", "QUARRY     4 stone a day, SL  ", "STONE YARD stone, sand > mats "
 		set iK to 1
-		while iK <= 4
-			if iK <= 2
-				let iBuilt := aW[iK - 1]
+		while iK <= 10
+			let iWs := aKind[iK]
+			let iIdx := aIdx[iK]
+			set iCost to 200
+			if iWs
+				let iBuilt := aW[iIdx]
 				set iCost to 300
 			else
-				let iBuilt := aS[iK - 3]
-				set iCost to 200
+				let iBuilt := aS[iIdx]
 			endif
+			let iNeed := aTr[iK]
 			if iBuilt
 				let sS := "BUILT"
+			elseif iNeed > iTier
+				let sS := sv_Construct "tier %.0f" iNeed
+			elseif iK >= 9 && iDeed == 0
+				let sS := "deed"
 			else
 				let sS := sv_Construct "%.0f" iCost
 			endif
-			if iK == 1
-				Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qPURIFIER   5 dirty > 4 water   %z%q" sS
-			elseif iK == 2
-				Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qAPOTHECARY 1 herbs > 1 powder  %z%q" sS
-			elseif iK == 3
-				Console "SetTerminalMenuItemText CCOfficeTerm 1 3 %qWELL RIG   4 dirty water a day %z%q" sS
-			else
-				Console "SetTerminalMenuItemText CCOfficeTerm 1 4 %qFORAGER    4 herbs a day       %z%q" sS
-			endif
+			let sT := aTxt[iK]
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q%z %z%q" iK sT sS
 			set iK to iK + 1
 		loop
-		set iOut to 5
+		set iOut to 11
 
-	elseif iAct >= 1 && iAct <= 4 && iTier >= 2 && (GetVariable "iEnded" CCCore) == 0
-		if iAct <= 2
-			let iBuilt := aW[iAct - 1]
+	elseif iAct >= 1 && iAct <= 10 && (GetVariable "iEnded" CCCore) == 0
+		let iWs := aKind[iAct]
+		let iIdx := aIdx[iAct]
+		let iNeed := aTr[iAct]
+		set iCost to 200
+		if iWs
+			let iBuilt := aW[iIdx]
 			set iCost to 300
 		else
-			let iBuilt := aS[iAct - 3]
-			set iCost to 200
+			let iBuilt := aS[iIdx]
 		endif
-		if iBuilt == 0 && iCash + iOwner >= iCost
+		if iAct >= 9 && iDeed == 0
+			set iBuilt to 1
+		endif
+		if iBuilt == 0 && iTier >= iNeed && iCash + iOwner >= iCost
 			set iFrom to iOwner
 			if iFrom > iCost
 				set iFrom to iCost
 			endif
 			set iOwner to iOwner - iFrom
 			set iCash to iCash - (iCost - iFrom)
-			if iAct <= 2
-				let aW[iAct - 1] := 1
+			if iWs
+				let aW[iIdx] := 1
 			else
-				let aS[iAct - 3] := 1
+				let aS[iIdx] := 1
 				let iN := (GetVariable "iHands" CCCore) + 1
 				SetVariable "iHands" iN CCCore
 			endif

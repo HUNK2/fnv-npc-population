@@ -834,6 +834,51 @@
     "script": "@CCOfficeExitScript"
    }
   },
+  "CCTextFn": {
+   "type": "SCPT",
+   "source": "scripts/CCTextFn.gek",
+   "script_type": "object"
+  },
+  "CCLoyalFn": {
+   "type": "SCPT",
+   "source": "scripts/CCLoyalFn.gek",
+   "script_type": "object"
+  },
+  "CCRoadsFn": {
+   "type": "SCPT",
+   "source": "scripts/CCRoadsFn.gek",
+   "script_type": "object"
+  },
+  "CCWorkFn": {
+   "type": "SCPT",
+   "source": "scripts/CCWorkFn.gek",
+   "script_type": "object"
+  },
+  "CCPeopleFn": {
+   "type": "SCPT",
+   "source": "scripts/CCPeopleFn.gek",
+   "script_type": "object"
+  },
+  "CCTripFn": {
+   "type": "SCPT",
+   "source": "scripts/CCTripFn.gek",
+   "script_type": "object"
+  },
+  "CCUpgradeFn": {
+   "type": "SCPT",
+   "source": "scripts/CCUpgradeFn.gek",
+   "script_type": "object"
+  },
+  "CCWagonsFn": {
+   "type": "SCPT",
+   "source": "scripts/CCWagonsFn.gek",
+   "script_type": "object"
+  },
+  "CCTownsFn": {
+   "type": "SCPT",
+   "source": "scripts/CCTownsFn.gek",
+   "script_type": "object"
+  },
   "CCBuildFn": {
    "type": "SCPT",
    "source": "scripts/CCBuildFn.gek",
@@ -878,6 +923,50 @@
      "persistent": true,
      "position": [
       400,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "sloanterm",
+     "base": "@CCOfficeTerm",
+     "editor_id": "CCSloanTermRef",
+     "persistent": true,
+     "position": [
+      600,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "outpostterm",
+     "base": "@CCOfficeTerm",
+     "editor_id": "CCOutpostTermRef",
+     "persistent": true,
+     "position": [
+      800,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "relay188",
+     "base": "@CCOfficeTerm",
+     "editor_id": "CC188TermRef",
+     "persistent": true,
+     "position": [
+      1000,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "relaynovac",
+     "base": "@CCOfficeTerm",
+     "editor_id": "CCNovacTermRef",
+     "persistent": true,
+     "position": [
+      1200,
       0,
       0
      ]

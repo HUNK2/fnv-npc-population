@@ -73,6 +73,7 @@ class Session:
         if game_window.wanted_monitor():
             game_window.move(game_window.wanted_monitor())
             await asyncio.sleep(0.5)
+        game_window.focus()             # in the background the game drops to ~10 fps and game time crawls
         for _ in range(30):
             data = await self.menus()
             if data.get('messageBox'):

@@ -1,0 +1,49 @@
+scn LIMGSAlarmScript
+
+; The Goodsprings alarm (docs/towns-design.md, "The alarm is fast"). Runs every second. While the
+; player is near town, any fight in town (the player or a resident in combat) sets iAlarm; the
+; residents' run-home packages read it (GetQuestVariable LIMGSAlarm iAlarm, the first variable:
+; keep it first). It clears after a game hour of quiet. When it starts or clears, every resident
+; looks at its packages again at once (a sandbox package would otherwise keep running for a while).
+
+int iAlarm
+float fQuiet
+int iFight
+int iWas
+
+begin GameMode
+	set iFight to 0
+	if player.GetInWorldspace WastelandNV
+		if player.GetDistance LIMGSWatchRouteRef < 7000
+			if player.IsInCombat
+				set iFight to 1
+			endif
+		endif
+	endif
+	if LIMGSAmosRef.IsInCombat || LIMGSWesRef.IsInCombat || LIMGSMarisolRef.IsInCombat || LIMGSHectorRef.IsInCombat
+		set iFight to 1
+	elseif LIMGSLenaRef.IsInCombat || LIMGSJosephRef.IsInCombat || LIMGSAdaRef.IsInCombat || LIMGSHarlanRef.IsInCombat
+		set iFight to 1
+	elseif LIMGSDutchyRef.IsInCombat || LIMGSAbeRef.IsInCombat || LIMGSCalRef.IsInCombat || LIMGSTeaRef.IsInCombat
+		set iFight to 1
+	endif
+	if iFight
+		set iAlarm to 1
+		set fQuiet to GameDaysPassed
+	elseif iAlarm && GameDaysPassed - fQuiet >= (1 / 24)
+		set iAlarm to 0
+	endif
+	if iAlarm != iWas
+		set iWas to iAlarm
+		LIMGSAmosRef.EvaluatePackage
+		LIMGSLenaRef.EvaluatePackage
+		LIMGSCalRef.EvaluatePackage
+		LIMGSJosephRef.EvaluatePackage
+		LIMGSAdaRef.EvaluatePackage
+		LIMGSRuthRef.EvaluatePackage
+		LIMGSHarlanRef.EvaluatePackage
+		LIMGSDutchyRef.EvaluatePackage
+		LIMGSAbeRef.EvaluatePackage
+		LIMGSTeaRef.EvaluatePackage
+	endif
+end

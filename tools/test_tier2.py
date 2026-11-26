@@ -147,7 +147,7 @@ class Screen(unittest.TestCase):
 
     def test_chains_row_at_tier_2_opens_build(self):
         c, t = outfit(), tm.Terminal()
-        self.assertEqual(tm.labels(c, t)[6], 'CHAINS   0 of 4 built')
+        self.assertEqual(tm.labels(c, t)[6], 'CHAINS   0 of 7 built')
         tm.click(c, t, 6)
         self.assertEqual(t.screen, tm.BUILD)
         rows = tm.labels(c, t)
@@ -165,9 +165,9 @@ class Screen(unittest.TestCase):
         self.assertEqual(tm.labels(c, t)[2], 'APOTHECARY 1 herbs > 1 powder  BUILT')
         tm.click(c, t, 2)
         self.assertEqual(c.workshops, ['apothecary'])
-        tm.click(c, t, 5)
+        tm.click(c, t, len(cm.BUILD_ROWS) + 1)          # BACK
         self.assertEqual(t.screen, tm.FRONT)
-        self.assertEqual(tm.labels(c, t)[6], 'CHAINS   1 of 4 built')
+        self.assertEqual(tm.labels(c, t)[6], 'CHAINS   1 of 7 built')
 
 
 if __name__ == '__main__':

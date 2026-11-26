@@ -17,6 +17,11 @@ class AllowNewVarsTest(unittest.TestCase):
                     [('iinit', 0), ('fprice', 0)], [('iinit', 1)]):
             self.assertIsNotNone(check(self.OLD, new))
 
+    def test_a_function_script_is_told_apart(self):
+        from allow_new_vars import is_function
+        self.assertTrue(is_function('scn CCBuildFn\n\nint iAct\n\nbegin Function {iAct}\nend\n'))
+        self.assertFalse(is_function('scn CCCoreScript\n\nint iInit\n\nbegin GameMode\nend\n'))
+
 
 if __name__ == '__main__':
     unittest.main()

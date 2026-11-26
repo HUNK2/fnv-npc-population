@@ -1,131 +1,195 @@
 scn CCContractFn
 
-; The supply contract (tools/company_model.py Company._contract, _settle_memos, _post_memos), moved
-; out of CCCoreScript to keep it under the script size limit. Works on CCCore's variables by name.
-; iAct 1: today's delivery (CCCore iTripRuns: the wagon runs); returns the crates loaded on the
-;         Goodsprings leg. 4 crates of water from the warehouse, then bought at Goodsprings, sold at the
-;         contract price without moving Primm's stock; a delivery the wagon cannot make costs 10% of
-;         its value and Primm trust 3. The last one: trust +3 and the contract ends.
-; iAct 2: post an offer memo when due; returns 1 if posted.
-; iAct 3: settle the offer memo with answer iPick (0 accept, 1 counter at +7%: half the time they
-;         walk, 2 decline).
+; Supply contracts (tools/company_model.py Company._contract, _deliver, contract_offer, _sign,
+; _post_memos; M2 plan 2.5), out of CCCoreScript for its size limit. Works on CCCore's variables by
+; name. Contracts are CCCore's aCon* arrays (town, good, road, origin, price, start, next due, done,
+; missed): 4 crates every 3 days for 28 days. Open at once: 1 at tier 1, 2 at tier 2, 3 at tier 3.
+; A contract memo (kind 2) carries aMemoX = price * 10000 + town * 1000 + good * 10 + road.
+; iAct 1: road iA's deliveries due today; iB 1 when its wagon runs. Each loads its crates on the leg out
+;         of its origin (warehouse first, then bought there) and sells them at the contract price
+;         without moving the buyer's stock; a delivery that cannot be made costs 10% of its value and
+;         the buyer's trust 3; the last one: trust +3 and it ends. Returns the crates loaded out of the
+;         road's first town * 100 + out of its second town.
+; iAct 2: post this week's offer when due (the biggest shortage on a running road); returns 1 if posted.
+; iAct 3: settle contract memo iA with answer iB (0 accept, 1 counter at +7%: half the time they walk,
+;         2 decline).
+; iAct 4: returns 1 when a contract delivery is due on day iA (Company.contract_due).
 
 int iAct
-int iPick
+int iA
+int iB
 int iOut
 int iDay
 int iCash
 int iCosts
-int iSales
-int iWeek
 int iPrice
 int iOwn
 int iCost
 int iPay
 int iK
+int iJ
 int iN
+int iT
+int iG
+int iO
+int iR
+int iTier
+int iOk
 int iValue
-int iNext
 int iSeed
 float fS
+float fShort
+float fBest
 array_var aWh
 array_var aStock
 array_var aAnchor
 array_var aUse
-array_var aTrust
 array_var aNormal
+array_var aTrust
+array_var aMkt
 array_var aMK
 array_var aMD
 array_var aMDue
 array_var aMP
+array_var aMX
+array_var aMW
+array_var aCT
+array_var aCG
+array_var aCR
+array_var aCO
+array_var aCP
+array_var aCS
+array_var aCN
+array_var aCD
+array_var aCM
+array_var aRun
+array_var aRA
+array_var aRB
+array_var aW
 
-begin Function {iAct iPick}
+begin Function {iAct iA iB}
 	set iOut to 0
 	let iDay := GetVariable "iDay" CCCore
 	let aTrust := GetArrayVariable "aTrust" CCCore
 	let aAnchor := GetArrayVariable "aAnchor" CCCore
 	let aUse := GetArrayVariable "aUse" CCCore
+	let aCT := GetArrayVariable "aConTown" CCCore
+	let aCG := GetArrayVariable "aConGood" CCCore
+	let aCR := GetArrayVariable "aConRoad" CCCore
+	let aCO := GetArrayVariable "aConOrigin" CCCore
+	let aCP := GetArrayVariable "aConPrice" CCCore
+	let aCS := GetArrayVariable "aConStart" CCCore
+	let aCN := GetArrayVariable "aConNext" CCCore
+	let aCD := GetArrayVariable "aConDone" CCCore
+	let aCM := GetArrayVariable "aConMissed" CCCore
+	let aRA := Ar_List 0, 0, 0, 1
+	let aRB := Ar_List 0, 1, 2, 3
 
 	if iAct == 1
-		let iCash := GetVariable "iCash" CCCore
-		let iCosts := GetVariable "iDayCosts" CCCore
-		let iPrice := GetVariable "iConPrice" CCCore
 		let aWh := GetArrayVariable "aWh" CCCore
 		let aStock := GetArrayVariable "aStock" CCCore
-		let iN := GetVariable "iTripRuns" CCCore
-		if iN
-			let iOwn := aWh[0]
-			if iOwn > 4
-				set iOwn to 4
-			endif
-			set iCost to 0
-			let fS := aStock[0]
-			set iK to iOwn
-			while iK < 4
-				let iPay := call CCPriceFn aAnchor[0], fS, aUse[0], aTrust[0], 0
-				set iCost to iCost + iPay
-				let fS := fS - 1
-				set iK to iK + 1
-			loop
-			if iCost <= iCash
-				let aWh[0] -= iOwn
-				set iK to iOwn
-				while iK < 4
-					let iPay := call CCPriceFn aAnchor[0], aStock[0], aUse[0], aTrust[0], 0
+		set iK to 0
+		while iK < ar_Size aCT
+			if eval (aCR[iK] == iA && aCN[iK] == iDay)
+				let iCash := GetVariable "iCash" CCCore
+				let iCosts := GetVariable "iDayCosts" CCCore
+				let iT := aCT[iK]
+				let iG := aCG[iK]
+				let iO := aCO[iK]
+				let iPrice := aCP[iK]
+				let iJ := iT * 100 + iG
+				SetVariable "iDayConTG" iJ CCCore
+				set iN to 0
+				if iB
+					let iOwn := aWh[iO * 12 + iG]
+					if iOwn > 4
+						set iOwn to 4
+					endif
+					set iCost to 0
+					let fS := aStock[iO * 12 + iG]
+					set iJ to iOwn
+					while iJ < 4
+						let iPay := call CCPriceFn aAnchor[iG], fS, aUse[iO * 12 + iG], aTrust[iO], 0
+						set iCost to iCost + iPay
+						let fS := fS - 1
+						set iJ to iJ + 1
+					loop
+					if iCost <= iCash
+						let aWh[iO * 12 + iG] -= iOwn
+						set iJ to iOwn
+						while iJ < 4
+							let iPay := call CCPriceFn aAnchor[iG], aStock[iO * 12 + iG], aUse[iO * 12 + iG], aTrust[iO], 0
+							set iCash to iCash - iPay
+							set iCosts to iCosts + iPay
+							let aStock[iO * 12 + iG] -= 1
+							set iJ to iJ + 1
+						loop
+						set iValue to 4 * iPrice
+						set iCash to iCash + iValue
+						let iJ := (GetVariable "iDaySales" CCCore) + iValue
+						SetVariable "iDaySales" iJ CCCore
+						let iJ := (GetVariable "iWeekSales" CCCore) + iValue
+						SetVariable "iWeekSales" iJ CCCore
+						let aTrust[iT] += 1
+						if eval (aTrust[iT] > 100)
+							let aTrust[iT] := 100
+						endif
+						let aCD[iK] += 1
+						SetVariable "iDayCon" 1 CCCore
+						set iN to 4
+						if eval (iO == aRA[iA])
+							set iOut to iOut + 400
+						else
+							set iOut to iOut + 4
+						endif
+					endif
+				endif
+				if iN == 0
+					let iPay := Floor (0.1 * 4 * iPrice + 0.5)
+					if iPay > iCash
+						set iPay to iCash
+					endif
 					set iCash to iCash - iPay
 					set iCosts to iCosts + iPay
-					let aStock[0] -= 1
-					set iK to iK + 1
-				loop
-				set iValue to 4 * iPrice
-				set iCash to iCash + iValue
-				let iSales := (GetVariable "iDaySales" CCCore) + iValue
-				let iWeek := (GetVariable "iWeekSales" CCCore) + iValue
-				SetVariable "iDaySales" iSales CCCore
-				SetVariable "iWeekSales" iWeek CCCore
-				let aTrust[1] += 1
-				if eval (aTrust[1] > 100)
-					let aTrust[1] := 100
+					let aTrust[iT] -= 3
+					if eval (aTrust[iT] < 0)
+						let aTrust[iT] := 0
+					endif
+					let aCM[iK] += 1
+					SetVariable "iDayCon" 2 CCCore
 				endif
-				let iN := (GetVariable "iConDone" CCCore) + 1
-				SetVariable "iConDone" iN CCCore
-				SetVariable "iDayCon" 1 CCCore
-				set iOut to 4
+				SetVariable "iCash" iCash CCCore
+				SetVariable "iDayCosts" iCosts CCCore
+				let aCN[iK] += 3
+				if eval (aCN[iK] >= aCS[iK] + 28)
+					let aTrust[iT] += 3
+					if eval (aTrust[iT] > 100)
+						let aTrust[iT] := 100
+					endif
+					let iJ := (GetVariable "iDayCon" CCCore) + 10
+					SetVariable "iDayCon" iJ CCCore
+					ar_Erase aCT iK
+					ar_Erase aCG iK
+					ar_Erase aCR iK
+					ar_Erase aCO iK
+					ar_Erase aCP iK
+					ar_Erase aCS iK
+					ar_Erase aCN iK
+					ar_Erase aCD iK
+					ar_Erase aCM iK
+					set iK to iK - 1
+				endif
 			endif
-		endif
-		if iOut == 0
-			let iPay := Floor (0.1 * 4 * iPrice + 0.5)
-			if iPay > iCash
-				set iPay to iCash
-			endif
-			set iCash to iCash - iPay
-			set iCosts to iCosts + iPay
-			let aTrust[1] -= 3
-			if eval (aTrust[1] < 0)
-				let aTrust[1] := 0
-			endif
-			let iN := (GetVariable "iConMissed" CCCore) + 1
-			SetVariable "iConMissed" iN CCCore
-			SetVariable "iDayCon" 2 CCCore
-		endif
-		SetVariable "iCash" iCash CCCore
-		SetVariable "iDayCosts" iCosts CCCore
-		let iNext := (GetVariable "iConNext" CCCore) + 3
-		SetVariable "iConNext" iNext CCCore
-		let iN := (GetVariable "iConStart" CCCore) + 28
-		if iNext >= iN
-			let aTrust[1] += 3
-			if eval (aTrust[1] > 100)
-				let aTrust[1] := 100
-			endif
-			SetVariable "iConOn" 0 CCCore
-			let iN := (GetVariable "iDayCon" CCCore) + 10
-			SetVariable "iDayCon" iN CCCore
-		endif
+			set iK to iK + 1
+		loop
 
 	elseif iAct == 2
-		; on the third day of a week, to a company in good standing with a wagon and a driver, no
-		; contract running or offered, at most one offer a week, room for the memo
+		; room for one more contract, good standing, a wagon and a driver, no offer waiting, the third
+		; day of a week, at most one offer a week, room for the memo
+		let iTier := GetVariable "iTier" CCCore
+		if iTier > 3
+			set iTier to 3
+		endif
 		let aMK := GetArrayVariable "aMemoKind" CCCore
 		set iN to 0
 		set iK to 0
@@ -136,29 +200,111 @@ begin Function {iAct iPick}
 			set iK to iK + 1
 		loop
 		let iK := call CCCoverFn
-		if eval (iN == 0 && iK > 0 && (GetVariable "iConOn" CCCore) == 0 && (GetVariable "iStage" CCCore) == 0 && (GetVariable "iWagonOk" CCCore) && iDay % 7 == 3 && iDay - (GetVariable "iLastOffer" CCCore) >= 7 && (ar_Size aMK) < 3)
+		if eval (iN == 0 && iK > 0 && (ar_Size aCT) < iTier && (GetVariable "iStage" CCCore) == 0 && (GetVariable "iWagonOk" CCCore) && iDay % 7 == 3 && iDay - (GetVariable "iLastOffer" CCCore) >= 7 && (ar_Size aMK) < 3)
 			let aNormal := GetArrayVariable "aNormal" CCCore
-			let iK := call CCPriceFn aAnchor[0], aNormal[6], aUse[6], aTrust[1], 1
-			let iPrice := Floor ((1 + 0.09) * iK + 0.5)
-			SetVariable "iOfferPrice" iPrice CCCore
-			let aMD := GetArrayVariable "aMemoDay" CCCore
-			let aMDue := GetArrayVariable "aMemoDue" CCCore
-			let aMP := GetArrayVariable "aMemoPick" CCCore
-			ar_Append aMK 2
-			ar_Append aMD iDay
-			ar_Append aMDue (iDay + 1)
-			ar_Append aMP (0 - 1)
-			SetVariable "iLastOffer" iDay CCCore
-			set iOut to 1
+			let aMkt := GetArrayVariable "aMkt" CCCore
+			; the offer (Company.contract_offer): tier 1 Primm water on road 1; from tier 2 the biggest
+			; shortage (3 days of use less the normal stock) at either end of a running road, for a market
+			; good the other end sells or a workshop there makes, not under contract
+			set iT to 1
+			set iG to 0
+			set iR to 1
+			set iOk to 1
+			if iTier >= 2
+				set iOk to 0
+				let aRun := call CCRoadsFn 0 iDay
+				let aW := GetArrayVariable "aWorkshops" CCCore
+				; the running roads in wagon order: road 1, then the wagons as bought (aWagonRoad)
+				let aCS := Ar_List 1
+				let aMX := GetArrayVariable "aWagonRoad" CCCore
+				set iK to 0
+				while iK < ar_Size aMX
+					ar_Append aCS aMX[iK]
+					set iK to iK + 1
+				loop
+				set iCost to 0
+				while iCost < ar_Size aCS
+					let iR := aCS[iCost]
+					if eval (aRun[iR] > 0)
+						set iJ to 0
+						while iJ < 2
+							if iJ == 0
+								let iA := aRA[iR]
+								let iO := aRB[iR]
+							else
+								let iA := aRB[iR]
+								let iO := aRA[iR]
+							endif
+							set iB to 0
+							while iB < 7
+								set iN to aMkt[iA * 12 + iB]
+								set iK to 0
+								while iK < ar_Size aCT
+									if eval (aCT[iK] == iA && aCG[iK] == iB)
+										set iN to 0
+									endif
+									set iK to iK + 1
+								loop
+								; a workshop at the origin that makes it: purifier water (GS), apothecary powder
+								; (GS), smokehouse meat (PR), stone yard materials (SL)
+								let iValue := aMkt[iO * 12 + iB]
+								if eval ((iB == 0 && iO == 0 && aW[0]) || (iB == 1 && iO == 0 && aW[1]) || (iB == 6 && iO == 1 && aW[2]) || (iB == 5 && iO == 2 && aW[3]))
+									set iValue to 1
+								endif
+								if iN && iValue
+									let fShort := 3 * aUse[iA * 12 + iB] - aNormal[iA * 12 + iB]
+									if iOk == 0 || fShort > fBest
+										set fBest to fShort
+										set iT to iA
+										set iG to iB
+										set iPrice to iR
+										set iOk to 1
+									endif
+								endif
+								set iB to iB + 1
+							loop
+							set iJ to iJ + 1
+						loop
+					endif
+					set iCost to iCost + 1
+				loop
+				let aCS := GetArrayVariable "aConStart" CCCore
+				set iR to iPrice
+			endif
+			if iOk
+				let iK := call CCPriceFn aAnchor[iG], aNormal[iT * 12 + iG], aUse[iT * 12 + iG], aTrust[iT], 1
+				let iPrice := Floor ((1 + 0.09) * iK + 0.5)
+				let aMD := GetArrayVariable "aMemoDay" CCCore
+				let aMDue := GetArrayVariable "aMemoDue" CCCore
+				let aMP := GetArrayVariable "aMemoPick" CCCore
+				let aMX := GetArrayVariable "aMemoX" CCCore
+				let aMW := GetArrayVariable "aMemoWho" CCCore
+				ar_Append aMK 2
+				ar_Append aMD iDay
+				ar_Append aMDue (iDay + 1)
+				ar_Append aMP (0 - 1)
+				ar_Append aMX (iPrice * 10000 + iT * 1000 + iG * 10 + iR)
+				ar_Append aMW " "
+				SetVariable "iOfferPrice" iPrice CCCore
+				SetVariable "iLastOffer" iDay CCCore
+				set iOut to 1
+			endif
 		endif
 
 	elseif iAct == 3
-		let iPrice := GetVariable "iOfferPrice" CCCore
+		let aMX := GetArrayVariable "aMemoX" CCCore
+		let iN := aMX[iA]
+		let iPrice := Floor (iN / 10000)
+		let iT := Floor ((iN % 10000) / 1000)
+		let iG := Floor ((iN % 1000) / 10)
+		let iR := iN % 10
 		set iN to 0
-		if iPick == 0
+		if iB == 0
 			set iN to iPrice
-		elseif iPick == 1
+		elseif iB == 1
 			let iSeed := GetVariable "iSeed" CCCore
+			let iJ := iT * 100 + iG
+			SetVariable "iDayConTG" iJ CCCore
 			if eval (((iDay % 100) * 19 + (iSeed % 100) * 29 + 124) % 100 < 50)
 				SetVariable "iDayCon" 3 CCCore
 			else
@@ -166,15 +312,33 @@ begin Function {iAct iPick}
 			endif
 		endif
 		if iN > 0
-			SetVariable "iConOn" 1 CCCore
-			SetVariable "iConPrice" iN CCCore
-			SetVariable "iConStart" iDay CCCore
-			SetVariable "iConNext" iDay CCCore
-			SetVariable "iConDone" 0 CCCore
-			SetVariable "iConMissed" 0 CCCore
+			ar_Append aCT iT
+			ar_Append aCG iG
+			ar_Append aCR iR
+			if eval (aRA[iR] == iT)
+				ar_Append aCO aRB[iR]
+			else
+				ar_Append aCO aRA[iR]
+			endif
+			ar_Append aCP iN
+			ar_Append aCS iDay
+			ar_Append aCN iDay
+			ar_Append aCD 0
+			ar_Append aCM 0
 			SetVariable "iDaySigned" iN CCCore
+			let iJ := iT * 100 + iG
+			SetVariable "iDayConTG" iJ CCCore
 			set iOut to 1
 		endif
+
+	elseif iAct == 4
+		set iK to 0
+		while iK < ar_Size aCN
+			if eval (aCN[iK] == iA)
+				set iOut to 1
+			endif
+			set iK to iK + 1
+		loop
 	endif
 	SetFunctionValue iOut
 end

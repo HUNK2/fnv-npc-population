@@ -1,0 +1,121 @@
+scn LIMGoodspringsScript
+
+; Lived-in Goodsprings (docs/towns-design.md; the model is tools/town_model.py town_state).
+; Runs every 10 seconds. Nothing happens before Doc Mitchell's intro (VCG01) is done. The first
+; run moves the residents and their extra beds from the holding cell into their homes and
+; enables them. Then, from
+; the quest state: the gunfight hand, the families leaving when the Powder Gangers win, and the
+; two travellers who are only in town in the evening and at night.
+; Keep the variable order: append new variables at the end.
+
+int iInit
+int iGunfightWon
+int iGangers
+float fGangDay
+int iGone
+int iTrav
+int iHour
+
+begin GameMode
+	if GetQuestCompleted VCG01 == 0
+		return
+	endif
+
+	if iInit == 0
+		set iInit to 1
+		LIMGSAmosRef.MoveToCell GSHouseInterior01 900 -400 2340
+		LIMGSLenaRef.MoveToCell GSHouseInterior01 860 -360 2340
+		LIMGSCalRef.MoveToCell GSHouseInterior01 820 -420 2340
+		LIMGSJosephRef.MoveToCell GSHouseInterior02 1150 -250 2340
+		LIMGSAdaRef.MoveToCell GSHouseInterior02 1110 -210 2340
+		LIMGSRuthRef.MoveToCell GSHouseInterior02 1070 -270 2340
+		LIMGSHarlanRef.MoveToCell GSHouseInterior03 450 -350 2340
+		LIMGSWesRef.MoveToCell GSHouseInterior03 410 -310 2340
+		LIMGSDutchyRef.MoveToCell GSHouseInterior04 700 -300 2340
+		LIMGSMarisolRef.MoveToCell GSHouseInterior04 660 -260 2340
+		LIMGSAbeRef.MoveToCell GSHouseInterior04 620 -340 2340
+		LIMGSTeaRef.MoveToCell GSHouseInterior04 580 -300 2340
+		LIMGSHectorRef.MoveToCell GSProspectorSaloonInterior 220 260 3460
+		LIMGSProspectorRef.MoveToCell GSProspectorSaloonInterior 300 -300 3460
+		LIMGSDrifterRef.MoveToCell GSProspectorSaloonInterior 260 -260 3460
+		LIMGSBed01aRef.MoveToCell GSHouseInterior01 800 -560 2336
+		LIMGSBed01bRef.MoveToCell GSHouseInterior01 700 -560 2336
+		LIMGSBed02aRef.MoveToCell GSHouseInterior02 1100 -400 2336
+		LIMGSBed04aRef.MoveToCell GSHouseInterior04 600 -500 2336
+		LIMGSBed04bRef.MoveToCell GSHouseInterior04 500 -500 2336
+		LIMGSBedWatchRef.MoveToCell GSProspectorSaloonInterior 250 300 3457
+		LIMGSBedTrav1Ref.MoveToCell GSProspectorSaloonInterior 450 300 3457
+		LIMGSBedTrav2Ref.MoveToCell GSProspectorSaloonInterior 350 300 3457
+		; they wait disabled in the holding cell (no AI runs) until now; Tea waits for the gunfight
+		LIMGSAmosRef.Enable
+		LIMGSLenaRef.Enable
+		LIMGSCalRef.Enable
+		LIMGSJosephRef.Enable
+		LIMGSAdaRef.Enable
+		LIMGSRuthRef.Enable
+		LIMGSHarlanRef.Enable
+		LIMGSWesRef.Enable
+		LIMGSDutchyRef.Enable
+		LIMGSMarisolRef.Enable
+		LIMGSAbeRef.Enable
+		LIMGSHectorRef.Enable
+	endif
+
+	; Ghost Town Gunfight won for the town: a fourth hand joins the fields
+	if iGunfightWon == 0 && GetQuestCompleted VMS16 && GetStageDone VMS16b 100 == 0
+		set iGunfightWon to 1
+		LIMGSTeaRef.Enable
+	endif
+
+	; the Powder Gangers run Goodsprings: a day later the families and most hands leave town
+	if iGangers == 0 && GetStageDone VMS16b 100
+		set iGangers to 1
+		set fGangDay to GameDaysPassed
+	endif
+	if iGangers && iGone == 0 && GameDaysPassed - fGangDay >= 1
+		set iGone to 1
+		LIMGSDutchyRef.RemoveFromFaction GoodspringsFaction
+		LIMGSAmosRef.MoveTo LIMGSHoldingRef
+		LIMGSLenaRef.MoveTo LIMGSHoldingRef
+		LIMGSCalRef.MoveTo LIMGSHoldingRef
+		LIMGSJosephRef.MoveTo LIMGSHoldingRef
+		LIMGSAdaRef.MoveTo LIMGSHoldingRef
+		LIMGSRuthRef.MoveTo LIMGSHoldingRef
+		LIMGSHarlanRef.MoveTo LIMGSHoldingRef
+		LIMGSWesRef.MoveTo LIMGSHoldingRef
+		LIMGSMarisolRef.MoveTo LIMGSHoldingRef
+		LIMGSAbeRef.MoveTo LIMGSHoldingRef
+		LIMGSTeaRef.MoveTo LIMGSHoldingRef
+		LIMGSHectorRef.MoveTo LIMGSHoldingRef
+		LIMGSAmosRef.Disable
+		LIMGSLenaRef.Disable
+		LIMGSCalRef.Disable
+		LIMGSJosephRef.Disable
+		LIMGSAdaRef.Disable
+		LIMGSRuthRef.Disable
+		LIMGSHarlanRef.Disable
+		LIMGSWesRef.Disable
+		LIMGSMarisolRef.Disable
+		LIMGSAbeRef.Disable
+		LIMGSTeaRef.Disable
+		LIMGSHectorRef.Disable
+	endif
+
+	; the travellers: in town 18 to 7, away by day
+	set iHour to GameHour
+	if iHour >= 18 || iHour < 7
+		if iTrav == 0
+			set iTrav to 1
+			LIMGSProspectorRef.Enable
+			LIMGSDrifterRef.Enable
+		endif
+	elseif iTrav
+		set iTrav to 0
+		if LIMGSProspectorRef.GetInSameCell player == 0
+			LIMGSProspectorRef.Disable
+		endif
+		if LIMGSDrifterRef.GetInSameCell player == 0
+			LIMGSDrifterRef.Disable
+		endif
+	endif
+end

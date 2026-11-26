@@ -15,6 +15,7 @@ int iValue
 int iMax
 int iMin
 int iStep
+int iK
 array_var aSN
 array_var aCC
 array_var aSK
@@ -27,9 +28,11 @@ begin Function {iClick iWas}
 	let iScreen := GetVariable "iScreen" CCTerm
 	let iPick := GetVariable "iPick" CCTerm
 	if iScreen == 15
-		if iClick >= 1 && iClick <= 4
+		if iClick >= 1 && iClick <= 10
 			call CCBuildFn iClick
 		endif
+	elseif iScreen == 16
+		call CCTownsFn 2 iClick
 	elseif iScreen == 9
 		let aSN := GetArrayVariable "aStaffName" CCCore
 		let iN := ar_Size aSN
@@ -48,13 +51,24 @@ begin Function {iClick iWas}
 		SetVariable "iPick" iClick CCTerm
 		SetVariable "iScreen" 11 CCTerm
 	elseif iScreen == 11
-		if iClick == 1
+		; rows as CCTermDraw2 drew them (CCTerm iRows, BACK last): from tier 2 with a hire possible,
+		; 1 fair, 2 low, 3 generous, 4 the reference check; else 1 hire, 2 the reference check
+		let iN := (GetVariable "iRows" CCTerm) - 2
+		if iClick == iN
+			call CCStaffFn 3 iPick
+		elseif iClick >= 1 && iClick < iN
+			set iK to 0
+			if iClick == 2
+				set iK to 1
+			elseif iClick == 3
+				set iK to 2
+			endif
+			SetVariable "iHireOffer" iK CCCore
 			let iOk := call CCStaffFn 1 iPick
+			SetVariable "iHireOffer" 0 CCCore
 			if iOk
 				SetVariable "iScreen" 10 CCTerm
 			endif
-		elseif iClick == 2
-			call CCStaffFn 3 iPick
 		endif
 	elseif iScreen == 13
 		SetVariable "iPick" iClick CCTerm

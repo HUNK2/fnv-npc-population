@@ -1,0 +1,56 @@
+scn CCTextFn
+
+; Words for the M2 texts (tools/post_model.py ROAD_NAME, GOOD_NAME, poss, con_words).
+; iAct 1: the name of road iA ("Primm road", "Sloan road", "Outpost road").
+; iAct 2: " <Town>'s <good> is due tomorrow." for the first contract due on day iA, else "".
+; iAct 3: the name of town iA. iAct 4: the name of good iA. iAct 5: town iA's possessive ("Primm's").
+
+int iAct
+int iA
+int iK
+array_var aCN
+array_var aCT
+array_var aCG
+array_var aT
+array_var aG
+array_var aP
+string_var sOut
+string_var sWa
+string_var sWb
+
+begin Function {iAct iA}
+	let aT := Ar_List "Goodsprings", "Primm", "Sloan", "Mojave Outpost"
+	let aP := Ar_List "Goodsprings'", "Primm's", "Sloan's", "Mojave Outpost's"
+	let aG := Ar_List "water", "healing powder", "ammo", "dirty water", "herbs", "building materials", "smoked meat", "brahmin", "stone", "sand", "scrap"
+	let sOut := ""
+	if iAct == 1
+		if iA == 2
+			let sOut := "Sloan road"
+		elseif iA == 3
+			let sOut := "Outpost road"
+		else
+			let sOut := "Primm road"
+		endif
+	elseif iAct == 2
+		let aCN := GetArrayVariable "aConNext" CCCore
+		let aCT := GetArrayVariable "aConTown" CCCore
+		let aCG := GetArrayVariable "aConGood" CCCore
+		set iK to 0
+		while iK < ar_Size aCN
+			if eval (aCN[iK] == iA)
+				let sWa := aP[aCT[iK]]
+				let sWb := aG[aCG[iK]]
+				let sOut := sv_Construct " %z %z is due tomorrow." sWa sWb
+				set iK to 99
+			endif
+			set iK to iK + 1
+		loop
+	elseif iAct == 3
+		let sOut := aT[iA]
+	elseif iAct == 4
+		let sOut := aG[iA]
+	elseif iAct == 5
+		let sOut := aP[iA]
+	endif
+	SetFunctionValue sOut
+end

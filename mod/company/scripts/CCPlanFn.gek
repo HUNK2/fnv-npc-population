@@ -1,21 +1,25 @@
 scn CCPlanFn
 
 ; The bookkeeper's plan (tools/company_model.py Company.plan) for a trip: during the tick (CCCore
-; iInTick 1) today's, else tomorrow's. For each leg, first the standing orders that keep the
-; destination stocked (a crate that does not lose money), then greedy: the best crate by margin while
-; it pays at least 20. Up to 8 crates a leg, 4 fewer on the Goodsprings leg on a contract delivery day.
-; Standing orders also bar a sale below a price and a purchase above one. Own warehouse crates load
-; free. Returns the order codes in pick order: origin * 10 + good (0 Goodsprings, 1 Primm).
+; iInTick 1) today's, else tomorrow's. For every running road (wagon order: road 1, then the wagons as
+; bought) and each of its legs, with stocks, warehouses and cash shared across the plan: first site
+; goods toward the workshop that uses them (at most 4 a leg, through Goodsprings when no road joins
+; the two), then the standing orders that keep the destination stocked (a crate that does not lose
+; money), then greedy: the best market crate by margin while it pays at least 20. Up to 8 crates a leg,
+; less a contract's crates due that day out of that origin. Standing orders also bar a sale below a
+; price and a purchase above one. Own warehouse crates load free. Goods: 0 water, 1 powder, 2 ammo,
+; 3 dirty water, 4 herbs, 5 materials, 6 meat (market goods), 7 brahmin, 8 stone, 9 sand, 10 scrap
+; (site goods). Returns the order codes in pick order: wagon * 1000 + origin town * 100 + good.
 
 array_var aQ
 array_var aSo
-array_var aSd
 array_var aWhPlan
 array_var aStock
 array_var aWh
 array_var aAnchor
 array_var aUse
 array_var aTrust
+array_var aMkt
 int iPlanCash
 int iLeg
 int iOrigin
@@ -40,24 +44,58 @@ int iCap
 int iS
 int iGo
 int iOk
+int iR
+int iW
+int iX
+int iU
+int iJ
+array_var aRun
+array_var aOrder
+array_var aWR
+array_var aRA
+array_var aRB
+array_var aWs
+array_var aUser
+array_var aCR
+array_var aCO
+array_var aCN
 
 begin Function {}
 	let aQ := Ar_Construct "array"
 	; the running game's compiler cannot resolve Quest.variable: read CCCore by name
 	let iPlanCash := GetVariable "iCash" CCCore
-	let aStock := GetArrayVariable "aStock" CCCore
-	let aWh := GetArrayVariable "aWh" CCCore
+	let aSo := GetArrayVariable "aStock" CCCore
+	let aStock := Ar_Copy aSo
+	let aSo := GetArrayVariable "aWh" CCCore
+	let aWhPlan := Ar_Copy aSo
 	let aAnchor := GetArrayVariable "aAnchor" CCCore
 	let aUse := GetArrayVariable "aUse" CCCore
 	let aTrust := GetArrayVariable "aTrust" CCCore
+	let aMkt := GetArrayVariable "aMkt" CCCore
 	let aSK := GetArrayVariable "aSOKind" CCCore
 	let aST := GetArrayVariable "aSOTown" CCCore
 	let aSG := GetArrayVariable "aSOGood" CCCore
 	let aSV := GetArrayVariable "aSOValue" CCCore
+	let aCR := GetArrayVariable "aConRoad" CCCore
+	let aCO := GetArrayVariable "aConOrigin" CCCore
+	let aCN := GetArrayVariable "aConNext" CCCore
+	let aWs := GetArrayVariable "aWorkshops" CCCore
 	let iTrip := (GetVariable "iDay" CCCore) + 1 - (GetVariable "iInTick" CCCore)
+	let aRA := Ar_List 0, 0, 0, 1
+	let aRB := Ar_List 0, 1, 2, 3
+	; the town of the workshop that uses each site good (-1: none built): brahmin the smokehouse
+	; (Primm), stone and sand the stone yard (Sloan), scrap none in M2
+	let aUser := Ar_List (0 - 1), (0 - 1), (0 - 1), (0 - 1), (0 - 1), (0 - 1), (0 - 1), (0 - 1), (0 - 1), (0 - 1), (0 - 1), (0 - 1)
+	if eval (aWs[2])
+		let aUser[7] := 1
+	endif
+	if eval (aWs[3])
+		let aUser[8] := 2
+		let aUser[9] := 2
+	endif
 	; sell-above floors and pay-at-most ceilings (a later slot wins)
-	let aFloor := Ar_List 0, 0, 0, 0, 0, 0
-	let aCeil := Ar_List 999999, 999999, 999999, 999999, 999999, 999999
+	let aFloor := Ar_List 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	let aCeil := Ar_List 999999, 999999, 999999, 999999, 999999, 999999, 999999, 999999, 999999, 999999, 999999, 999999
 	set iS to 0
 	while iS < 3
 		if eval (aSK[iS] == 2)
@@ -67,104 +105,162 @@ begin Function {}
 		endif
 		set iS to iS + 1
 	loop
-	set iLeg to 0
-	while iLeg < 2
-		set iOrigin to iLeg
-		set iDest to 1 - iLeg
-		let aSo := Ar_Copy aStock
-		let aSd := Ar_Copy aStock
-		if iOrigin == 0
-			let aWhPlan := Ar_Copy aWh
-		else
-			let aWhPlan := Ar_List 0, 0, 0, 0, 0, 0
-		endif
-		set iCap to 8
-		let iOk := (GetVariable "iConOn" CCCore) && (GetVariable "iConNext" CCCore) == iTrip
-		if iOrigin == 0 && iOk
-			set iCap to 4
-		endif
-		set iK to 0
-		; keep-stocked orders for this leg's destination
-		set iS to 0
-		while iS < 3
-			if eval (aSK[iS] == 1 && aST[iS] == iDest)
-				let iG := aSG[iS]
-				set iGo to 1
-				while iGo && iK < iCap && aSd[iDest * 6 + iG] < aSV[iS]
-					let iSale := call CCPriceFn aAnchor[iG], aSd[iDest * 6 + iG], aUse[iDest * 6 + iG], aTrust[iDest], 1
-					let iOwn := aWhPlan[iG] > 0
-					set iCost to 0
-					if iOwn == 0
-						let iCost := call CCPriceFn aAnchor[iG], aSo[iOrigin * 6 + iG], aUse[iOrigin * 6 + iG], aTrust[iOrigin], 0
-					endif
-					set iOk to 1
-					if eval (iOwn == 0 && (iCost > iPlanCash || iCost > aCeil[iG]))
-						set iOk to 0
-					endif
-					if eval (iSale < aFloor[iG] || iSale - iCost < 0)
-						set iOk to 0
-					endif
-					if iOk
-						if iOwn
-							let aWhPlan[iG] -= 1
-						else
-							let aSo[iOrigin * 6 + iG] -= 1
-							set iPlanCash to iPlanCash - iCost
-						endif
-						let aSd[iDest * 6 + iG] += 1
-						ar_Append aQ (iOrigin * 10 + iG)
-						set iK to iK + 1
-					else
-						set iGo to 0
-					endif
-				loop
+	; running roads in wagon order
+	let aRun := call CCRoadsFn 0 iTrip
+	let aOrder := Ar_List 1
+	let aWR := GetArrayVariable "aWagonRoad" CCCore
+	set iK to 0
+	while iK < ar_Size aWR
+		ar_Append aOrder aWR[iK]
+		set iK to iK + 1
+	loop
+	set iX to 0
+	while iX < ar_Size aOrder
+		let iR := aOrder[iX]
+		let iW := aRun[iR]
+		set iLeg to 0
+		while iW > 0 && iLeg < 2
+			if iLeg == 0
+				let iOrigin := aRA[iR]
+				let iDest := aRB[iR]
+			else
+				let iOrigin := aRB[iR]
+				let iDest := aRA[iR]
 			endif
-			set iS to iS + 1
-		loop
-		; then the best crate by margin
-		while iK < iCap
-			set iBestG to -1
-			set iG to 0
-			while iG < 6
-				let iSale := call CCPriceFn aAnchor[iG], aSd[iDest * 6 + iG], aUse[iDest * 6 + iG], aTrust[iDest], 1
-				let iOwn := aWhPlan[iG] > 0
-				if iOwn
-					set iCost to 0
-				else
-					let iCost := call CCPriceFn aAnchor[iG], aSo[iOrigin * 6 + iG], aUse[iOrigin * 6 + iG], aTrust[iOrigin], 0
+			set iCap to 8
+			set iK to 0
+			while iK < ar_Size aCN
+				if eval (aCN[iK] == iTrip && aCR[iK] == iR && aCO[iK] == iOrigin)
+					set iCap to iCap - 4
 				endif
-				set iOk to 1
-				if eval (iOwn == 0 && (iCost > iPlanCash || iCost > aCeil[iG]))
-					set iOk to 0
-				endif
-				if eval (iSale < aFloor[iG])
-					set iOk to 0
-				endif
-				if iOk
-					if iBestG < 0 || iSale - iCost > iBest
-						set iBest to iSale - iCost
-						set iBestG to iG
-						set iBestOwn to iOwn
-						set iBestCost to iCost
+				set iK to iK + 1
+			loop
+			set iK to 0
+			; site goods first (Company.site_goes)
+			set iG to 7
+			while iG <= 10
+				let iU := aUser[iG]
+				set iGo to 0
+				if iU >= 0 && iU != iOrigin
+					if iU == iDest
+						set iGo to 1
+					elseif iDest == 0
+						; through Goodsprings when no road joins the origin and the user
+						set iGo to 1
+						set iJ to 1
+						while iJ <= 3
+							if eval ((aRA[iJ] == iOrigin && aRB[iJ] == iU) || (aRA[iJ] == iU && aRB[iJ] == iOrigin))
+								set iGo to 0
+							endif
+							set iJ to iJ + 1
+						loop
 					endif
 				endif
+				while iGo && iK < iCap && iK < 4 && aWhPlan[iOrigin * 12 + iG] > 0
+					let aWhPlan[iOrigin * 12 + iG] -= 1
+					let aWhPlan[iDest * 12 + iG] += 1
+					set iK to iK + 1
+					ar_Append aQ (iW * 1000 + iOrigin * 100 + iG)
+				loop
 				set iG to iG + 1
 			loop
-			if iBestG < 0 || iBest < 20
-				set iK to iCap
-			else
-				if iBestOwn
-					let aWhPlan[iBestG] -= 1
-				else
-					let aSo[iOrigin * 6 + iBestG] -= 1
-					set iPlanCash to iPlanCash - iBestCost
+			; keep-stocked orders for this leg's destination
+			set iS to 0
+			while iS < 3
+				if eval (aSK[iS] == 1 && aST[iS] == iDest)
+					let iG := aSG[iS]
+					set iGo to 1
+					while iGo && iK < iCap && aStock[iDest * 12 + iG] < aSV[iS]
+						set iOk to 0
+						if eval (aMkt[iDest * 12 + iG])
+							let iSale := call CCPriceFn aAnchor[iG], aStock[iDest * 12 + iG], aUse[iDest * 12 + iG], aTrust[iDest], 1
+							let iOwn := aWhPlan[iOrigin * 12 + iG] > 0
+							set iCost to 0
+							set iOk to 1
+							if iOwn == 0
+								if eval (aMkt[iOrigin * 12 + iG])
+									let iCost := call CCPriceFn aAnchor[iG], aStock[iOrigin * 12 + iG], aUse[iOrigin * 12 + iG], aTrust[iOrigin], 0
+								else
+									set iOk to 0
+								endif
+							endif
+							if eval (iOwn == 0 && (iCost > iPlanCash || iCost > aCeil[iG]))
+								set iOk to 0
+							endif
+							if eval (iSale < aFloor[iG] || iSale - iCost < 0)
+								set iOk to 0
+							endif
+						endif
+						if iOk
+							if iOwn
+								let aWhPlan[iOrigin * 12 + iG] -= 1
+							else
+								let aStock[iOrigin * 12 + iG] -= 1
+								set iPlanCash to iPlanCash - iCost
+							endif
+							let aStock[iDest * 12 + iG] += 1
+							ar_Append aQ (iW * 1000 + iOrigin * 100 + iG)
+							set iK to iK + 1
+						else
+							set iGo to 0
+						endif
+					loop
 				endif
-				let aSd[iDest * 6 + iBestG] += 1
-				ar_Append aQ (iOrigin * 10 + iBestG)
-				set iK to iK + 1
-			endif
+				set iS to iS + 1
+			loop
+			; then the best market crate by margin
+			while iK < iCap
+				set iBestG to -1
+				set iG to 0
+				while iG < 7
+					if eval (aMkt[iDest * 12 + iG])
+						let iOwn := aWhPlan[iOrigin * 12 + iG] > 0
+						set iOk to 1
+						set iCost to 0
+						if iOwn == 0
+							if eval (aMkt[iOrigin * 12 + iG])
+								let iCost := call CCPriceFn aAnchor[iG], aStock[iOrigin * 12 + iG], aUse[iOrigin * 12 + iG], aTrust[iOrigin], 0
+							else
+								set iOk to 0
+							endif
+						endif
+						if iOk
+							let iSale := call CCPriceFn aAnchor[iG], aStock[iDest * 12 + iG], aUse[iDest * 12 + iG], aTrust[iDest], 1
+							if eval (iOwn == 0 && (iCost > iPlanCash || iCost > aCeil[iG]))
+								set iOk to 0
+							endif
+							if eval (iSale < aFloor[iG])
+								set iOk to 0
+							endif
+						endif
+						if iOk
+							if iBestG < 0 || iSale - iCost > iBest
+								set iBest to iSale - iCost
+								set iBestG to iG
+								set iBestOwn to iOwn
+								set iBestCost to iCost
+							endif
+						endif
+					endif
+					set iG to iG + 1
+				loop
+				if iBestG < 0 || iBest < 20
+					set iK to iCap
+				else
+					if iBestOwn
+						let aWhPlan[iOrigin * 12 + iBestG] -= 1
+					else
+						let aStock[iOrigin * 12 + iBestG] -= 1
+						set iPlanCash to iPlanCash - iBestCost
+					endif
+					let aStock[iDest * 12 + iBestG] += 1
+					ar_Append aQ (iW * 1000 + iOrigin * 100 + iBestG)
+					set iK to iK + 1
+				endif
+			loop
+			set iLeg to iLeg + 1
 		loop
-		set iLeg to iLeg + 1
+		set iX to iX + 1
 	loop
 	SetFunctionValue aQ
 end

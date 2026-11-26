@@ -1,0 +1,225 @@
+scn CCUpgradeFn
+
+; The M2 ledger (plan 2.3), once per game: CCCore iInit 4 -> 5 (a fresh game runs it at once; an M1
+; save keeps every number it had). CCCoreScript creates the new arrays; this fills them and widens the
+; old ones in place. Towns 0 Goodsprings, 1 Primm, 2 Sloan, 3 Mojave Outpost; goods 0 water, 1 powder,
+; 2 ammo, 3 dirty water, 4 herbs, 5 materials, 6 smoked meat (market goods), 7 brahmin, 8 stone, 9 sand,
+; 10 scrap (site goods), 11 spare; cells town * 12 + good. Starter trade (daily use, normal stock) for
+; the new cells as tools/company_model.py STARTER; a good missing from a town has no market (aMkt 0).
+; The M1 contract (iCon*) becomes the first entry of the aCon* arrays; waiting memos get aMemoX/aMemoWho.
+
+int iT
+int iG
+int iK
+int iN
+int iOld
+array_var aU
+array_var aNm
+array_var aTmp
+array_var aAnchor
+array_var aUse
+array_var aNormal
+array_var aStock
+array_var aOU
+array_var aON
+array_var aOS
+array_var aMkt
+array_var aBase
+array_var aTrust
+array_var aWh
+array_var aW
+array_var aS
+array_var aA
+array_var aB
+array_var aC
+array_var aD
+array_var aE
+array_var aF
+array_var aMK
+array_var aMX
+array_var aMW
+array_var aCT
+array_var aCG
+array_var aCR
+array_var aCO
+array_var aCP
+array_var aCS
+array_var aCN
+array_var aCD
+array_var aCM
+
+begin Function {}
+	; use and normal stock for all 48 cells (a 0 use: no market there; its cell keeps use 1)
+	; Ar_List takes at most 20 items: a town (12 cells) at a time
+	let aU := Ar_List 4, 2, 4, 1, 1, 1, 4, 0, 0, 0, 0, 0
+	let aTmp := Ar_List 10, 4, 2, 2, 1, 1, 6, 0, 0, 0, 0, 0
+	set iN to 0
+	while iN < 12
+		ar_Append aU aTmp[iN]
+		set iN to iN + 1
+	loop
+	let aTmp := Ar_List 6, 3, 2, 2, 0, 2, 4, 0, 0, 0, 0, 0
+	set iN to 0
+	while iN < 12
+		ar_Append aU aTmp[iN]
+		set iN to iN + 1
+	loop
+	let aTmp := Ar_List 8, 2, 4, 0, 0, 0, 6, 0, 0, 0, 0, 0
+	set iN to 0
+	while iN < 12
+		ar_Append aU aTmp[iN]
+		set iN to iN + 1
+	loop
+	let aNm := Ar_List 34, 18, 4, 30, 15, 0, 4, 0, 0, 0, 0, 0
+	let aTmp := Ar_List 14, 4, 20, 2, 1, 10, 12, 0, 0, 0, 0, 0
+	set iN to 0
+	while iN < 12
+		ar_Append aNm aTmp[iN]
+		set iN to iN + 1
+	loop
+	let aTmp := Ar_List 6, 3, 2, 2, 0, 0, 2, 0, 0, 0, 0, 0
+	set iN to 0
+	while iN < 12
+		ar_Append aNm aTmp[iN]
+		set iN to iN + 1
+	loop
+	let aTmp := Ar_List 12, 6, 4, 0, 0, 0, 6, 0, 0, 0, 0, 0
+	set iN to 0
+	while iN < 12
+		ar_Append aNm aTmp[iN]
+		set iN to iN + 1
+	loop
+	let aAnchor := GetArrayVariable "aAnchor" CCCore
+	ar_Append aAnchor 100
+	ar_Append aAnchor 120
+	ar_Append aAnchor 50
+	ar_Append aAnchor 20
+	ar_Append aAnchor 30
+	ar_Append aAnchor 0
+	let aUse := GetArrayVariable "aUse" CCCore
+	let aNormal := GetArrayVariable "aNormal" CCCore
+	let aStock := GetArrayVariable "aStock" CCCore
+	let aMkt := GetArrayVariable "aMkt" CCCore
+	let aBase := GetArrayVariable "aBaseUse" CCCore
+	let aOU := Ar_Copy aUse
+	let aON := Ar_Copy aNormal
+	let aOS := Ar_Copy aStock
+	ar_Resize aUse 48 0
+	ar_Resize aNormal 48 0
+	ar_Resize aStock 48 0
+	set iT to 0
+	while iT < 4
+		set iG to 0
+		while iG < 12
+			let iK := iT * 12 + iG
+			if eval (aU[iK] > 0)
+				ar_Append aMkt 1
+			else
+				ar_Append aMkt 0
+			endif
+			if iT < 2 && iG < 6
+				; an M1 cell: keep its use (Primm's ammo without a sheriff), normal and stock
+				let iOld := iT * 6 + iG
+				let aUse[iK] := aOU[iOld]
+				let aNormal[iK] := aON[iOld]
+				let aStock[iK] := aOS[iOld]
+			else
+				let aUse[iK] := aU[iK]
+				if eval (aU[iK] == 0)
+					let aUse[iK] := 1
+				endif
+				let aNormal[iK] := aNm[iK]
+				let aStock[iK] := aNm[iK]
+			endif
+			ar_Append aBase aUse[iK]
+			set iG to iG + 1
+		loop
+		set iT to iT + 1
+	loop
+	let aTrust := GetArrayVariable "aTrust" CCCore
+	ar_Append aTrust 20
+	ar_Append aTrust 20
+	let aWh := GetArrayVariable "aWh" CCCore
+	ar_Resize aWh 48 0
+	let aW := GetArrayVariable "aWorkshops" CCCore
+	ar_Append aW 0
+	ar_Append aW 0
+	let aS := GetArrayVariable "aSites" CCCore
+	set iK to 0
+	while iK < 4
+		ar_Append aS 0
+		set iK to iK + 1
+	loop
+	; staff and candidates on the books: Nerve 50, loyalty 55, no trait, not a resident
+	let aA := GetArrayVariable "aStaffName" CCCore
+	let aB := GetArrayVariable "aStaffNerve" CCCore
+	let aC := GetArrayVariable "aStaffLoyal" CCCore
+	let aD := GetArrayVariable "aStaffTrait" CCCore
+	let aE := GetArrayVariable "aStaffRes" CCCore
+	let aF := GetArrayVariable "aStaffWhy" CCCore
+	set iK to 0
+	while iK < ar_Size aA
+		ar_Append aB 50
+		ar_Append aC 55
+		ar_Append aD 0
+		ar_Append aE 0
+		let aMK := Ar_Construct "array"
+		ar_Append aF aMK
+		set iK to iK + 1
+	loop
+	let aA := GetArrayVariable "aCandName" CCCore
+	let aB := GetArrayVariable "aCandNerve" CCCore
+	let aD := GetArrayVariable "aCandTrait" CCCore
+	let aE := GetArrayVariable "aCandRes" CCCore
+	set iK to 0
+	while iK < ar_Size aA
+		ar_Append aB 50
+		ar_Append aD 0
+		ar_Append aE 0
+		set iK to iK + 1
+	loop
+	; the M1 contract: Primm water on road 1 out of Goodsprings
+	if eval (GetVariable "iConOn" CCCore)
+		let aCT := GetArrayVariable "aConTown" CCCore
+		let aCG := GetArrayVariable "aConGood" CCCore
+		let aCR := GetArrayVariable "aConRoad" CCCore
+		let aCO := GetArrayVariable "aConOrigin" CCCore
+		let aCP := GetArrayVariable "aConPrice" CCCore
+		let aCS := GetArrayVariable "aConStart" CCCore
+		let aCN := GetArrayVariable "aConNext" CCCore
+		let aCD := GetArrayVariable "aConDone" CCCore
+		let aCM := GetArrayVariable "aConMissed" CCCore
+		ar_Append aCT 1
+		ar_Append aCG 0
+		ar_Append aCR 1
+		ar_Append aCO 0
+		let iN := GetVariable "iConPrice" CCCore
+		ar_Append aCP iN
+		let iN := GetVariable "iConStart" CCCore
+		ar_Append aCS iN
+		let iN := GetVariable "iConNext" CCCore
+		ar_Append aCN iN
+		let iN := GetVariable "iConDone" CCCore
+		ar_Append aCD iN
+		let iN := GetVariable "iConMissed" CCCore
+		ar_Append aCM iN
+		SetVariable "iConOn" 0 CCCore
+	endif
+	; waiting memos: a road memo is road 1, a contract offer Primm water on road 1 at iOfferPrice
+	let aMK := GetArrayVariable "aMemoKind" CCCore
+	let aMX := GetArrayVariable "aMemoX" CCCore
+	let aMW := GetArrayVariable "aMemoWho" CCCore
+	set iK to 0
+	while iK < ar_Size aMK
+		set iN to 0
+		if eval (aMK[iK] == 0)
+			set iN to 1
+		elseif eval (aMK[iK] == 2)
+			let iN := (GetVariable "iOfferPrice" CCCore) * 10000 + 1000 + 1
+		endif
+		ar_Append aMX iN
+		ar_Append aMW " "
+		set iK to iK + 1
+	loop
+	SetFunctionValue 1
+end

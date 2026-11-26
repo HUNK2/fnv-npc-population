@@ -4,12 +4,6935 @@
  "plugin": "LivedInMojave.esp",
  "author": "fnv-npc-population",
  "description": "Lived-in Mojave core: shared factions, globals and the roles kit. Master of the Mojave Caravan Company.",
- "masters": ["FalloutNV.esm"],
+ "masters": [
+  "FalloutNV.esm"
+ ],
  "records": {
-  "LIMVersion": {"type": "GLOB", "fields": [
-   {"tag": "FNAM", "pack": "<B", "values": [115]},
-   {"tag": "FLTV", "pack": "<f", "values": [1.0]}]},
-  "LIMTownsfolkFaction": {"type": "FACT", "template": "@GoodspringsFaction", "fields": [
-   {"tag": "FULL", "text": "Mojave townsfolk"}]}
+  "LIMVersion": {
+   "type": "GLOB",
+   "fields": [
+    {
+     "tag": "FNAM",
+     "pack": "<B",
+     "values": [
+      115
+     ]
+    },
+    {
+     "tag": "FLTV",
+     "pack": "<f",
+     "values": [
+      1.0
+     ]
+    }
+   ]
+  },
+  "LIMTownsfolkFaction": {
+   "type": "FACT",
+   "template": "@GoodspringsFaction",
+   "fields": [
+    {
+     "tag": "FULL",
+     "text": "Mojave townsfolk"
+    }
+   ]
+  },
+  "LIMGoodspringsScript": {
+   "type": "SCPT",
+   "source": "scripts/LIMGoodspringsScript.gek",
+   "script_type": "quest"
+  },
+  "GREETING": {
+   "type": "DIAL",
+   "override": true,
+   "infos": [
+    {
+     "key": "lim_amos_won",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSAmos",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@LIMGoodsprings",
+       "param2": 2,
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "You stood with us against those gangers. Walk my field any time."
+     ]
+    },
+    {
+     "key": "lim_amos",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSAmos",
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Rows don't water themselves. Mind the furrows."
+     ]
+    },
+    {
+     "key": "lim_lena_won",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSLena",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@LIMGoodsprings",
+       "param2": 2,
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Folks still talk about the gunfight. Thank you for that."
+     ]
+    },
+    {
+     "key": "lim_lena",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSLena",
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Cal, quit gawking. Morning, stranger."
+     ]
+    },
+    {
+     "key": "lim_cal_won",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSCal",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@LIMGoodsprings",
+       "param2": 2,
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Were you really in the gunfight? I watched from the window."
+     ]
+    },
+    {
+     "key": "lim_cal",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSCal",
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Pa says I get my own row next spring."
+     ]
+    },
+    {
+     "key": "lim_joseph_won",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSJoseph",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@LIMGoodsprings",
+       "param2": 2,
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Water tastes sweeter with no gangers drinking it."
+     ]
+    },
+    {
+     "key": "lim_joseph",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSJoseph",
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "The well runs low every summer. Every single one."
+     ]
+    },
+    {
+     "key": "lim_ada_won",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSAda",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@LIMGoodsprings",
+       "param2": 2,
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "You saved this town a funeral or two. Mending's free for you."
+     ]
+    },
+    {
+     "key": "lim_ada",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSAda",
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Got a tear in that coat? I can mend it. Cheap."
+     ]
+    },
+    {
+     "key": "lim_ruth_won",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSRuth",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@LIMGoodsprings",
+       "param2": 2,
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Mama says you're brave."
+     ]
+    },
+    {
+     "key": "lim_ruth",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSRuth",
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Do you have a dog? Sunny has a dog."
+     ]
+    },
+    {
+     "key": "lim_harlan_won",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSHarlan",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@LIMGoodsprings",
+       "param2": 2,
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "My Henry would have liked you."
+     ]
+    },
+    {
+     "key": "lim_harlan",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSHarlan",
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "My Henry planted this garden. I keep it going."
+     ]
+    },
+    {
+     "key": "lim_wes_won",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSWes",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@LIMGoodsprings",
+       "param2": 2,
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "You handled yourself out there. Need a hand, ask."
+     ]
+    },
+    {
+     "key": "lim_wes",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSWes",
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Every bucket in this town came up on my arms."
+     ]
+    },
+    {
+     "key": "lim_dutchy_won",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSDutchy",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@LIMGoodsprings",
+       "param2": 2,
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Guess the town's yours now, huh."
+     ]
+    },
+    {
+     "key": "lim_dutchy",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSDutchy",
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Work's work. Don't much care who pays."
+     ]
+    },
+    {
+     "key": "lim_marisol_won",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSMarisol",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@LIMGoodsprings",
+       "param2": 2,
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Good shooting. I counted."
+     ]
+    },
+    {
+     "key": "lim_marisol",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSMarisol",
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Keep that gun holstered near the fields."
+     ]
+    },
+    {
+     "key": "lim_abe_won",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSAbe",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@LIMGoodsprings",
+       "param2": 2,
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Fifty years I've worked dirt, and I never saw a fight like that."
+     ]
+    },
+    {
+     "key": "lim_abe",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSAbe",
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Dirt don't lie. People do."
+     ]
+    },
+    {
+     "key": "lim_hector_won",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSHector",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@LIMGoodsprings",
+       "param2": 2,
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Quiet nights since the gangers ran. I like quiet."
+     ]
+    },
+    {
+     "key": "lim_hector",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSHector",
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Night watch. I sleep while you do your business."
+     ]
+    },
+    {
+     "key": "lim_tea_won",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSTea",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@LIMGoodsprings",
+       "param2": 2,
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Heard Goodsprings had work after the gunfight. Here I am."
+     ]
+    },
+    {
+     "key": "lim_tea",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSTea",
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Heard Goodsprings had work after the gunfight. Here I am."
+     ]
+    },
+    {
+     "key": "lim_prospector_won",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSProspector",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@LIMGoodsprings",
+       "param2": 2,
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Heard about the gunfight clear up in the hills."
+     ]
+    },
+    {
+     "key": "lim_prospector",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSProspector",
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Nothing in those hills but rocks and more rocks."
+     ]
+    },
+    {
+     "key": "lim_drifter_won",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSDrifter",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@LIMGoodsprings",
+       "param2": 2,
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Town feels safer. Might stay a night more."
+     ]
+    },
+    {
+     "key": "lim_drifter",
+     "quest": "@LIMGoodsprings",
+     "flags": [
+      "goodbye"
+     ],
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@LIMGSDrifter",
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Just passing through. Same as you."
+     ]
+    }
+   ]
+  },
+  "LIMGSAmosBe05x2": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSPorch01Ref",
+      250
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      5,
+      2
+     ]
+    }
+   ]
+  },
+  "LIMGSAmosWalk07x5": {
+   "type": "PACK",
+   "template": "@EasyPeteChairPackage8x4",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSFieldGateRef",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      7,
+      1
+     ]
+    }
+   ]
+  },
+  "LIMGSAmosBe07x5": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSFieldsRef",
+      500
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      7,
+      5
+     ]
+    }
+   ]
+  },
+  "LIMGSAmosBe12x2": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior01",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      12,
+      2
+     ]
+    }
+   ]
+  },
+  "LIMGSAmosWalk14x4": {
+   "type": "PACK",
+   "template": "@EasyPeteChairPackage8x4",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSFieldGateRef",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      14,
+      1
+     ]
+    }
+   ]
+  },
+  "LIMGSAmosBe14x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSFieldsRef",
+      500
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      14,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSAmosBe18x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSPorch01Ref",
+      250
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      18,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSAmosSleep22x7": {
+   "type": "PACK",
+   "template": "@GSSettlerAAMSleepPackage22x8",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior01",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      22,
+      7
+     ]
+    }
+   ]
+  },
+  "LIMGSAmosIdle": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior01",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSAmos": {
+   "type": "NPC_",
+   "template": "@1ESharecropperAAMTemplate",
+   "fields": [
+    {
+     "tag": "FULL",
+     "text": "Amos Pruitt"
+    },
+    {
+     "tag": "TPLT",
+     "remove": true
+    },
+    {
+     "tag": "SCRI",
+     "remove": true
+    },
+    {
+     "tag": "COED",
+     "remove": true
+    },
+    {
+     "tag": "CNTO",
+     "remove": true
+    },
+    {
+     "tag": "SNAM",
+     "remove": true
+    },
+    {
+     "tag": "PKID",
+     "remove": true
+    },
+    {
+     "tag": "ACBS",
+     "patch": [
+      [
+       0,
+       "<I",
+       16
+      ],
+      [
+       22,
+       "<H",
+       0
+      ]
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@GoodspringsFaction",
+        0
+       ]
+      },
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@LIMTownsfolkFaction",
+        0
+       ]
+      }
+     ],
+     "after": "ACBS"
+    },
+    {
+     "insert": [
+      {
+       "tag": "SCRI",
+       "form": "@LIMGSResidentScript"
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@LL1NPCTownClothes100",
+        1
+       ]
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@CapsChange50",
+        1
+       ]
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@WithAmmoNVVarmintRifleLoot",
+        1
+       ]
+      }
+     ],
+     "after": "EAMT"
+    },
+    {
+     "tag": "AIDT",
+     "pack": "<BBBBB3xIbBBBi",
+     "values": [
+      0,
+      3,
+      50,
+      50,
+      0,
+      0,
+      -1,
+      0,
+      1,
+      0,
+      0
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAmosBe05x2"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAmosWalk07x5"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAmosBe07x5"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAmosBe12x2"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAmosWalk14x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAmosBe14x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAmosBe18x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAmosSleep22x7"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAmosIdle"
+      }
+     ],
+     "after": "AIDT"
+    }
+   ]
+  },
+  "LIMGSLenaAlarm": {
+   "type": "PACK",
+   "template": "@EasyPeteHideInSaloonPackage",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior01",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    },
+    {
+     "tag": "CTDA",
+     "append": true,
+     "pack": "<B3xfIIIII",
+     "values": [
+      0,
+      1.0,
+      79,
+      "@LIMGSAlarm",
+      1,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSLenaBe05x2": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSPorch01Ref",
+      250
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      5,
+      2
+     ]
+    }
+   ]
+  },
+  "LIMGSLenaWalk07x5": {
+   "type": "PACK",
+   "template": "@DefaultFollowLinkedClose",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      7,
+      1
+     ]
+    },
+    {
+     "tag": "PTDT",
+     "pack": "<iIif",
+     "values": [
+      0,
+      "@LIMGSAmosRef",
+      160,
+      0.0
+     ]
+    },
+    {
+     "tag": "CTDA",
+     "append": true,
+     "pack": "<B3xfIIIII",
+     "values": [
+      0,
+      0.0,
+      35,
+      0,
+      0,
+      2,
+      "@LIMGSAmosRef"
+     ]
+    }
+   ]
+  },
+  "LIMGSLenaBe07x5": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSFieldsRef",
+      500
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      7,
+      5
+     ]
+    }
+   ]
+  },
+  "LIMGSLenaBe12x2": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior01",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      12,
+      2
+     ]
+    }
+   ]
+  },
+  "LIMGSLenaWalk14x4": {
+   "type": "PACK",
+   "template": "@DefaultFollowLinkedClose",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      14,
+      1
+     ]
+    },
+    {
+     "tag": "PTDT",
+     "pack": "<iIif",
+     "values": [
+      0,
+      "@LIMGSAmosRef",
+      160,
+      0.0
+     ]
+    },
+    {
+     "tag": "CTDA",
+     "append": true,
+     "pack": "<B3xfIIIII",
+     "values": [
+      0,
+      0.0,
+      35,
+      0,
+      0,
+      2,
+      "@LIMGSAmosRef"
+     ]
+    }
+   ]
+  },
+  "LIMGSLenaBe14x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSFieldsRef",
+      500
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      14,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSLenaBe18x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSPorch01Ref",
+      250
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      18,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSLenaSleep22x7": {
+   "type": "PACK",
+   "template": "@GSSettlerAAMSleepPackage22x8",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior01",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      22,
+      7
+     ]
+    }
+   ]
+  },
+  "LIMGSLenaIdle": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior01",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSLena": {
+   "type": "NPC_",
+   "template": "@VVault34SharecropperCF",
+   "fields": [
+    {
+     "tag": "FULL",
+     "text": "Lena Pruitt"
+    },
+    {
+     "tag": "TPLT",
+     "remove": true
+    },
+    {
+     "tag": "SCRI",
+     "remove": true
+    },
+    {
+     "tag": "COED",
+     "remove": true
+    },
+    {
+     "tag": "CNTO",
+     "remove": true
+    },
+    {
+     "tag": "SNAM",
+     "remove": true
+    },
+    {
+     "tag": "PKID",
+     "remove": true
+    },
+    {
+     "tag": "ACBS",
+     "patch": [
+      [
+       0,
+       "<I",
+       17
+      ],
+      [
+       22,
+       "<H",
+       0
+      ]
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@GoodspringsFaction",
+        0
+       ]
+      },
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@LIMTownsfolkFaction",
+        0
+       ]
+      }
+     ],
+     "after": "ACBS"
+    },
+    {
+     "insert": [
+      {
+       "tag": "SCRI",
+       "form": "@LIMGSResidentScript"
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@LL1NPCTownClothes100",
+        1
+       ]
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@CapsChange50",
+        1
+       ]
+      }
+     ],
+     "after": "EAMT"
+    },
+    {
+     "tag": "AIDT",
+     "pack": "<BBBBB3xIbBBBi",
+     "values": [
+      0,
+      0,
+      50,
+      50,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "PKID",
+       "form": "@LIMGSLenaAlarm"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSLenaBe05x2"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSLenaWalk07x5"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSLenaBe07x5"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSLenaBe12x2"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSLenaWalk14x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSLenaBe14x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSLenaBe18x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSLenaSleep22x7"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSLenaIdle"
+      }
+     ],
+     "after": "AIDT"
+    }
+   ]
+  },
+  "LIMGSCalAlarm": {
+   "type": "PACK",
+   "template": "@EasyPeteHideInSaloonPackage",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior01",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    },
+    {
+     "tag": "CTDA",
+     "append": true,
+     "pack": "<B3xfIIIII",
+     "values": [
+      0,
+      1.0,
+      79,
+      "@LIMGSAlarm",
+      1,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSCalBe05x2": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSPorch01Ref",
+      250
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      5,
+      2
+     ]
+    }
+   ]
+  },
+  "LIMGSCalWalk07x5": {
+   "type": "PACK",
+   "template": "@DefaultFollowLinkedClose",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      7,
+      1
+     ]
+    },
+    {
+     "tag": "PTDT",
+     "pack": "<iIif",
+     "values": [
+      0,
+      "@LIMGSAmosRef",
+      160,
+      0.0
+     ]
+    },
+    {
+     "tag": "CTDA",
+     "append": true,
+     "pack": "<B3xfIIIII",
+     "values": [
+      0,
+      0.0,
+      35,
+      0,
+      0,
+      2,
+      "@LIMGSAmosRef"
+     ]
+    }
+   ]
+  },
+  "LIMGSCalBe07x5": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSFieldsRef",
+      500
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      7,
+      5
+     ]
+    }
+   ]
+  },
+  "LIMGSCalBe12x2": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior01",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      12,
+      2
+     ]
+    }
+   ]
+  },
+  "LIMGSCalWalk14x4": {
+   "type": "PACK",
+   "template": "@DefaultFollowLinkedClose",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      14,
+      1
+     ]
+    },
+    {
+     "tag": "PTDT",
+     "pack": "<iIif",
+     "values": [
+      0,
+      "@LIMGSAmosRef",
+      160,
+      0.0
+     ]
+    },
+    {
+     "tag": "CTDA",
+     "append": true,
+     "pack": "<B3xfIIIII",
+     "values": [
+      0,
+      0.0,
+      35,
+      0,
+      0,
+      2,
+      "@LIMGSAmosRef"
+     ]
+    }
+   ]
+  },
+  "LIMGSCalBe14x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSFieldsRef",
+      500
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      14,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSCalBe18x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSPorch01Ref",
+      250
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      18,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSCalSleep22x7": {
+   "type": "PACK",
+   "template": "@GSSettlerAAMSleepPackage22x8",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior01",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      22,
+      7
+     ]
+    }
+   ]
+  },
+  "LIMGSCalIdle": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior01",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSCal": {
+   "type": "NPC_",
+   "template": "@UnderpassCitizen06",
+   "fields": [
+    {
+     "tag": "FULL",
+     "text": "Cal Pruitt"
+    },
+    {
+     "tag": "TPLT",
+     "remove": true
+    },
+    {
+     "tag": "SCRI",
+     "remove": true
+    },
+    {
+     "tag": "COED",
+     "remove": true
+    },
+    {
+     "tag": "CNTO",
+     "remove": true
+    },
+    {
+     "tag": "SNAM",
+     "remove": true
+    },
+    {
+     "tag": "PKID",
+     "remove": true
+    },
+    {
+     "tag": "ACBS",
+     "patch": [
+      [
+       0,
+       "<I",
+       16
+      ],
+      [
+       22,
+       "<H",
+       0
+      ]
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@GoodspringsFaction",
+        0
+       ]
+      },
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@LIMTownsfolkFaction",
+        0
+       ]
+      }
+     ],
+     "after": "ACBS"
+    },
+    {
+     "insert": [
+      {
+       "tag": "SCRI",
+       "form": "@LIMGSResidentScript"
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@LL1NPCTownClothes100",
+        1
+       ]
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@CapsChange50",
+        1
+       ]
+      }
+     ],
+     "after": "EAMT"
+    },
+    {
+     "tag": "AIDT",
+     "pack": "<BBBBB3xIbBBBi",
+     "values": [
+      0,
+      0,
+      50,
+      50,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "PKID",
+       "form": "@LIMGSCalAlarm"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSCalBe05x2"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSCalWalk07x5"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSCalBe07x5"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSCalBe12x2"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSCalWalk14x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSCalBe14x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSCalBe18x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSCalSleep22x7"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSCalIdle"
+      }
+     ],
+     "after": "AIDT"
+    }
+   ]
+  },
+  "LIMGSJosephAlarm": {
+   "type": "PACK",
+   "template": "@EasyPeteHideInSaloonPackage",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior02",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    },
+    {
+     "tag": "CTDA",
+     "append": true,
+     "pack": "<B3xfIIIII",
+     "values": [
+      0,
+      1.0,
+      79,
+      "@LIMGSAlarm",
+      1,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSJosephBe06x6": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSSpringRef",
+      300
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      6,
+      6
+     ]
+    }
+   ]
+  },
+  "LIMGSJosephBe12x2": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior02",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      12,
+      2
+     ]
+    }
+   ]
+  },
+  "LIMGSJosephBe14x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSGeneralStore",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      14,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSJosephBe18x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSPorch02Ref",
+      250
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      18,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSJosephSleep22x8": {
+   "type": "PACK",
+   "template": "@GSSettlerAAMSleepPackage22x8",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior02",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      22,
+      8
+     ]
+    }
+   ]
+  },
+  "LIMGSJosephIdle": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior02",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSJoseph": {
+   "type": "NPC_",
+   "template": "@RancherAAMTemplate",
+   "fields": [
+    {
+     "tag": "FULL",
+     "text": "Joseph Okafor"
+    },
+    {
+     "tag": "TPLT",
+     "remove": true
+    },
+    {
+     "tag": "SCRI",
+     "remove": true
+    },
+    {
+     "tag": "COED",
+     "remove": true
+    },
+    {
+     "tag": "CNTO",
+     "remove": true
+    },
+    {
+     "tag": "SNAM",
+     "remove": true
+    },
+    {
+     "tag": "PKID",
+     "remove": true
+    },
+    {
+     "tag": "ACBS",
+     "patch": [
+      [
+       0,
+       "<I",
+       16
+      ],
+      [
+       22,
+       "<H",
+       0
+      ]
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@GoodspringsFaction",
+        0
+       ]
+      },
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@LIMTownsfolkFaction",
+        0
+       ]
+      }
+     ],
+     "after": "ACBS"
+    },
+    {
+     "insert": [
+      {
+       "tag": "SCRI",
+       "form": "@LIMGSResidentScript"
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@LL1NPCTownClothes100",
+        1
+       ]
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@CapsChange50",
+        1
+       ]
+      }
+     ],
+     "after": "EAMT"
+    },
+    {
+     "tag": "AIDT",
+     "pack": "<BBBBB3xIbBBBi",
+     "values": [
+      0,
+      0,
+      50,
+      50,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "PKID",
+       "form": "@LIMGSJosephAlarm"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSJosephBe06x6"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSJosephBe12x2"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSJosephBe14x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSJosephBe18x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSJosephSleep22x8"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSJosephIdle"
+      }
+     ],
+     "after": "AIDT"
+    }
+   ]
+  },
+  "LIMGSAdaAlarm": {
+   "type": "PACK",
+   "template": "@EasyPeteHideInSaloonPackage",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior02",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    },
+    {
+     "tag": "CTDA",
+     "append": true,
+     "pack": "<B3xfIIIII",
+     "values": [
+      0,
+      1.0,
+      79,
+      "@LIMGSAlarm",
+      1,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSAdaBe06x6": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSPorch02Ref",
+      250
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      6,
+      6
+     ]
+    }
+   ]
+  },
+  "LIMGSAdaBe12x2": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior02",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      12,
+      2
+     ]
+    }
+   ]
+  },
+  "LIMGSAdaBe14x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSGeneralStore",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      14,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSAdaBe18x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSPorch02Ref",
+      250
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      18,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSAdaSleep22x8": {
+   "type": "PACK",
+   "template": "@GSSettlerAAMSleepPackage22x8",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior02",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      22,
+      8
+     ]
+    }
+   ]
+  },
+  "LIMGSAdaIdle": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior02",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSAda": {
+   "type": "NPC_",
+   "template": "@NovacSettler01",
+   "fields": [
+    {
+     "tag": "FULL",
+     "text": "Ada Okafor"
+    },
+    {
+     "tag": "TPLT",
+     "remove": true
+    },
+    {
+     "tag": "SCRI",
+     "remove": true
+    },
+    {
+     "tag": "COED",
+     "remove": true
+    },
+    {
+     "tag": "CNTO",
+     "remove": true
+    },
+    {
+     "tag": "SNAM",
+     "remove": true
+    },
+    {
+     "tag": "PKID",
+     "remove": true
+    },
+    {
+     "tag": "ACBS",
+     "patch": [
+      [
+       0,
+       "<I",
+       17
+      ],
+      [
+       22,
+       "<H",
+       0
+      ]
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@GoodspringsFaction",
+        0
+       ]
+      },
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@LIMTownsfolkFaction",
+        0
+       ]
+      }
+     ],
+     "after": "ACBS"
+    },
+    {
+     "insert": [
+      {
+       "tag": "SCRI",
+       "form": "@LIMGSResidentScript"
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@LL1NPCTownClothes100",
+        1
+       ]
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@CapsChange50",
+        1
+       ]
+      }
+     ],
+     "after": "EAMT"
+    },
+    {
+     "tag": "AIDT",
+     "pack": "<BBBBB3xIbBBBi",
+     "values": [
+      0,
+      0,
+      50,
+      50,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAdaAlarm"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAdaBe06x6"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAdaBe12x2"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAdaBe14x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAdaBe18x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAdaSleep22x8"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAdaIdle"
+      }
+     ],
+     "after": "AIDT"
+    }
+   ]
+  },
+  "LIMGSRuthAlarm": {
+   "type": "PACK",
+   "template": "@EasyPeteHideInSaloonPackage",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior02",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    },
+    {
+     "tag": "CTDA",
+     "append": true,
+     "pack": "<B3xfIIIII",
+     "values": [
+      0,
+      1.0,
+      79,
+      "@LIMGSAlarm",
+      1,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSRuthBe07x5": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSSchoolyardRef",
+      500
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      7,
+      5
+     ]
+    }
+   ]
+  },
+  "LIMGSRuthBe12x2": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior02",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      12,
+      2
+     ]
+    }
+   ]
+  },
+  "LIMGSRuthBe14x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSSchoolyardRef",
+      500
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      14,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSRuthBe18x2": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSPorch02Ref",
+      250
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      18,
+      2
+     ]
+    }
+   ]
+  },
+  "LIMGSRuthSleep20x10": {
+   "type": "PACK",
+   "template": "@GSSettlerAAMSleepPackage22x8",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior02",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      20,
+      10
+     ]
+    }
+   ]
+  },
+  "LIMGSRuthBe06x1": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior02",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      6,
+      1
+     ]
+    }
+   ]
+  },
+  "LIMGSRuthIdle": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior02",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSRuth": {
+   "type": "NPC_",
+   "template": "@VOVNorthDwellerCFqChild",
+   "fields": [
+    {
+     "tag": "FULL",
+     "text": "Ruth Okafor"
+    },
+    {
+     "tag": "TPLT",
+     "remove": true
+    },
+    {
+     "tag": "SCRI",
+     "remove": true
+    },
+    {
+     "tag": "COED",
+     "remove": true
+    },
+    {
+     "tag": "CNTO",
+     "remove": true
+    },
+    {
+     "tag": "SNAM",
+     "remove": true
+    },
+    {
+     "tag": "PKID",
+     "remove": true
+    },
+    {
+     "tag": "ACBS",
+     "patch": [
+      [
+       0,
+       "<I",
+       19
+      ],
+      [
+       22,
+       "<H",
+       0
+      ]
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@GoodspringsFaction",
+        0
+       ]
+      },
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@LIMTownsfolkFaction",
+        0
+       ]
+      }
+     ],
+     "after": "ACBS"
+    },
+    {
+     "insert": [
+      {
+       "tag": "SCRI",
+       "form": "@LIMGSResidentScript"
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@LL1NPCTownClothes100",
+        1
+       ]
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@CapsChange50",
+        1
+       ]
+      }
+     ],
+     "after": "EAMT"
+    },
+    {
+     "tag": "AIDT",
+     "pack": "<BBBBB3xIbBBBi",
+     "values": [
+      0,
+      0,
+      50,
+      50,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "PKID",
+       "form": "@LIMGSRuthAlarm"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSRuthBe07x5"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSRuthBe12x2"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSRuthBe14x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSRuthBe18x2"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSRuthSleep20x10"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSRuthBe06x1"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSRuthIdle"
+      }
+     ],
+     "after": "AIDT"
+    }
+   ]
+  },
+  "LIMGSHarlanAlarm": {
+   "type": "PACK",
+   "template": "@EasyPeteHideInSaloonPackage",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior03",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    },
+    {
+     "tag": "CTDA",
+     "append": true,
+     "pack": "<B3xfIIIII",
+     "values": [
+      0,
+      1.0,
+      79,
+      "@LIMGSAlarm",
+      1,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSHarlanBe06x6": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSGardenRef",
+      300
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      6,
+      6
+     ]
+    }
+   ]
+  },
+  "LIMGSHarlanBe12x2": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior03",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      12,
+      2
+     ]
+    }
+   ]
+  },
+  "LIMGSHarlanBe14x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSGardenRef",
+      300
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      14,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSHarlanBe18x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSPorch03Ref",
+      250
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      18,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSHarlanSleep22x8": {
+   "type": "PACK",
+   "template": "@GSSettlerAAMSleepPackage22x8",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior03",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      22,
+      8
+     ]
+    }
+   ]
+  },
+  "LIMGSHarlanIdle": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior03",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSHarlan": {
+   "type": "NPC_",
+   "template": "@Boomer00FFarmer",
+   "fields": [
+    {
+     "tag": "FULL",
+     "text": "Widow Harlan"
+    },
+    {
+     "tag": "TPLT",
+     "remove": true
+    },
+    {
+     "tag": "SCRI",
+     "remove": true
+    },
+    {
+     "tag": "COED",
+     "remove": true
+    },
+    {
+     "tag": "CNTO",
+     "remove": true
+    },
+    {
+     "tag": "SNAM",
+     "remove": true
+    },
+    {
+     "tag": "PKID",
+     "remove": true
+    },
+    {
+     "tag": "ACBS",
+     "patch": [
+      [
+       0,
+       "<I",
+       17
+      ],
+      [
+       22,
+       "<H",
+       0
+      ]
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@GoodspringsFaction",
+        0
+       ]
+      },
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@LIMTownsfolkFaction",
+        0
+       ]
+      }
+     ],
+     "after": "ACBS"
+    },
+    {
+     "insert": [
+      {
+       "tag": "SCRI",
+       "form": "@LIMGSResidentScript"
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@LL1NPCTownClothes100",
+        1
+       ]
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@CapsChange50",
+        1
+       ]
+      }
+     ],
+     "after": "EAMT"
+    },
+    {
+     "tag": "AIDT",
+     "pack": "<BBBBB3xIbBBBi",
+     "values": [
+      0,
+      0,
+      50,
+      50,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "PKID",
+       "form": "@LIMGSHarlanAlarm"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSHarlanBe06x6"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSHarlanBe12x2"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSHarlanBe14x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSHarlanBe18x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSHarlanSleep22x8"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSHarlanIdle"
+      }
+     ],
+     "after": "AIDT"
+    }
+   ]
+  },
+  "LIMGSWesBe06x6": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSSpringRef",
+      300
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      6,
+      6
+     ]
+    }
+   ]
+  },
+  "LIMGSWesBe12x2": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior03",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      12,
+      2
+     ]
+    }
+   ]
+  },
+  "LIMGSWesBe14x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSSpringRef",
+      300
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      14,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSWesBe18x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSProspectorSaloonInterior",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      18,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSWesSleep22x8": {
+   "type": "PACK",
+   "template": "@GSSettlerAAMSleepPackage22x8",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior03",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      22,
+      8
+     ]
+    }
+   ]
+  },
+  "LIMGSWesIdle": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior03",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSWes": {
+   "type": "NPC_",
+   "template": "@VVault34SharecropperHM",
+   "fields": [
+    {
+     "tag": "FULL",
+     "text": "Wes Harlan"
+    },
+    {
+     "tag": "TPLT",
+     "remove": true
+    },
+    {
+     "tag": "SCRI",
+     "remove": true
+    },
+    {
+     "tag": "COED",
+     "remove": true
+    },
+    {
+     "tag": "CNTO",
+     "remove": true
+    },
+    {
+     "tag": "SNAM",
+     "remove": true
+    },
+    {
+     "tag": "PKID",
+     "remove": true
+    },
+    {
+     "tag": "ACBS",
+     "patch": [
+      [
+       0,
+       "<I",
+       16
+      ],
+      [
+       22,
+       "<H",
+       0
+      ]
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@GoodspringsFaction",
+        0
+       ]
+      },
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@LIMTownsfolkFaction",
+        0
+       ]
+      }
+     ],
+     "after": "ACBS"
+    },
+    {
+     "insert": [
+      {
+       "tag": "SCRI",
+       "form": "@LIMGSResidentScript"
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@LL1NPCTownClothes100",
+        1
+       ]
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@CapsChange50",
+        1
+       ]
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@WithAmmoNVVarmintRifleLoot",
+        1
+       ]
+      }
+     ],
+     "after": "EAMT"
+    },
+    {
+     "tag": "AIDT",
+     "pack": "<BBBBB3xIbBBBi",
+     "values": [
+      0,
+      3,
+      50,
+      50,
+      0,
+      0,
+      -1,
+      0,
+      1,
+      0,
+      0
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "PKID",
+       "form": "@LIMGSWesBe06x6"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSWesBe12x2"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSWesBe14x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSWesBe18x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSWesSleep22x8"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSWesIdle"
+      }
+     ],
+     "after": "AIDT"
+    }
+   ]
+  },
+  "LIMGSDutchyAlarm": {
+   "type": "PACK",
+   "template": "@EasyPeteHideInSaloonPackage",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior04",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    },
+    {
+     "tag": "CTDA",
+     "append": true,
+     "pack": "<B3xfIIIII",
+     "values": [
+      0,
+      1.0,
+      79,
+      "@LIMGSAlarm",
+      1,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSDutchyBe05x2": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSPorch01Ref",
+      250
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      5,
+      2
+     ]
+    }
+   ]
+  },
+  "LIMGSDutchyBe07x5": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSFieldsRef",
+      500
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      7,
+      5
+     ]
+    }
+   ]
+  },
+  "LIMGSDutchyBe12x2": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSProspectorSaloonInterior",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      12,
+      2
+     ]
+    }
+   ]
+  },
+  "LIMGSDutchyBe14x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSFieldsRef",
+      500
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      14,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSDutchyBe18x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSProspectorSaloonInterior",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      18,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSDutchySleep22x7": {
+   "type": "PACK",
+   "template": "@GSSettlerAAMSleepPackage22x8",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior04",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      22,
+      7
+     ]
+    }
+   ]
+  },
+  "LIMGSDutchyIdle": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior04",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSDutchy": {
+   "type": "NPC_",
+   "template": "@UnderpassCitizen03",
+   "fields": [
+    {
+     "tag": "FULL",
+     "text": "Dutchy"
+    },
+    {
+     "tag": "TPLT",
+     "remove": true
+    },
+    {
+     "tag": "SCRI",
+     "remove": true
+    },
+    {
+     "tag": "COED",
+     "remove": true
+    },
+    {
+     "tag": "CNTO",
+     "remove": true
+    },
+    {
+     "tag": "SNAM",
+     "remove": true
+    },
+    {
+     "tag": "PKID",
+     "remove": true
+    },
+    {
+     "tag": "ACBS",
+     "patch": [
+      [
+       0,
+       "<I",
+       16
+      ],
+      [
+       22,
+       "<H",
+       0
+      ]
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@GoodspringsFaction",
+        0
+       ]
+      },
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@LIMTownsfolkFaction",
+        0
+       ]
+      }
+     ],
+     "after": "ACBS"
+    },
+    {
+     "insert": [
+      {
+       "tag": "SCRI",
+       "form": "@LIMGSResidentScript"
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@LL1NPCTownClothes100",
+        1
+       ]
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@CapsChange50",
+        1
+       ]
+      }
+     ],
+     "after": "EAMT"
+    },
+    {
+     "tag": "AIDT",
+     "pack": "<BBBBB3xIbBBBi",
+     "values": [
+      0,
+      0,
+      50,
+      50,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "PKID",
+       "form": "@LIMGSDutchyAlarm"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSDutchyBe05x2"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSDutchyBe07x5"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSDutchyBe12x2"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSDutchyBe14x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSDutchyBe18x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSDutchySleep22x7"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSDutchyIdle"
+      }
+     ],
+     "after": "AIDT"
+    }
+   ]
+  },
+  "LIMGSMarisolBe05x2": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSPorch01Ref",
+      250
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      5,
+      2
+     ]
+    }
+   ]
+  },
+  "LIMGSMarisolBe07x5": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSFieldsRef",
+      500
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      7,
+      5
+     ]
+    }
+   ]
+  },
+  "LIMGSMarisolBe12x2": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSProspectorSaloonInterior",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      12,
+      2
+     ]
+    }
+   ]
+  },
+  "LIMGSMarisolBe14x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSFieldsRef",
+      500
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      14,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSMarisolBe18x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSProspectorSaloonInterior",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      18,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSMarisolSleep22x7": {
+   "type": "PACK",
+   "template": "@GSSettlerAAMSleepPackage22x8",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior04",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      22,
+      7
+     ]
+    }
+   ]
+  },
+  "LIMGSMarisolIdle": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior04",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSMarisol": {
+   "type": "NPC_",
+   "template": "@VVault34SharecropperAFAnne",
+   "fields": [
+    {
+     "tag": "FULL",
+     "text": "Marisol"
+    },
+    {
+     "tag": "TPLT",
+     "remove": true
+    },
+    {
+     "tag": "SCRI",
+     "remove": true
+    },
+    {
+     "tag": "COED",
+     "remove": true
+    },
+    {
+     "tag": "CNTO",
+     "remove": true
+    },
+    {
+     "tag": "SNAM",
+     "remove": true
+    },
+    {
+     "tag": "PKID",
+     "remove": true
+    },
+    {
+     "tag": "ACBS",
+     "patch": [
+      [
+       0,
+       "<I",
+       17
+      ],
+      [
+       22,
+       "<H",
+       0
+      ]
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@GoodspringsFaction",
+        0
+       ]
+      },
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@LIMTownsfolkFaction",
+        0
+       ]
+      }
+     ],
+     "after": "ACBS"
+    },
+    {
+     "insert": [
+      {
+       "tag": "SCRI",
+       "form": "@LIMGSResidentScript"
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@LL1NPCTownClothes100",
+        1
+       ]
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@CapsChange50",
+        1
+       ]
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@WithAmmoNVVarmintRifleLoot",
+        1
+       ]
+      }
+     ],
+     "after": "EAMT"
+    },
+    {
+     "tag": "AIDT",
+     "pack": "<BBBBB3xIbBBBi",
+     "values": [
+      0,
+      3,
+      50,
+      50,
+      0,
+      0,
+      -1,
+      0,
+      1,
+      0,
+      0
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "PKID",
+       "form": "@LIMGSMarisolBe05x2"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSMarisolBe07x5"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSMarisolBe12x2"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSMarisolBe14x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSMarisolBe18x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSMarisolSleep22x7"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSMarisolIdle"
+      }
+     ],
+     "after": "AIDT"
+    }
+   ]
+  },
+  "LIMGSAbeAlarm": {
+   "type": "PACK",
+   "template": "@EasyPeteHideInSaloonPackage",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior04",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    },
+    {
+     "tag": "CTDA",
+     "append": true,
+     "pack": "<B3xfIIIII",
+     "values": [
+      0,
+      1.0,
+      79,
+      "@LIMGSAlarm",
+      1,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSAbeBe05x2": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSPorch01Ref",
+      250
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      5,
+      2
+     ]
+    }
+   ]
+  },
+  "LIMGSAbeBe07x5": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSFieldsRef",
+      500
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      7,
+      5
+     ]
+    }
+   ]
+  },
+  "LIMGSAbeBe12x2": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSProspectorSaloonInterior",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      12,
+      2
+     ]
+    }
+   ]
+  },
+  "LIMGSAbeBe14x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSFieldsRef",
+      500
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      14,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSAbeBe18x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSProspectorSaloonInterior",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      18,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSAbeSleep22x7": {
+   "type": "PACK",
+   "template": "@GSSettlerAAMSleepPackage22x8",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior04",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      22,
+      7
+     ]
+    }
+   ]
+  },
+  "LIMGSAbeIdle": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior04",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSAbe": {
+   "type": "NPC_",
+   "template": "@Boomer00MFarmer",
+   "fields": [
+    {
+     "tag": "FULL",
+     "text": "Old Abe"
+    },
+    {
+     "tag": "TPLT",
+     "remove": true
+    },
+    {
+     "tag": "SCRI",
+     "remove": true
+    },
+    {
+     "tag": "COED",
+     "remove": true
+    },
+    {
+     "tag": "CNTO",
+     "remove": true
+    },
+    {
+     "tag": "SNAM",
+     "remove": true
+    },
+    {
+     "tag": "PKID",
+     "remove": true
+    },
+    {
+     "tag": "ACBS",
+     "patch": [
+      [
+       0,
+       "<I",
+       16
+      ],
+      [
+       22,
+       "<H",
+       0
+      ]
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@GoodspringsFaction",
+        0
+       ]
+      },
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@LIMTownsfolkFaction",
+        0
+       ]
+      }
+     ],
+     "after": "ACBS"
+    },
+    {
+     "insert": [
+      {
+       "tag": "SCRI",
+       "form": "@LIMGSResidentScript"
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@LL1NPCTownClothes100",
+        1
+       ]
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@CapsChange50",
+        1
+       ]
+      }
+     ],
+     "after": "EAMT"
+    },
+    {
+     "tag": "AIDT",
+     "pack": "<BBBBB3xIbBBBi",
+     "values": [
+      0,
+      0,
+      50,
+      50,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAbeAlarm"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAbeBe05x2"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAbeBe07x5"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAbeBe12x2"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAbeBe14x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAbeBe18x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAbeSleep22x7"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSAbeIdle"
+      }
+     ],
+     "after": "AIDT"
+    }
+   ]
+  },
+  "LIMGSHectorSleep05x16": {
+   "type": "PACK",
+   "template": "@GSSettlerAAMSleepPackage22x8",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSProspectorSaloonInterior",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      5,
+      16
+     ]
+    }
+   ]
+  },
+  "LIMGSHectorBe21x8": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSWatchRouteRef",
+      2000
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      21,
+      8
+     ]
+    }
+   ]
+  },
+  "LIMGSHectorIdle": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSProspectorSaloonInterior",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSHector": {
+   "type": "NPC_",
+   "template": "@WestsideCitizenAAMTemplate",
+   "fields": [
+    {
+     "tag": "FULL",
+     "text": "Hector Vane"
+    },
+    {
+     "tag": "TPLT",
+     "remove": true
+    },
+    {
+     "tag": "SCRI",
+     "remove": true
+    },
+    {
+     "tag": "COED",
+     "remove": true
+    },
+    {
+     "tag": "CNTO",
+     "remove": true
+    },
+    {
+     "tag": "SNAM",
+     "remove": true
+    },
+    {
+     "tag": "PKID",
+     "remove": true
+    },
+    {
+     "tag": "ACBS",
+     "patch": [
+      [
+       0,
+       "<I",
+       16
+      ],
+      [
+       22,
+       "<H",
+       0
+      ]
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@GoodspringsFaction",
+        0
+       ]
+      },
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@LIMTownsfolkFaction",
+        0
+       ]
+      }
+     ],
+     "after": "ACBS"
+    },
+    {
+     "insert": [
+      {
+       "tag": "SCRI",
+       "form": "@LIMGSResidentScript"
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@LL1NPCTownClothes100",
+        1
+       ]
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@CapsChange50",
+        1
+       ]
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@WithAmmoNVVarmintRifleLoot",
+        1
+       ]
+      }
+     ],
+     "after": "EAMT"
+    },
+    {
+     "tag": "AIDT",
+     "pack": "<BBBBB3xIbBBBi",
+     "values": [
+      0,
+      3,
+      50,
+      50,
+      0,
+      0,
+      -1,
+      0,
+      1,
+      0,
+      0
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "PKID",
+       "form": "@LIMGSHectorSleep05x16"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSHectorBe21x8"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSHectorIdle"
+      }
+     ],
+     "after": "AIDT"
+    }
+   ]
+  },
+  "LIMGSProspectorBe18x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSProspectorSaloonInterior",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      18,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSProspectorSleep22x8": {
+   "type": "PACK",
+   "template": "@GSSettlerAAMSleepPackage22x8",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSProspectorSaloonInterior",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      22,
+      8
+     ]
+    }
+   ]
+  },
+  "LIMGSProspectorBe06x1": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSProspectorSaloonInterior",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      6,
+      1
+     ]
+    }
+   ]
+  },
+  "LIMGSProspectorIdle": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSProspectorSaloonInterior",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSProspector": {
+   "type": "NPC_",
+   "template": "@NVProspectorMale",
+   "fields": [
+    {
+     "tag": "FULL",
+     "text": "A prospector"
+    },
+    {
+     "tag": "TPLT",
+     "remove": true
+    },
+    {
+     "tag": "SCRI",
+     "remove": true
+    },
+    {
+     "tag": "COED",
+     "remove": true
+    },
+    {
+     "tag": "CNTO",
+     "remove": true
+    },
+    {
+     "tag": "SNAM",
+     "remove": true
+    },
+    {
+     "tag": "PKID",
+     "remove": true
+    },
+    {
+     "tag": "ACBS",
+     "patch": [
+      [
+       0,
+       "<I",
+       16
+      ],
+      [
+       22,
+       "<H",
+       0
+      ]
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@GoodspringsFaction",
+        0
+       ]
+      },
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@LIMTownsfolkFaction",
+        0
+       ]
+      }
+     ],
+     "after": "ACBS"
+    },
+    {
+     "insert": [
+      {
+       "tag": "SCRI",
+       "form": "@LIMGSResidentScript"
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@LL1NPCTownClothes100",
+        1
+       ]
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@CapsChange50",
+        1
+       ]
+      }
+     ],
+     "after": "EAMT"
+    },
+    {
+     "tag": "AIDT",
+     "pack": "<BBBBB3xIbBBBi",
+     "values": [
+      0,
+      0,
+      50,
+      50,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "PKID",
+       "form": "@LIMGSProspectorBe18x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSProspectorSleep22x8"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSProspectorBe06x1"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSProspectorIdle"
+      }
+     ],
+     "after": "AIDT"
+    }
+   ]
+  },
+  "LIMGSDrifterBe18x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSProspectorSaloonInterior",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      18,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSDrifterSleep22x8": {
+   "type": "PACK",
+   "template": "@GSSettlerAAMSleepPackage22x8",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSProspectorSaloonInterior",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      22,
+      8
+     ]
+    }
+   ]
+  },
+  "LIMGSDrifterBe06x1": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSProspectorSaloonInterior",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      6,
+      1
+     ]
+    }
+   ]
+  },
+  "LIMGSDrifterIdle": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSProspectorSaloonInterior",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSDrifter": {
+   "type": "NPC_",
+   "template": "@UnderpassCitizen05",
+   "fields": [
+    {
+     "tag": "FULL",
+     "text": "A drifter"
+    },
+    {
+     "tag": "TPLT",
+     "remove": true
+    },
+    {
+     "tag": "SCRI",
+     "remove": true
+    },
+    {
+     "tag": "COED",
+     "remove": true
+    },
+    {
+     "tag": "CNTO",
+     "remove": true
+    },
+    {
+     "tag": "SNAM",
+     "remove": true
+    },
+    {
+     "tag": "PKID",
+     "remove": true
+    },
+    {
+     "tag": "ACBS",
+     "patch": [
+      [
+       0,
+       "<I",
+       16
+      ],
+      [
+       22,
+       "<H",
+       0
+      ]
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@GoodspringsFaction",
+        0
+       ]
+      },
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@LIMTownsfolkFaction",
+        0
+       ]
+      }
+     ],
+     "after": "ACBS"
+    },
+    {
+     "insert": [
+      {
+       "tag": "SCRI",
+       "form": "@LIMGSResidentScript"
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@LL1NPCTownClothes100",
+        1
+       ]
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@CapsChange50",
+        1
+       ]
+      }
+     ],
+     "after": "EAMT"
+    },
+    {
+     "tag": "AIDT",
+     "pack": "<BBBBB3xIbBBBi",
+     "values": [
+      0,
+      0,
+      50,
+      50,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "PKID",
+       "form": "@LIMGSDrifterBe18x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSDrifterSleep22x8"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSDrifterBe06x1"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSDrifterIdle"
+      }
+     ],
+     "after": "AIDT"
+    }
+   ]
+  },
+  "LIMGSTeaAlarm": {
+   "type": "PACK",
+   "template": "@EasyPeteHideInSaloonPackage",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior04",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    },
+    {
+     "tag": "CTDA",
+     "append": true,
+     "pack": "<B3xfIIIII",
+     "values": [
+      0,
+      1.0,
+      79,
+      "@LIMGSAlarm",
+      1,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSTeaBe05x2": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSPorch01Ref",
+      250
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      5,
+      2
+     ]
+    }
+   ]
+  },
+  "LIMGSTeaBe07x5": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSFieldsRef",
+      500
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      7,
+      5
+     ]
+    }
+   ]
+  },
+  "LIMGSTeaBe12x2": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSProspectorSaloonInterior",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      12,
+      2
+     ]
+    }
+   ]
+  },
+  "LIMGSTeaBe14x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      0,
+      "@LIMGSFieldsRef",
+      500
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      14,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSTeaBe18x4": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSProspectorSaloonInterior",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      18,
+      4
+     ]
+    }
+   ]
+  },
+  "LIMGSTeaSleep22x7": {
+   "type": "PACK",
+   "template": "@GSSettlerAAMSleepPackage22x8",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior04",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      22,
+      7
+     ]
+    }
+   ]
+  },
+  "LIMGSTeaIdle": {
+   "type": "PACK",
+   "template": "@GSSettlerCFSandboxPackage6x6",
+   "fields": [
+    {
+     "tag": "CTDA",
+     "remove": true
+    },
+    {
+     "tag": "PLDT",
+     "pack": "<iIi",
+     "values": [
+      1,
+      "@GSHouseInterior04",
+      0
+     ]
+    },
+    {
+     "tag": "PSDT",
+     "pack": "<bbBbi",
+     "values": [
+      -1,
+      -1,
+      0,
+      -1,
+      0
+     ]
+    }
+   ]
+  },
+  "LIMGSTea": {
+   "type": "NPC_",
+   "template": "@UnderpassCitizen04",
+   "fields": [
+    {
+     "tag": "FULL",
+     "text": "Tea Whitlock"
+    },
+    {
+     "tag": "TPLT",
+     "remove": true
+    },
+    {
+     "tag": "SCRI",
+     "remove": true
+    },
+    {
+     "tag": "COED",
+     "remove": true
+    },
+    {
+     "tag": "CNTO",
+     "remove": true
+    },
+    {
+     "tag": "SNAM",
+     "remove": true
+    },
+    {
+     "tag": "PKID",
+     "remove": true
+    },
+    {
+     "tag": "ACBS",
+     "patch": [
+      [
+       0,
+       "<I",
+       17
+      ],
+      [
+       22,
+       "<H",
+       0
+      ]
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@GoodspringsFaction",
+        0
+       ]
+      },
+      {
+       "tag": "SNAM",
+       "pack": "<IB3x",
+       "values": [
+        "@LIMTownsfolkFaction",
+        0
+       ]
+      }
+     ],
+     "after": "ACBS"
+    },
+    {
+     "insert": [
+      {
+       "tag": "SCRI",
+       "form": "@LIMGSResidentScript"
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@LL1NPCTownClothes100",
+        1
+       ]
+      },
+      {
+       "tag": "CNTO",
+       "pack": "<Ii",
+       "values": [
+        "@CapsChange50",
+        1
+       ]
+      }
+     ],
+     "after": "EAMT"
+    },
+    {
+     "tag": "AIDT",
+     "pack": "<BBBBB3xIbBBBi",
+     "values": [
+      0,
+      0,
+      50,
+      50,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "insert": [
+      {
+       "tag": "PKID",
+       "form": "@LIMGSTeaAlarm"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSTeaBe05x2"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSTeaBe07x5"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSTeaBe12x2"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSTeaBe14x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSTeaBe18x4"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSTeaSleep22x7"
+      },
+      {
+       "tag": "PKID",
+       "form": "@LIMGSTeaIdle"
+      }
+     ],
+     "after": "AIDT"
+    }
+   ]
+  },
+  "LIMGSResidentScript": {
+   "type": "SCPT",
+   "source": "scripts/LIMGSResidentScript.gek",
+   "script_type": "object"
+  },
+  "LIMGSAlarmScript": {
+   "type": "SCPT",
+   "source": "scripts/LIMGSAlarmScript.gek",
+   "script_type": "quest"
+  },
+  "LIMGoodsprings": {
+   "type": "QUST",
+   "fields": [
+    {
+     "tag": "SCRI",
+     "form": "@LIMGoodspringsScript"
+    },
+    {
+     "tag": "FULL",
+     "text": "Lived-in Goodsprings"
+    },
+    {
+     "tag": "DATA",
+     "pack": "<BBBBf",
+     "values": [
+      1,
+      40,
+      0,
+      0,
+      10.0
+     ]
+    }
+   ]
+  },
+  "LIMGSAlarm": {
+   "type": "QUST",
+   "fields": [
+    {
+     "tag": "SCRI",
+     "form": "@LIMGSAlarmScript"
+    },
+    {
+     "tag": "FULL",
+     "text": "Goodsprings alarm"
+    },
+    {
+     "tag": "DATA",
+     "pack": "<BBBBf",
+     "values": [
+      1,
+      40,
+      0,
+      0,
+      1.0
+     ]
+    }
+   ]
+  }
+ },
+ "cells": {
+  "LIMHoldingCell": {
+   "name": "Lived-in Mojave Holding",
+   "objects": [
+    {
+     "ref_id": "amos",
+     "base": "@LIMGSAmos",
+     "editor_id": "LIMGSAmosRef",
+     "persistent": true,
+     "disabled": true,
+     "position": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "lena",
+     "base": "@LIMGSLena",
+     "editor_id": "LIMGSLenaRef",
+     "persistent": true,
+     "disabled": true,
+     "position": [
+      150,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "cal",
+     "base": "@LIMGSCal",
+     "editor_id": "LIMGSCalRef",
+     "persistent": true,
+     "disabled": true,
+     "position": [
+      300,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "joseph",
+     "base": "@LIMGSJoseph",
+     "editor_id": "LIMGSJosephRef",
+     "persistent": true,
+     "disabled": true,
+     "position": [
+      450,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "ada",
+     "base": "@LIMGSAda",
+     "editor_id": "LIMGSAdaRef",
+     "persistent": true,
+     "disabled": true,
+     "position": [
+      600,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "ruth",
+     "base": "@LIMGSRuth",
+     "editor_id": "LIMGSRuthRef",
+     "persistent": true,
+     "disabled": true,
+     "position": [
+      750,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "harlan",
+     "base": "@LIMGSHarlan",
+     "editor_id": "LIMGSHarlanRef",
+     "persistent": true,
+     "disabled": true,
+     "position": [
+      900,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "wes",
+     "base": "@LIMGSWes",
+     "editor_id": "LIMGSWesRef",
+     "persistent": true,
+     "disabled": true,
+     "position": [
+      1050,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "dutchy",
+     "base": "@LIMGSDutchy",
+     "editor_id": "LIMGSDutchyRef",
+     "persistent": true,
+     "disabled": true,
+     "position": [
+      1200,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "marisol",
+     "base": "@LIMGSMarisol",
+     "editor_id": "LIMGSMarisolRef",
+     "persistent": true,
+     "disabled": true,
+     "position": [
+      1350,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "abe",
+     "base": "@LIMGSAbe",
+     "editor_id": "LIMGSAbeRef",
+     "persistent": true,
+     "disabled": true,
+     "position": [
+      1500,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "hector",
+     "base": "@LIMGSHector",
+     "editor_id": "LIMGSHectorRef",
+     "persistent": true,
+     "disabled": true,
+     "position": [
+      1650,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "prospector",
+     "base": "@LIMGSProspector",
+     "editor_id": "LIMGSProspectorRef",
+     "persistent": true,
+     "disabled": true,
+     "position": [
+      1800,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "drifter",
+     "base": "@LIMGSDrifter",
+     "editor_id": "LIMGSDrifterRef",
+     "persistent": true,
+     "disabled": true,
+     "position": [
+      1950,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "tea",
+     "base": "@LIMGSTea",
+     "editor_id": "LIMGSTeaRef",
+     "persistent": true,
+     "disabled": true,
+     "position": [
+      2100,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "bed01a",
+     "base": "@NVBedrollR",
+     "editor_id": "LIMGSBed01aRef",
+     "persistent": true,
+     "position": [
+      0,
+      600,
+      0
+     ]
+    },
+    {
+     "ref_id": "bed01b",
+     "base": "@NVBedrollL",
+     "editor_id": "LIMGSBed01bRef",
+     "persistent": true,
+     "position": [
+      150,
+      600,
+      0
+     ]
+    },
+    {
+     "ref_id": "bed02a",
+     "base": "@NVBedrollR",
+     "editor_id": "LIMGSBed02aRef",
+     "persistent": true,
+     "position": [
+      300,
+      600,
+      0
+     ]
+    },
+    {
+     "ref_id": "bed04a",
+     "base": "@NVBedrollR",
+     "editor_id": "LIMGSBed04aRef",
+     "persistent": true,
+     "position": [
+      450,
+      600,
+      0
+     ]
+    },
+    {
+     "ref_id": "bed04b",
+     "base": "@NVBedrollL",
+     "editor_id": "LIMGSBed04bRef",
+     "persistent": true,
+     "position": [
+      600,
+      600,
+      0
+     ]
+    },
+    {
+     "ref_id": "bedwatch",
+     "base": "@NVBedrollR",
+     "editor_id": "LIMGSBedWatchRef",
+     "persistent": true,
+     "position": [
+      750,
+      600,
+      0
+     ]
+    },
+    {
+     "ref_id": "bedtrav1",
+     "base": "@NVBedrollR",
+     "editor_id": "LIMGSBedTrav1Ref",
+     "persistent": true,
+     "position": [
+      900,
+      600,
+      0
+     ]
+    },
+    {
+     "ref_id": "bedtrav2",
+     "base": "@NVBedrollL",
+     "editor_id": "LIMGSBedTrav2Ref",
+     "persistent": true,
+     "position": [
+      1050,
+      600,
+      0
+     ]
+    },
+    {
+     "ref_id": "gone",
+     "base": "@XMarker",
+     "editor_id": "LIMGSHoldingRef",
+     "persistent": true,
+     "position": [
+      0,
+      -600,
+      0
+     ]
+    }
+   ]
+  }
+ },
+ "worlds": {
+  "WastelandNV": {
+   "cells": {
+    "limgs_fields": {
+     "grid": [
+      -18,
+      -1
+     ],
+     "objects": [
+      {
+       "ref_id": "fields",
+       "base": "@XMarkerHeading",
+       "editor_id": "LIMGSFieldsRef",
+       "persistent": true,
+       "position": [
+        -72300,
+        -3300,
+        8150
+       ],
+       "rotation": [
+        0,
+        0,
+        0
+       ]
+      },
+      {
+       "ref_id": "crop0",
+       "base": "@cropFurrowLongNV",
+       "position": [
+        -72500,
+        -3450,
+        8150
+       ],
+       "rotation": [
+        0,
+        0,
+        0
+       ]
+      },
+      {
+       "ref_id": "crop1",
+       "base": "@cropFurrowLongNV",
+       "position": [
+        -72500,
+        -3300,
+        8150
+       ],
+       "rotation": [
+        0,
+        0,
+        0
+       ]
+      },
+      {
+       "ref_id": "crop2",
+       "base": "@cropFurrowLongNV",
+       "position": [
+        -72500,
+        -3150,
+        8150
+       ],
+       "rotation": [
+        0,
+        0,
+        0
+       ]
+      },
+      {
+       "ref_id": "crop3",
+       "base": "@cropFurrowLongNV",
+       "position": [
+        -72100,
+        -3450,
+        8150
+       ],
+       "rotation": [
+        0,
+        0,
+        0
+       ]
+      },
+      {
+       "ref_id": "crop4",
+       "base": "@cropFurrowLongNV",
+       "position": [
+        -72100,
+        -3300,
+        8150
+       ],
+       "rotation": [
+        0,
+        0,
+        0
+       ]
+      },
+      {
+       "ref_id": "crop5",
+       "base": "@cropFurrowLongNV",
+       "position": [
+        -72100,
+        -3150,
+        8150
+       ],
+       "rotation": [
+        0,
+        0,
+        0
+       ]
+      },
+      {
+       "ref_id": "crop6",
+       "base": "@NVSharecropSign",
+       "position": [
+        -71820,
+        -3000,
+        8150
+       ],
+       "rotation": [
+        0,
+        0,
+        270
+       ]
+      }
+     ]
+    },
+    "limgs_fieldgate": {
+     "grid": [
+      -18,
+      -1
+     ],
+     "objects": [
+      {
+       "ref_id": "fieldgate",
+       "base": "@XMarkerHeading",
+       "editor_id": "LIMGSFieldGateRef",
+       "persistent": true,
+       "position": [
+        -71700,
+        -3300,
+        8200
+       ],
+       "rotation": [
+        0,
+        0,
+        270
+       ]
+      }
+     ]
+    },
+    "limgs_porch01": {
+     "grid": [
+      -18,
+      -1
+     ],
+     "objects": [
+      {
+       "ref_id": "porch01",
+       "base": "@XMarkerHeading",
+       "editor_id": "LIMGSPorch01Ref",
+       "persistent": true,
+       "position": [
+        -70550,
+        -3799,
+        8307
+       ],
+       "rotation": [
+        0,
+        0,
+        90
+       ]
+      }
+     ]
+    },
+    "limgs_porch02": {
+     "grid": [
+      -18,
+      -1
+     ],
+     "objects": [
+      {
+       "ref_id": "porch02",
+       "base": "@XMarkerHeading",
+       "editor_id": "LIMGSPorch02Ref",
+       "persistent": true,
+       "position": [
+        -71524,
+        -856,
+        8231
+       ],
+       "rotation": [
+        0,
+        0,
+        180
+       ]
+      }
+     ]
+    },
+    "limgs_porch03": {
+     "grid": [
+      -17,
+      -1
+     ],
+     "objects": [
+      {
+       "ref_id": "porch03",
+       "base": "@XMarkerHeading",
+       "editor_id": "LIMGSPorch03Ref",
+       "persistent": true,
+       "position": [
+        -68100,
+        -1120,
+        8195
+       ],
+       "rotation": [
+        0,
+        0,
+        280
+       ]
+      }
+     ]
+    },
+    "limgs_spring": {
+     "grid": [
+      -17,
+      0
+     ],
+     "objects": [
+      {
+       "ref_id": "spring",
+       "base": "@XMarkerHeading",
+       "editor_id": "LIMGSSpringRef",
+       "persistent": true,
+       "position": [
+        -69000,
+        2500,
+        8344
+       ],
+       "rotation": [
+        0,
+        0,
+        0
+       ]
+      }
+     ]
+    },
+    "limgs_schoolyard": {
+     "grid": [
+      -19,
+      -2
+     ],
+     "objects": [
+      {
+       "ref_id": "schoolyard",
+       "base": "@XMarkerHeading",
+       "editor_id": "LIMGSSchoolyardRef",
+       "persistent": true,
+       "position": [
+        -74520,
+        -4450,
+        8205
+       ],
+       "rotation": [
+        0,
+        0,
+        0
+       ]
+      }
+     ]
+    },
+    "limgs_garden": {
+     "grid": [
+      -17,
+      -1
+     ],
+     "objects": [
+      {
+       "ref_id": "garden",
+       "base": "@XMarkerHeading",
+       "editor_id": "LIMGSGardenRef",
+       "persistent": true,
+       "position": [
+        -68000,
+        -1650,
+        8090
+       ],
+       "rotation": [
+        0,
+        0,
+        0
+       ]
+      }
+     ]
+    },
+    "limgs_watchroute": {
+     "grid": [
+      -17,
+      0
+     ],
+     "objects": [
+      {
+       "ref_id": "watchroute",
+       "base": "@XMarkerHeading",
+       "editor_id": "LIMGSWatchRouteRef",
+       "persistent": true,
+       "position": [
+        -69500,
+        1200,
+        8190
+       ],
+       "rotation": [
+        0,
+        0,
+        0
+       ]
+      }
+     ]
+    }
+   }
+  }
  }
 }

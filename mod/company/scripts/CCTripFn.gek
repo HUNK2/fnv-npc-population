@@ -1,0 +1,266 @@
+scn CCTripFn
+
+; The day's trips (tools/company_model.py Company.tick's road loop, _leg, _event; M2 plan 2.4), moved
+; out of CCCoreScript. Roads 1 to 3 in order; a road runs when CCRoadsFn gives it a wagon. The road
+; memo's mode (CCCore iDayMode: 0 send, 1 hire a gun, 2 keep home) and the director's event apply to
+; the event road only (CCRoadsFn 1). A road that does not run still settles its contract deliveries
+; (a miss). Queue codes: wagon * 1000 + origin town * 100 + good. Site goods (7 brahmin, 8 stone,
+; 9 sand, 10 scrap) ride to the destination's warehouse and are never sold. Cells: town * 12 + good.
+
+int iD
+int iSeed
+int iRoad
+int iW
+int iEv
+int iMode
+int iA
+int iB
+int iLeg
+int iOrigin
+int iDest
+int iCap
+int iLoaded
+int iI
+int iCode
+int iG
+int iCost
+int iSale
+int iSold
+int iSales0
+int iTake
+int iN
+int iCover
+int iClean
+int iValue
+int iBurn
+int iMargin
+int iCash
+float fM
+array_var aRun
+array_var aQ
+array_var aStock
+array_var aWh
+array_var aAnchor
+array_var aUse
+array_var aTrust
+array_var aMkt
+array_var aMatIn
+array_var aLeg
+array_var aSite
+array_var aHS
+array_var aHC
+array_var aRA
+array_var aRB
+array_var aDanger
+array_var aSR
+array_var aST
+
+begin Function {}
+	let iD := GetVariable "iDay" CCCore
+	let iSeed := GetVariable "iSeed" CCCore
+	let aQ := GetArrayVariable "aQueue" CCCore
+	let aStock := GetArrayVariable "aStock" CCCore
+	let aWh := GetArrayVariable "aWh" CCCore
+	let aAnchor := GetArrayVariable "aAnchor" CCCore
+	let aUse := GetArrayVariable "aUse" CCCore
+	let aTrust := GetArrayVariable "aTrust" CCCore
+	let aMkt := GetArrayVariable "aMkt" CCCore
+	let aMatIn := GetArrayVariable "aMatIn" CCCore
+	let aRA := Ar_List 0, 0, 0, 1
+	let aRB := Ar_List 0, 1, 2, 3
+	let aDanger := Ar_List 60, 60, 30, 60
+	let aRun := call CCRoadsFn 0 iD
+	let iEv := call CCRoadsFn 1 iD
+	SetVariable "iEvRoad" iEv CCCore
+	SetVariable "iTripRuns" 0 CCCore
+	SetVariable "iLoaded" 0 CCCore
+	set iRoad to 1
+	while iRoad <= 3
+		let iW := aRun[iRoad]
+		set iMode to 0
+		if iRoad == iEv
+			let iMode := GetVariable "iDayMode" CCCore
+		endif
+		if iW == 0 || iMode == 2
+			if iW > 0 && iRoad == iEv
+				let iN := GetVariable "iLastEventDay" CCCore
+				let iN := call CCFiresFn iD, iN, iSeed
+				if iN
+					SetVariable "iLastEventDay" iD CCCore
+				endif
+			endif
+			call CCContractFn 1 iRoad 0
+		else
+			if iRoad == 1
+				SetVariable "iTripRuns" 1 CCCore
+			endif
+			let iN := (GetVariable "iDayRuns" CCCore) + 1
+			SetVariable "iDayRuns" iN CCCore
+			SetVariable "iDayRoad" iRoad CCCore
+			if iMode == 1
+				let iCash := GetVariable "iCash" CCCore
+				set iTake to 25
+				if iCash < iTake
+					set iTake to iCash
+				endif
+				set iCash to iCash - iTake
+				SetVariable "iCash" iCash CCCore
+				let iN := (GetVariable "iDayCosts" CCCore) + iTake
+				SetVariable "iDayCosts" iN CCCore
+			endif
+			let iSales0 := GetVariable "iDaySales" CCCore
+			; contract crates: returns crates loaded out of the road's first town * 100 + its second
+			let iLoaded := call CCContractFn 1 iRoad 1
+			if iRoad == 1
+				let iN := Floor (iLoaded / 100)
+				SetVariable "iLoaded" iN CCCore
+			endif
+			set iLeg to 0
+			while iLeg < 2
+				if iLeg == 0
+					let iOrigin := aRA[iRoad]
+					let iDest := aRB[iRoad]
+					let iCap := 8 - Floor (iLoaded / 100)
+				else
+					let iOrigin := aRB[iRoad]
+					let iDest := aRA[iRoad]
+					let iCap := 8 - iLoaded % 100
+				endif
+				let iCash := GetVariable "iCash" CCCore
+				; before the return leg of the event road the director may send bandits (Company._event):
+				; they rob the strongbox, this road's takings so far: 30%, all in a wreck, at most 3 days of costs
+				if iLeg == 1 && iRoad == iEv
+					let iN := GetVariable "iLastEventDay" CCCore
+					let iN := call CCFiresFn iD, iN, iSeed
+					if iN
+						SetVariable "iLastEventDay" iD CCCore
+						let iCover := call CCCoverFn
+						if iMode == 1
+							set iCover to iCover + 30
+						endif
+						let fM := iCover / aDanger[iRoad]
+						let iClean := Floor (100 * fM * fM / (1 + fM * fM) + 0.5)
+						let iTake := (GetVariable "iDaySales" CCCore) - iSales0
+						if eval (((iD % 100) * 19 + (iSeed % 100) * 29 + 62) % 100 < iClean)
+							SetVariable "iDayEvent" 1 CCCore
+							; M2: a guard with no trait who held the road earns Steady (8)
+							if eval ((GetVariable "iTier" CCCore) >= 2)
+								let aSR := GetArrayVariable "aStaffRole" CCCore
+								let aST := GetArrayVariable "aStaffTrait" CCCore
+								set iI to 0
+								while iI < ar_Size aSR
+									if eval (aSR[iI] == 1 && aST[iI] == 0)
+										let aST[iI] := 8
+										set iI to 99
+									endif
+									set iI to iI + 1
+								loop
+							endif
+						elseif iTake <= 0
+							SetVariable "iDayEvent" 4 CCCore
+						else
+							if eval (((iD % 100) * 19 + (iSeed % 100) * 29 + 93) % 100 < 33)
+								set iValue to iTake
+								SetVariable "iDayEvent" 3 CCCore
+							else
+								let iValue := Floor (0.3 * iTake + 0.5)
+								SetVariable "iDayEvent" 2 CCCore
+							endif
+							let iN := GetVariable "iLoan" CCCore
+							let iBurn := Floor ((GetVariable "iWages" CCCore) + 6 + (70 + Floor (0.04 * iN + 0.5) + (iN < 300) * iN + (iN >= 300) * 300) / 7 + 0.5)
+							if iValue > 3 * iBurn
+								set iValue to 3 * iBurn
+							endif
+							if eval (GetVariable "iShield" CCCore)
+								set iMargin to 0
+								let aHS := GetArrayVariable "aHistSales" CCCore
+								let aHC := GetArrayVariable "aHistCosts" CCCore
+								if eval ((ar_Size aHS) > 0)
+									let iMargin := aHS[(ar_Size aHS) - 1] - aHC[(ar_Size aHC) - 1]
+								endif
+								if iMargin < 0
+									set iMargin to 0
+								endif
+								if iValue > iMargin
+									set iValue to iMargin
+								endif
+							endif
+							set iCash to iCash - iValue
+							let iN := (GetVariable "iDayCosts" CCCore) + iValue
+							SetVariable "iDayCosts" iN CCCore
+							SetVariable "iDayLoss" iValue CCCore
+						endif
+					endif
+				endif
+				; load: own warehouse crates free, else bought at the origin; site goods move warehouses
+				let aLeg := Ar_Construct "array"
+				let aSite := Ar_Construct "array"
+				let iN := GetVariable "iDayCosts" CCCore
+				set iI to 0
+				while iI < ar_Size aQ
+					let iCode := aQ[iI]
+					if eval (Floor (iCode / 1000) == iW && Floor ((iCode % 1000) / 100) == iOrigin && (ar_Size aLeg) + (ar_Size aSite) < iCap)
+						let iG := iCode % 100
+						if iG >= 7
+							if eval (aWh[iOrigin * 12 + iG] > 0)
+								let aWh[iOrigin * 12 + iG] -= 1
+								let aWh[iDest * 12 + iG] += 1
+								ar_Append aSite iG
+							endif
+						elseif eval (aWh[iOrigin * 12 + iG] > 0)
+							let aWh[iOrigin * 12 + iG] -= 1
+							ar_Append aLeg iG
+						else
+							let iCost := call CCPriceFn aAnchor[iG], aStock[iOrigin * 12 + iG], aUse[iOrigin * 12 + iG], aTrust[iOrigin], 0
+							if iCost <= iCash
+								set iCash to iCash - iCost
+								set iN to iN + iCost
+								let aStock[iOrigin * 12 + iG] -= 1
+								ar_Append aLeg iG
+							endif
+						endif
+					endif
+					set iI to iI + 1
+				loop
+				SetVariable "iDayCosts" iN CCCore
+				; sell at the destination
+				let iA := GetVariable "iDaySales" CCCore
+				let iB := GetVariable "iWeekSales" CCCore
+				set iSold to 0
+				set iI to 0
+				while iI < ar_Size aLeg
+					let iG := aLeg[iI]
+					let iSale := call CCPriceFn aAnchor[iG], aStock[iDest * 12 + iG], aUse[iDest * 12 + iG], aTrust[iDest], 1
+					set iCash to iCash + iSale
+					set iA to iA + iSale
+					set iB to iB + iSale
+					let aStock[iDest * 12 + iG] += 1
+					if iG == 5
+						let aMatIn[iDest] += 1
+					endif
+					set iSold to iSold + 1
+					set iI to iI + 1
+				loop
+				SetVariable "iDaySales" iA CCCore
+				SetVariable "iWeekSales" iB CCCore
+				SetVariable "iCash" iCash CCCore
+				if iLeg == 0
+					let iN := (GetVariable "iDayOut" CCCore) + iSold
+					SetVariable "iDayOut" iN CCCore
+				else
+					let iN := (GetVariable "iDayBack" CCCore) + iSold
+					SetVariable "iDayBack" iN CCCore
+				endif
+				if iSold > 0
+					let aTrust[iDest] += 1
+					if eval (aTrust[iDest] > 100)
+						let aTrust[iDest] := 100
+					endif
+				endif
+				set iLeg to iLeg + 1
+			loop
+		endif
+		set iRoad to iRoad + 1
+	loop
+	SetFunctionValue 1
+end

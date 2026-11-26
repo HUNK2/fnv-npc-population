@@ -1,0 +1,80 @@
+scn CCRoadsFn
+
+; The roads that run (tools/company_model.py Company.running_roads, event_road; M2 plan 2.4). Roads:
+; 1 Goodsprings - Primm (wagon 1, CCCore iWagonOk), 2 Goodsprings - Sloan, 3 Primm - Mojave Outpost
+; (wagons 2 and 3 in CCCore aWagonRoad / aWagonOk, in the order bought). Each wagon needs a driver;
+; each wagon past the first needs a clerk. Towns: 0 Goodsprings, 1 Primm, 2 Sloan, 3 Mojave Outpost.
+; iAct 0: returns an array of 4: [0, wagon on road 1, on road 2, on road 3] (0: the road does not run).
+; iAct 1: returns the road whose return leg the director's event meets on day iD (roll key 5).
+; iAct 2: returns the number of running roads.
+
+int iAct
+int iD
+int iDrivers
+int iSlots
+int iRun
+int iK
+int iN
+int iSeed
+array_var aR
+array_var aWR
+array_var aWO
+array_var aOut
+array_var aList
+
+begin Function {iAct iD}
+	let aR := GetArrayVariable "aStaffRole" CCCore
+	let aWR := GetArrayVariable "aWagonRoad" CCCore
+	let aWO := GetArrayVariable "aWagonOk" CCCore
+	set iDrivers to 0
+	set iSlots to 1
+	set iK to 0
+	while iK < ar_Size aR
+		if eval (aR[iK] == 0)
+			set iDrivers to iDrivers + 1
+		elseif eval (aR[iK] == 3)
+			set iSlots to iSlots + 1
+		endif
+		set iK to iK + 1
+	loop
+	let aOut := Ar_List 0, 0, 0, 0
+	set iRun to 0
+	if eval ((GetVariable "iWagonOk" CCCore) && iDrivers > 0)
+		let aOut[1] := 1
+		set iRun to 1
+		set iDrivers to iDrivers - 1
+	endif
+	set iK to 0
+	while iK < ar_Size aWR
+		if eval (aWO[iK] && iDrivers > 0 && iRun < iSlots)
+			let aOut[aWR[iK]] := iK + 2
+			set iRun to iRun + 1
+			set iDrivers to iDrivers - 1
+		endif
+		set iK to iK + 1
+	loop
+	if iAct == 0
+		SetFunctionValue aOut
+	elseif iAct == 2
+		SetFunctionValue iRun
+	else
+		; sorted running roads, or road 1 when none runs
+		let aList := Ar_Construct "array"
+		set iK to 1
+		while iK <= 3
+			if eval (aOut[iK] > 0)
+				ar_Append aList iK
+			endif
+			set iK to iK + 1
+		loop
+		set iN to 1
+		if eval ((ar_Size aList) == 1)
+			let iN := aList[0]
+		elseif eval ((ar_Size aList) > 1)
+			let iSeed := GetVariable "iSeed" CCCore
+			let iK := ((iD % 100) * 19 + (iSeed % 100) * 29 + 5 * 31) % 100
+			let iN := aList[iK % (ar_Size aList)]
+		endif
+		SetFunctionValue iN
+	endif
+end

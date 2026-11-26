@@ -118,6 +118,8 @@ begin MenuMode 1057
 				set iScreen to 5
 			elseif iClick == 12
 				set iScreen to 8
+			elseif iClick == 13
+				set iScreen to 16
 			endif
 		elseif iClick == iRows - 1
 			; BACK: to the screen this one was reached from (Hire > Staff, Candidate > Hire, Slot >
@@ -140,13 +142,13 @@ begin MenuMode 1057
 				set iN to 0
 				set iK to 0
 				while iK < ar_Size aQ
-					if eval (Floor (aQ[iK] / 10) == iDir)
+					if eval (Floor (aQ[iK] / 1000) == 1 && Floor ((aQ[iK] % 1000) / 100) == iDir)
 						set iN to iN + 1
 					endif
 					set iK to iK + 1
 				loop
 				if iN < 8
-					ar_Append aQ (iDir * 10 + iClick - 1)
+					ar_Append aQ (1000 + iDir * 100 + iClick - 1)
 				endif
 			endif
 		elseif iScreen == 3
@@ -184,6 +186,11 @@ begin MenuMode 1057
 		elseif iScreen == 4
 			if iClick == 0
 				call CCCureFn 4
+			elseif iClick == 1 || iClick == 2
+				if (GetVariable "iTier" CCCore) >= 2
+					set iN to iClick + 1
+					call CCWagonsFn 1 iN
+				endif
 			endif
 		elseif iScreen == 8
 			; the cure rows, in the order CCTermDraw wrote them

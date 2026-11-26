@@ -286,5 +286,43 @@ class Tier3AndPerk(unittest.TestCase):
         self.assertEqual(c.buy_from_player('powder', 20), 8)    # 10 a day
 
 
+class Texts(unittest.TestCase):
+    def test_m2_texts_name_road_town_and_good_and_fit(self):
+        import post_model as pm
+        c = founded()
+        c.tier = 3
+        c.contracts.append(cm.Contract('meat', 4, 3, 140, 1, 2, town='MO', road=3, origin='PR'))
+        c.staff.append(person('Ruthie'))
+        memos = [cm.Memo('road', 1, 2, road=3), cm.Memo('contract', 1, 2, price=140, town='MO', good='meat', road=3),
+                 cm.Memo('raise', 1, 4, who='Ruthie')]
+        texts = [pm.memo_text(c, m) for m in memos] + [pm.memo_title(c, m) for m in memos]
+        texts += [pm.letter_text(cm.Letter(1, 'road', (60, 45, 36, 1, 3, ('MO', 'meat')))),
+                  pm.letter_text(cm.Letter(1, 'loss', ('bandits_wreck', 90, 2))),
+                  pm.letter_text(cm.Letter(1, 'tier', (3,)))]
+        self.assertIn('Outpost road', texts[0])
+        self.assertIn("Mojave Outpost's store wants 4 crates of smoked meat", texts[1])
+        self.assertIn('Ruthie asks for a raise', texts[2])
+        self.assertIn("Mojave Outpost's smoked meat is due tomorrow", texts[6])
+        self.assertIn('Sloan road', texts[7])
+        for x in texts:
+            self.assertLessEqual(len(x), pm.MAX_TEXT, x)
+
+    def test_m1_texts_unchanged(self):
+        import post_model as pm
+        self.assertEqual(pm.letter_text(cm.Letter(1, 'road', (60, 45, 36, 1))),
+                         'Bandit sign on the Primm road tomorrow: about 60 strong, our cover 45: 36 in 100 to get '
+                         "through clean. Keep the wagon home tomorrow? Primm's water is due tomorrow.")
+
+    def test_a_resident_on_staff_leaves_with_goodsprings(self):
+        c = founded()
+        p = person('Marisol')
+        p.resident = True
+        c.staff.append(p)
+        c.gangers_town = True
+        r = c.tick()
+        self.assertNotIn(p, c.staff)
+        self.assertIn('Marisol left with Goodsprings', r.notes)
+
+
 if __name__ == '__main__':
     unittest.main()

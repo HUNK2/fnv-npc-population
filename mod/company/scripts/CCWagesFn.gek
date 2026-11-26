@@ -1,19 +1,50 @@
 scn CCWagesFn
 
 ; The day's wages (tools/company_model.py Company.daily_wages): every paper staff member's wage plus
-; 14 for each hand (hands come with workshops).
+; 14 for each hand (hands come with sites) and 40 for each manager (M2). Also sets CCCore fCut, the best
+; trader's cut off the spread (Company.trader_cut): 1 point for each 10 of Skill over 50, the trait's
+; skill bonus counted (Haggler and Ambitious +10, Reckless -10).
 
 array_var aW
+array_var aR
+array_var aS
+array_var aT
 int iK
 int iN
+int iBest
+int iSk
+float fCut
 
 begin Function {}
 	let aW := GetArrayVariable "aStaffWage" CCCore
+	let aR := GetArrayVariable "aStaffRole" CCCore
+	let aS := GetArrayVariable "aStaffSkill" CCCore
+	let aT := GetArrayVariable "aStaffTrait" CCCore
 	let iN := 14 * (GetVariable "iHands" CCCore)
+	if eval (GetVariable "iBookkeeper" CCCore)
+		set iN to iN + 40
+	endif
+	if eval (GetVariable "iRouteMgr" CCCore)
+		set iN to iN + 40
+	endif
+	set iBest to 50
 	set iK to 0
 	while iK < ar_Size aW
 		let iN += aW[iK]
+		if eval (aR[iK] == 2)
+			let iSk := aS[iK]
+			if eval (aT[iK] == 1 || aT[iK] == 7)
+				set iSk to iSk + 10
+			elseif eval (aT[iK] == 3)
+				set iSk to iSk - 10
+			endif
+			if iSk > iBest
+				set iBest to iSk
+			endif
+		endif
 		set iK to iK + 1
 	loop
+	let fCut := Floor ((iBest - 50) / 10) / 100
+	SetVariable "fCut" fCut CCCore
 	SetFunctionValue iN
 end

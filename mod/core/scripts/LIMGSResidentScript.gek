@@ -1,0 +1,23 @@
+scn LIMGSResidentScript
+
+; On every Goodsprings resident the mod adds (docs/towns-design.md, "Fights"): the player hurting
+; or killing one of them is noticed by the town. Infamy is vanilla Goodsprings reputation, so the
+; town's reactions and vanilla dialogue both follow it. Once per resident for a hit, once more for
+; a death.
+
+int iHit
+int iDead
+
+begin OnHit player
+	if iHit == 0
+		set iHit to 1
+		AddReputation RepNVGoodsprings 0 1
+	endif
+end
+
+begin OnDeath player
+	if iDead == 0
+		set iDead to 1
+		AddReputation RepNVGoodsprings 0 3
+	endif
+end

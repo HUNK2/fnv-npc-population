@@ -1,4 +1,4 @@
-"""M1 post texts (plan task 1.6): the morning report's two pages, memo texts and letter texts.
+"""Post texts (M1 plan task 1.6; M2 names the road, town and good): the morning report's two pages, memo texts and letter texts.
 
 The game (CCCore) writes the same strings with sv_Construct at the tick, so tools/ingame_post.py can
 read them back and compare. Every text is at most 200 characters (M0 0.8: JohnnyGuitar copies terminal
@@ -7,14 +7,28 @@ text into a 260-byte buffer). Numbers are whole caps with no thousands separator
 import company_model as cm
 
 MAX_TEXT = 200
+ROAD_NAME = {1: 'Primm road', 2: 'Sloan road', 3: 'Outpost road'}
+GOOD_NAME = {'water': 'water', 'powder': 'healing powder', 'ammo': 'ammo', 'dirty': 'dirty water',
+             'herbs': 'herbs', 'materials': 'building materials', 'meat': 'smoked meat'}
+
+
+def poss(name):
+    return name + ("'" if name.endswith('s') else "'s")
+
+
+def con_words(con):
+    """('PR', 'water') -> ('Primm', 'water')."""
+    return cm.TOWN_NAME[con[0]], GOOD_NAME[con[1]]
+
+
 EVENT_TEXT = {
-    'bandits_driven_off': ' Bandits tried the Primm road and our guard drove them off.',
+    'bandits_driven_off': ' Bandits tried the %s and our guard drove them off.',
     'bandits_took_cargo': ' Bandits robbed the wagon on the way back: %d caps lost.',
     'bandits_wreck': ' Bandits took the whole strongbox on the way back: %d caps lost.',
     'bandits_empty': ' Bandits stopped the wagon on the way back and found nothing to take.',
 }
 FORECAST_TEXT = {
-    'bandits': 'bandit sign on the Primm road, about %d strong, our cover %d.',      # danger, cover
+    'bandits': 'bandit sign on the %s, about %d strong, our cover %d.',      # road, danger, cover
     'quiet': 'the road looks quiet.',
     'no_wagon': 'no wagon on the road.',
 }
@@ -52,15 +66,25 @@ def bill_estimate(c):
     return est + (cm.LICENCE if due % 28 == 0 else 0)
 
 
-CONTRACT_TEXT = {'delivered': ' Primm got its water.', 'missed': ' We missed the Primm water delivery.',
-                 'delivered completed': ' Primm got its water: the contract is done.',
-                 'missed completed': ' We missed the last Primm delivery: the contract is done.',
-                 'walked': ' Primm walked away from our counter.'}
+CONTRACT_TEXT = {'delivered': ' %s got its %s.', 'missed': ' We missed the %s %s delivery.',
+                 'delivered completed': ' %s got its %s: the contract is done.',
+                 'missed completed': ' We missed the last %s delivery: the contract is done.',
+                 'walked': ' %s walked away from our counter.'}
 
 
 def forecast_line(c):
     f = c.forecast()
-    return FORECAST_TEXT[f] % (cm.DANGER, c.cover()) if f == 'bandits' else FORECAST_TEXT[f]
+    if f != 'bandits':
+        return FORECAST_TEXT[f]
+    road = c.event_road(c.day + 1)
+    return FORECAST_TEXT[f] % (ROAD_NAME[road], cm.ROAD_DANGER[road], c.cover())
+
+
+def contract_line(r):
+    town, good = con_words(r.con)
+    if r.contract == 'walked' or r.contract == 'missed completed':
+        return CONTRACT_TEXT[r.contract] % town
+    return CONTRACT_TEXT[r.contract] % (town, good)
 
 
 def report_pages(c):
@@ -68,21 +92,27 @@ def report_pages(c):
     if not c.history:
         return None
     r = c.history[-1]
-    out = sum(n for (o, _), n in r.loads.items() if o == 'GS')
-    back = sum(n for (o, _), n in r.loads.items() if o == 'PR')
+    out, back = r.out, r.back
+    dest = {1: 'Primm', 2: 'Sloan', 3: 'the Outpost'}[r.ran]
     if not r.wagon:
         p1 = "Boss. The wagon is in the lender's yard, so nothing moved."
     elif not r.crew:
         p1 = 'Boss. We have no driver on the books, so the wagon stayed in the yard.'
-    elif r.road_mode == cm.HOLD:
-        p1 = 'Boss. The wagon stayed home today, as the memo said: bandit sign on the Primm road.'
+    elif r.road_mode == cm.HOLD and r.runs == 0:
+        p1 = 'Boss. The wagon stayed home today, as the memo said: bandit sign on the %s.' % ROAD_NAME[r.ev_road]
+    elif r.runs > 1 or r.road_mode == cm.HOLD:
+        p1 = 'Boss. %d wagon%s ran: %d crates out, %d back.' % (r.runs, '' if r.runs == 1 else 's', out, back)
+        if r.road_mode == cm.HOLD:
+            p1 += ' The %s wagon stayed home, as the memo said.' % ROAD_NAME[r.ev_road].split()[0]
     elif out + back == 0:
-        p1 = 'Boss. The wagon went to Primm and back with no cargo: nothing paid the trip.'
+        p1 = 'Boss. The wagon went to %s and back with no cargo: nothing paid the trip.' % dest
     else:
-        p1 = 'Boss. The wagon took %d crates to Primm and brought %d back.' % (out, back)
+        p1 = 'Boss. The wagon took %d crates to %s and brought %d back.' % (out, dest, back)
     if r.road_mode == cm.GUN:
         p1 += ' We hired a gun for the road.'
-    if r.event:
+    if r.event == 'bandits_driven_off':
+        p1 += EVENT_TEXT[r.event] % ROAD_NAME[r.ev_road]
+    elif r.event:
         p1 += EVENT_TEXT[r.event] % r.event_loss if '%' in EVENT_TEXT[r.event] else EVENT_TEXT[r.event]
     if r.bills is not None:
         if r.bills_paid:
@@ -92,9 +122,9 @@ def report_pages(c):
     if r.prepaid:
         p1 += ' We paid %d off the loan.' % r.prepaid
     if r.signed:
-        p1 += ' We signed the Primm water contract at %d.' % r.signed
+        p1 += ' We signed the %s %s contract at %d.' % (con_words(r.con) + (r.signed,))
     if r.contract:
-        p1 += CONTRACT_TEXT[r.contract]
+        p1 += contract_line(r)
     p2 = ('Day %d: sales %d, costs %d, net %d. Cash %d, runway %dd. Bills in %dd, about %d. Tomorrow: %s'
           % (r.day, r.sales, r.costs, r.margin, c.cash, c.runway(), days_to_bills(c), bill_estimate(c),
              forecast_line(c)))
@@ -104,26 +134,35 @@ def report_pages(c):
 def memo_title(c, m):
     due = m.due - c.day
     if m.kind == 'road':
-        return 'BANDIT SIGN, PRIMM ROAD  due %dd' % due
+        return 'BANDIT SIGN, %s  due %dd' % (ROAD_NAME[m.road].upper(), due)
     if m.kind == 'contract':
-        return 'PRIMM WANTS WATER  due %dd' % due
+        return '%s WANTS %s  due %dd' % (cm.TOWN_NAME[m.town].upper(), GOOD_NAME[m.good].upper(), due)
+    if m.kind == 'raise':
+        return 'A RAISE FOR %s  due %dd' % (m.who.upper(), due)
     return 'PAY DOWN THE LOAN?  due %dd' % due
 
 
 def memo_text(c, m):
     if m.kind == 'road':
-        cover = c.cover()
-        tail = ('Unanswered, it goes: Primm\'s water is due.' if c.memo_default(m) == cm.SEND
+        cover, dg = c.cover(), cm.ROAD_DANGER[m.road]
+        due = next((x for x in c.contracts if x.next_due == m.due), None)
+        what = ("Primm's water" if due and (due.town, due.good) == ('PR', 'water') else 'a delivery')
+        tail = ('Unanswered, it goes: %s is due.' % what if c.memo_default(m) == cm.SEND and due
                 else 'Unanswered, it stays home.')
-        return ('Bandit sign on the Primm road tomorrow: about %d strong, our cover %d: %d in 100 to get '
+        return ('Bandit sign on the %s tomorrow: about %d strong, our cover %d: %d in 100 to get '
                 'through clean, %d with a gun (%d). Send, hire a gun, or keep it home? %s'
-                % (cm.DANGER, cover, c.clean_chance(cover), c.clean_chance(cover + cm.GUN_COVER), cm.GUN_COST,
-                   tail))
+                % (ROAD_NAME[m.road], dg, cover, c.clean_chance(cover, dg), c.clean_chance(cover + cm.GUN_COVER, dg),
+                   cm.GUN_COST, tail))
     if m.kind == 'contract':
-        return ('Primm\'s store wants %d crates of water every %d days for %d days, at %d a crate. Accept, '
+        return ('%s store wants %d crates of %s every %d days for %d days, at %d a crate. Accept, '
                 'or counter at %d (they may walk)? If you say nothing, we decline.'
-                % (cm.CONTRACT_CRATES, cm.CONTRACT_EVERY, cm.CONTRACT_DAYS, m.price,
-                   cm.half_up(m.price * (1 + cm.COUNTER_PREMIUM))))
+                % (poss(cm.TOWN_NAME[m.town]), cm.CONTRACT_CRATES, GOOD_NAME[m.good], cm.CONTRACT_EVERY,
+                   cm.CONTRACT_DAYS, m.price, cm.half_up(m.price * (1 + cm.COUNTER_PREMIUM))))
+    if m.kind == 'raise':
+        p = next((x for x in c.staff if x.name == m.who), None)
+        loyal, wage = (p.loyalty, p.wage) if p else (0, 0)
+        return ('%s asks for a raise: loyalty %d, wage %d a day. Give a quarter more (%d a day), or refuse? If you say '
+                'nothing, we refuse.' % (m.who, loyal, wage, cm.half_up(wage * cm.RAISE)))
     return ('The bills are paid and we hold %d caps. Pay %d off the loan now and save %d a week in '
             'interest? If you say nothing, we keep the cash.'
             % (c.cash, cm.PREPAY, cm.half_up(cm.INTEREST * cm.PREPAY)))
@@ -160,6 +199,8 @@ def notice_buttons(c, acts):
 
 TIER_TEXT = ('Boss, we are an Outfit now. Our office next to the Prospector Saloon is open and Primm gave us '
              'a stall. The Build screen is open at the terminal: purifier, apothecary, well rig, forager hut.')
+TIER3_TEXT = ('Boss, we are a caravan company now. Sloan and the Outpost gave us branches, the route manager '
+              'can be hired, and the smokehouse and stone yard are on the Build screen.')
 
 
 def letter_title(letter):
@@ -168,7 +209,8 @@ def letter_title(letter):
                 'takeover': 'takeover notice', 'probation': 'strike'}[letter.values[0]]
     else:
         word = {'away': 'while you were away', 'road': 'bandit sign', 'loss': 'robbed',
-                'forecast': 'short on bill day', 'closed': 'company closed', 'tier': 'an Outfit now'}[letter.kind]
+                'forecast': 'short on bill day', 'closed': 'company closed',
+                'tier': 'an Outfit now' if letter.values[:1] != (3,) else 'a caravan company'}[letter.kind]
     return 'LETTER day %d  %s' % (letter.day, word)
 
 
@@ -184,13 +226,17 @@ def letter_text(letter):
     if letter.kind == 'closed':
         return CLOSED_TEXT[v[0]]
     if letter.kind == 'tier':
-        return TIER_TEXT
+        return TIER3_TEXT if v[:1] == (3,) else TIER_TEXT
     if letter.kind == 'road':
-        danger, cover, chance, due = v
-        return ('Bandit sign on the Primm road tomorrow: about %d strong, our cover %d: %d in 100 to get '
+        danger, cover, chance, due = v[:4]
+        road = v[4] if len(v) > 4 else 1
+        con = v[5] if len(v) > 5 and v[5] else ('PR', 'water')
+        return ('Bandit sign on the %s tomorrow: about %d strong, our cover %d: %d in 100 to get '
                 'through clean. Keep the wagon home tomorrow?%s'
-                % (danger, cover, chance, ' Primm\'s water is due tomorrow.' if due else ''))
-    event, loss = v
+                % (ROAD_NAME[road], danger, cover, chance,
+                   ' %s %s is due tomorrow.' % (poss(cm.TOWN_NAME[con[0]]), GOOD_NAME[con[1]]) if due else ''))
+    event, loss = v[:2]
+    road = ROAD_NAME[v[2] if len(v) > 2 else 1]
     if event == 'bandits_wreck':
-        return 'Bandits took the whole strongbox on the Primm road: %d caps lost. The crew is unhurt.' % loss
-    return 'Bandits robbed the wagon on the Primm road: %d caps lost. The crew is unhurt.' % loss
+        return 'Bandits took the whole strongbox on the %s: %d caps lost. The crew is unhurt.' % (road, loss)
+    return 'Bandits robbed the wagon on the %s: %d caps lost. The crew is unhurt.' % (road, loss)

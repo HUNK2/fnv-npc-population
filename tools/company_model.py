@@ -135,7 +135,7 @@ OFFER_WAGE = {'low': -2, 'fair': 0, 'generous': 3}
 LOYALTY_PAID, LOYALTY_MISSED = 5, -10
 LOYALTY_RAISE_ASK, LOYALTY_LEAVE = 35, 20
 RAISE, RAISE_LOYALTY, REFUSE_LOYALTY = 1.25, 20, -10
-MEMO_ANSWERS['raise'] = ('give a raise of 25%', 'refuse')
+MEMO_ANSWERS['raise'] = ('raise the wage a quarter', 'refuse')
 MEMO_DEFAULT['raise'] = 1
 # the lived-in Goodsprings residents who can be hired from tier 2 (tools/town_model.py hireable)
 RESIDENT_HIRES = (('Wes Harlan', 'driver', 55, 80, 70, 'Steady'), ('Marisol', 'guard', 65, 75, 75, 'Cautious'))
@@ -149,7 +149,8 @@ CONTRACTS_OPEN = {1: 1, 2: 2, 3: 3}
 BUY_FROM_PLAYER = {'water': 10, 'powder': 10}     # tier 2 perk: goods and bottles (or powders) a crate
 BUY_SHARE, BUY_DAY_MAX = 0.8, 10
 DELIVERY_TRUST, DEED_TRUST = 1, 10       # a leg that sells into a town; Ghost Town Gunfight (GS)
-BUILD_ORDER = ('purifier', 'apothecary', 'well', 'forager')     # the Build screen's rows
+BUILD_ORDER = ('purifier', 'apothecary', 'well', 'forager')     # the M1 Build screen's rows
+BUILD_ROWS = BUILD_ORDER + ('corral', 'sandpit', 'scrapyard', 'smokehouse', 'quarry', 'stoneyard')   # M2's
 WORKSHOP_COST, SITE_COST, HAND_WAGE = 300, 200, 14
 WORKSHOPS = {                    # name: (inputs per batch, outputs per batch, output crates a day)
     'purifier': ({'dirty': 5}, {'water': 4}, 4),
@@ -297,6 +298,12 @@ class DayReport:
     skim: int = 0               # skimmed by dishonest staff
     tier_up: bool = False       # the company reached a new tier today
     sold_to: dict = field(default_factory=dict)     # M2: (town, good) -> crates sold there
+    ev_road: int = 1            # M2: the road the director's event met (or would have met)
+    con: tuple = ('PR', 'water')            # M2: the (town, good) of today's contract news
+    runs: int = 0               # M2: roads whose wagon ran
+    ran: int = 1                # M2: the last road whose wagon ran
+    out: int = 0                # M2: crates sold on the out legs
+    back: int = 0               # M2: crates sold on the back legs
 
     @property
     def margin(self):
@@ -349,6 +356,7 @@ class Company:
         self.unmet_days = {t: 0 for t in TOWNS}
         self.materials_in = {t: 0 for t in TOWNS}            # crates delivered since the last level
         self.managers = {}                                   # 'bookkeeper' / 'route' -> policy
+        self.carried = {g: 0 for g in BUY_FROM_PLAYER}       # bottles / powders the player carries (game: items)
         self.gangers_town = False                            # Goodsprings run by the Powder Gangers
         self.bought_today, self.bought_day = 0, 0
 
@@ -517,6 +525,7 @@ class Company:
         r.wagon, r.road_mode, r.crew = self.wagon_ok, self.road_mode, self.has_driver()
         running = dict((road, w) for w, road in self.running_roads())
         ev_road = self.event_road(d)
+        r.ev_road = ev_road
         for road in sorted(ROADS):
             w = running.get(road)
             mode = self.road_mode if road == ev_road else SEND
@@ -531,12 +540,18 @@ class Company:
                 r.costs += pay
             sales0 = r.sales                    # the road's takings: its contract and its out leg
             loaded = self._contract(r, True, road)
+            r.runs += 1
+            r.ran = road
             out, back = ROADS[road], ROADS[road][::-1]
             for origin, dest in (out, back):
                 if origin == back[0] and road == ev_road:
                     self._event(r, r.sales - sales0, road)
-                self._leg(r, origin, dest, [o for o in self.queue_list if o.town == origin and o.wagon == w],
-                          CRATES_PER_LEG - (loaded.get(origin, 0)))
+                n = self._leg(r, origin, dest, [o for o in self.queue_list if o.town == origin and o.wagon == w],
+                              CRATES_PER_LEG - (loaded.get(origin, 0)))
+                if origin == out[0]:
+                    r.out += n
+                else:
+                    r.back += n
         self._skim(r)
         self.queue_list = []
         self.road_mode = SEND
@@ -553,6 +568,10 @@ class Company:
         if d % 7 == 1:
             self._new_candidates()
         self._levels(r)
+        if self.gangers_town:
+            for p in [p for p in self.staff if p.resident]:
+                self.staff.remove(p)
+                r.notes.append('%s left with Goodsprings' % p.name)
         self._ladder(r)
         if self.ghost_town_done and not self.ghost_town_paid:
             self.ghost_town_paid = True
@@ -604,6 +623,7 @@ class Company:
                 self.materials_in[dest] += 1
         if sold:
             self.trust[dest] = min(100, self.trust[dest] + DELIVERY_TRUST)
+        return sum(1 for g, cost in crates if cost is not None)
 
     def event_fires(self, d):
         """Does the director place a bandit event on day d's return leg? Known a day ahead (the forecast):
@@ -889,6 +909,7 @@ class Company:
         self.contracts.append(Contract(good, CONTRACT_CRATES, CONTRACT_EVERY, price, self.day, self.day,
                                        town=town, road=road, origin=origin))
         r.signed = price
+        r.con = (town, good)
 
     def contract_offer(self):
         """M2: (town, good, road) of this week's offer. Tier 1: Primm water (the M1 contract). From tier 2:
@@ -949,6 +970,7 @@ class Company:
                 self.trust[c.town] = min(100, self.trust[c.town] + 1)
                 c.done += 1
                 r.contract = 'delivered'
+                r.con = (c.town, c.good)
                 loaded = c.crates
         if not loaded:
             pay = min(self.cash, half_up(CONTRACT_MISS * c.crates * c.price))
@@ -957,6 +979,7 @@ class Company:
             self.trust[c.town] = max(0, self.trust[c.town] - 3)
             c.missed += 1
             r.contract = 'missed'
+            r.con = (c.town, c.good)
         c.next_due += c.every
         if c.next_due >= c.start + CONTRACT_DAYS:
             self.trust[c.town] = min(100, self.trust[c.town] + 3)
@@ -1239,6 +1262,7 @@ class Company:
                 elif a == 1:
                     if roll(self.seed, self.day, 4) < COUNTER_WALK:
                         r.contract = 'walked'
+                        r.con = (m.town, m.good)
                     else:
                         self._sign(half_up(m.price * (1 + COUNTER_PREMIUM)), r, m)
             elif m.kind == 'raise':
@@ -1319,10 +1343,11 @@ class Company:
         if road:
             cover = self.cover()
             dg = ROAD_DANGER[self.event_road(self.day + 1)]       # M2: the danger of the road at risk
-            new.append(Letter(self.day, 'road', (dg, cover, self.clean_chance(cover, dg),
-                                                 int(self.contract_due(self.day + 1)))))
+            due = next(((c.town, c.good) for c in self.contracts if c.next_due == self.day + 1), None)
+            new.append(Letter(self.day, 'road', (dg, cover, self.clean_chance(cover, dg), int(due is not None),
+                                                 self.event_road(self.day + 1), due)))
         if r.event in ('bandits_took_cargo', 'bandits_wreck'):
-            new.append(Letter(self.day, 'loss', (r.event, r.event_loss)))
+            new.append(Letter(self.day, 'loss', (r.event, r.event_loss, r.ev_road)))
         if r.tier_up:
             new.append(Letter(self.day, 'tier', (self.tier,)))
         self.post = (self.post + new)[-POST_KEEP:]

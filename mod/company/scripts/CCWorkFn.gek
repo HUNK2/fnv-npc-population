@@ -1,0 +1,161 @@
+scn CCWorkFn
+
+; Sites, workshops and town levels (tools/company_model.py Company.run_workshops, _levels; M2 plan 2.4).
+; Works on CCCore's arrays in place. Cells: town * 12 + good.
+; iAct 0: the day's output. Sites (aSites: 0 well rig, 1 forager hut in Goodsprings, 2 corral in
+;         Goodsprings, 3 sand pit and 4 scrap yard in Primm, 5 quarry in Sloan) put 4 crates each in
+;         their town's warehouse; workshops (aWorkshops: 0 purifier 5 dirty -> 4 water and 1 apothecary
+;         1 herbs -> 1 powder in Goodsprings, 2 smokehouse 1 brahmin -> 4 meat in Primm, 3 stone yard
+;         2 stone + 1 sand -> 2 materials in Sloan) make up to 4 crates a day from their warehouse.
+; iAct 1: town levels after the day: a day is met when water, meat and powder (where sold) each stock
+;         2 days of use; 7 met days and 40, 90, 160 crates of materials delivered since the last level
+;         raise one (Camp, Hamlet, Village, Town); 14 unmet days drop one, never below the start
+;         (Goodsprings Hamlet, Primm Village, Sloan and the Outpost Camps). Each level above the start
+;         adds a quarter to every good's daily use (aBaseUse). Also sets CCCore iDeedQuarry once the
+;         Quarry Junction deathclaw leaders are dead.
+
+int iAct
+int iT
+int iG
+int iN
+int iMet
+int iLv
+float fK
+array_var aWh
+array_var aW
+array_var aS
+array_var aStock
+array_var aUse
+array_var aBase
+array_var aMkt
+array_var aLv
+array_var aMet
+array_var aUnmet
+array_var aMat
+array_var aStart
+array_var aNeed
+
+begin Function {iAct}
+	if iAct == 0
+		let aWh := GetArrayVariable "aWh" CCCore
+		let aW := GetArrayVariable "aWorkshops" CCCore
+		let aS := GetArrayVariable "aSites" CCCore
+		if eval (aS[0])
+			let aWh[3] += 4
+		endif
+		if eval (aS[1])
+			let aWh[4] += 4
+		endif
+		if eval (aS[2])
+			let aWh[7] += 4
+		endif
+		if eval (aS[3])
+			let aWh[21] += 4
+		endif
+		if eval (aS[4])
+			let aWh[22] += 4
+		endif
+		if eval (aS[5])
+			let aWh[32] += 4
+		endif
+		if eval (aW[0])
+			set iN to 0
+			while aWh[3] >= 5 && iN + 4 <= 4
+				let aWh[3] -= 5
+				let aWh[0] += 4
+				set iN to iN + 4
+			loop
+		endif
+		if eval (aW[1])
+			set iN to 0
+			while aWh[4] >= 1 && iN + 1 <= 4
+				let aWh[4] -= 1
+				let aWh[1] += 1
+				set iN to iN + 1
+			loop
+		endif
+		if eval (aW[2])
+			set iN to 0
+			while aWh[19] >= 1 && iN + 4 <= 4
+				let aWh[19] -= 1
+				let aWh[18] += 4
+				set iN to iN + 4
+			loop
+		endif
+		if eval (aW[3])
+			set iN to 0
+			while aWh[32] >= 2 && aWh[33] >= 1 && iN + 2 <= 4
+				let aWh[32] -= 2
+				let aWh[33] -= 1
+				let aWh[29] += 2
+				set iN to iN + 2
+			loop
+		endif
+
+	elseif iAct == 1
+		; the Quarry Junction deed (Claws Out: the deathclaw mother and alpha male dead, vanilla
+		; vFreeformSloan.bDeathclawLeadersDead) opens the quarry crew and the stone yard
+		if (GetVariable "iDeedQuarry" CCCore) == 0
+			if (GetVariable "bDeathclawLeadersDead" vFreeformSloan)
+				SetVariable "iDeedQuarry" 1 CCCore
+			endif
+		endif
+		let aStock := GetArrayVariable "aStock" CCCore
+		let aUse := GetArrayVariable "aUse" CCCore
+		let aBase := GetArrayVariable "aBaseUse" CCCore
+		let aMkt := GetArrayVariable "aMkt" CCCore
+		let aLv := GetArrayVariable "aLevel" CCCore
+		let aMet := GetArrayVariable "aMetDays" CCCore
+		let aUnmet := GetArrayVariable "aUnmetDays" CCCore
+		let aMat := GetArrayVariable "aMatIn" CCCore
+		let aStart := Ar_List 1, 2, 0, 0
+		let aNeed := Ar_List 0, 40, 90, 160
+		set iT to 0
+		while iT < 4
+			set iMet to 1
+			set iG to 0
+			while iG < 7
+				if eval ((iG == 0 || iG == 1 || iG == 6) && aMkt[iT * 12 + iG])
+					if eval (aStock[iT * 12 + iG] < 2 * aUse[iT * 12 + iG])
+						set iMet to 0
+					endif
+				endif
+				set iG to iG + 1
+			loop
+			if iMet
+				let aMet[iT] += 1
+				let aUnmet[iT] := 0
+			else
+				let aMet[iT] := 0
+				let aUnmet[iT] += 1
+			endif
+			let iLv := aLv[iT]
+			set iN to 0
+			if eval (iLv < 3 && aMet[iT] >= 7)
+				if eval (aMat[iT] >= aNeed[iLv + 1])
+					set iN to 1
+				endif
+			endif
+			if iN
+				set iLv to iLv + 1
+				let aMat[iT] := 0
+				let aMet[iT] := 0
+			elseif eval (iLv > aStart[iT] && aUnmet[iT] >= 14)
+				set iLv to iLv - 1
+				let aUnmet[iT] := 0
+				set iN to 1
+			endif
+			if iN
+				let aLv[iT] := iLv
+				let fK := 1 + 0.25 * (iLv - aStart[iT])
+				set iG to 0
+				while iG < 12
+					let aUse[iT * 12 + iG] := aBase[iT * 12 + iG] * fK
+					set iG to iG + 1
+				loop
+			endif
+			set iT to iT + 1
+		loop
+	endif
+	SetFunctionValue 1
+end

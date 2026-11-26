@@ -19,6 +19,7 @@ int iK
 int iG
 int iO
 int iD
+int iLast
 int iB
 int iS
 int iBest
@@ -61,6 +62,7 @@ array_var aPT
 array_var aPX
 string_var sT
 string_var sM
+string_var sN
 int iMemo
 int iA
 int iPick
@@ -190,7 +192,7 @@ begin Function {}
 		set iBestG to -1
 		set iG to 0
 		while iG < 6
-			let iS := call CCPriceFn aAnchor[iG], aStock[6 + iG], aUse[6 + iG], aTrust[1], 1
+			let iS := call CCPriceFn aAnchor[iG], aStock[12 + iG], aUse[12 + iG], aTrust[1], 1
 			let iB := call CCPriceFn aAnchor[iG], aStock[iG], aUse[iG], aTrust[0], 0
 			if iBestG < 0 || iS - iB > iBest
 				set iBest to iS - iB
@@ -211,15 +213,23 @@ begin Function {}
 		else
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 5 %qPRICES   best GS>PR: materials %.0f%q" iBest
 		endif
-		call CCBuildFn 5
+		call CCBuildFn 11
 		let aS := GetArrayVariable "aStaffName" CCCore
 		let iN := (ar_Size aS) + iHands
 		let iK := call CCCoverFn
 		Console "SetTerminalMenuItemText CCOfficeTerm 1 7 %qSTAFF    %.0f on the books, cover %.0f%q" iN iK
-		let iA := GetVariable "iConOn" CCCore
-		if iA
-			let iA := GetVariable "iConDone" CCCore
-			Console "SetTerminalMenuItemText CCOfficeTerm 1 8 %qCONTRACTS water %.0f/9 to PR%q" iA
+		; the first running contract (M2: aCon* arrays): good, deliveries done of 9, buyer
+		let aS := GetArrayVariable "aConDone" CCCore
+		if eval ((ar_Size aS) > 0)
+			let iA := aS[0]
+			let aS := GetArrayVariable "aConGood" CCCore
+			let iK := aS[0]
+			let sT := call CCTextFn 4 iK
+			let aS := GetArrayVariable "aConTown" CCCore
+			let iK := aS[0]
+			let aS := Ar_List "GS", "PR", "SL", "MO"
+			let sN := aS[iK]
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 8 %qCONTRACTS %z %.0f/9 to %z%q" sT iA sN
 		else
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 8 %qCONTRACTS none running%q"
 		endif
@@ -230,6 +240,10 @@ begin Function {}
 		let sT := call CCNoticeFn 1
 		Console "SetTerminalMenuItemText CCOfficeTerm 1 12 %q%z%q" sT
 		SetVariable "iRows" 13 CCTerm
+		if (GetVariable "iTier" CCCore) >= 2
+			call CCTownsFn 1 0
+			SetVariable "iRows" 14 CCTerm
+		endif
 
 	elseif iScreen == 1
 		set iO to iDirT
@@ -241,12 +255,12 @@ begin Function {}
 		endif
 		set iG to 0
 		while iG < 6
-			let iB := call CCPriceFn aAnchor[iG], aStock[iO * 6 + iG], aUse[iO * 6 + iG], aTrust[iO], 0
-			let iS := call CCPriceFn aAnchor[iG], aStock[iD * 6 + iG], aUse[iD * 6 + iG], aTrust[iD], 1
+			let iB := call CCPriceFn aAnchor[iG], aStock[iO * 12 + iG], aUse[iO * 12 + iG], aTrust[iO], 0
+			let iS := call CCPriceFn aAnchor[iG], aStock[iD * 12 + iG], aUse[iD * 12 + iG], aTrust[iD], 1
 			set iN to 0
 			set iK to 0
 			while iK < ar_Size aQ
-				if eval (aQ[iK] == iO * 10 + iG)
+				if eval (aQ[iK] == 1000 + iO * 100 + iG)
 					set iN to iN + 1
 				endif
 				set iK to iK + 1
@@ -315,8 +329,8 @@ begin Function {}
 		; net worth: cash + owner's pot + warehouse at anchor prices + wagon and brahmin - loan - arrears
 		set iNw to iCash + iOwner + iAssets - iLoan - iArrears
 		set iG to 0
-		while iG < 6
-			let iNw += aAnchor[iG] * aWh[iG]
+		while iG < 48
+			let iNw += aAnchor[iG % 12] * aWh[iG]
 			set iG to iG + 1
 		loop
 		set iN to iNw - iOwnerPaidIn
@@ -364,10 +378,16 @@ begin Function {}
 		else
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qWAGON 1  none: BUY one for 700%q"
 		endif
-		; the last three days, newest first
 		set iRow to 1
+		if (GetVariable "iTier" CCCore) >= 2
+			; M2: the Sloan road's and the Outpost road's rows
+			call CCWagonsFn 0 0
+			set iRow to 3
+		endif
+		; the last three days, newest first
+		set iLast to iRow + 2
 		set iK to iDay - 1
-		while iK >= 0 && iRow <= 3
+		while iK >= 0 && iRow <= iLast
 			set iN to iK + 1
 			let iSales := aHistSales[iK]
 			let iCosts := aHistCosts[iK]

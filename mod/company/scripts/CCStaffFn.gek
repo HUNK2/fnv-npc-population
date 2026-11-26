@@ -1,10 +1,13 @@
 scn CCStaffFn
 
 ; Paper staff and hiring (tools/company_model.py: Company.hire, fire, reference_check, _new_candidates).
-; iAct 1 hire candidate iIdx (one driver at most), 2 fire staff member iIdx, 3 reference check of
-; candidate iIdx (10 caps; shows the honesty band), 4 post this week's candidates (the tick, on day 1
-; of each week), 5 the founding driver and guard. Returns 1 when it did something. Roles: 0 driver,
-; 1 guard. CCCore's arrays are changed in place.
+; iAct 1 hire candidate iIdx with the offer in CCCore iHireOffer (0 fair, 1 low: wage -2 and loyalty
+; 45, 2 generous: wage +3 and loyalty 65; a driver for each wagon at most), 2 fire (or lose) staff
+; member iIdx, 3 reference check of candidate iIdx (10 caps; shows the honesty band), 4 post this
+; week's candidates (the tick, on day 1 of each week), 5 the founding driver and guard. Returns 1 when
+; it did something. Roles: 0 driver, 1 guard, 2 trader, 3 clerk (M2, from tier 2, with Nerve and a
+; trait: CCPeopleFn). From tier 2, while Goodsprings stands, Wes Harlan and Marisol (lived-in
+; Goodsprings residents) are among the candidates. CCCore's arrays are changed in place.
 
 int iAct
 int iIdx
@@ -36,6 +39,22 @@ array_var aCW
 array_var aCU
 array_var aCC
 string_var sName
+int iNerve
+int iTrait
+int iTr
+int iTier
+int iOffer
+array_var aSV
+array_var aSL
+array_var aST
+array_var aSRes
+array_var aWhy
+array_var aCV
+array_var aCT
+array_var aCRes
+array_var aTW
+array_var aRec
+array_var aWR
 
 begin Function {iAct iIdx}
 	set iOk to 0
@@ -51,6 +70,14 @@ begin Function {iAct iIdx}
 	let aCW := GetArrayVariable "aCandWage" CCCore
 	let aCU := GetArrayVariable "aCandRumour" CCCore
 	let aCC := GetArrayVariable "aCandChecked" CCCore
+	let aSV := GetArrayVariable "aStaffNerve" CCCore
+	let aSL := GetArrayVariable "aStaffLoyal" CCCore
+	let aST := GetArrayVariable "aStaffTrait" CCCore
+	let aSRes := GetArrayVariable "aStaffRes" CCCore
+	let aWhy := GetArrayVariable "aStaffWhy" CCCore
+	let aCV := GetArrayVariable "aCandNerve" CCCore
+	let aCT := GetArrayVariable "aCandTrait" CCCore
+	let aCRes := GetArrayVariable "aCandRes" CCCore
 
 	if iAct == 1
 		if eval (iIdx >= 0 && iIdx < (ar_Size aCN))
@@ -60,20 +87,53 @@ begin Function {iAct iIdx}
 				set iN to 1
 			endif
 			if eval (aCR[iIdx] == 0)
+				; a driver for each wagon (wagon 1 and aWagonRoad)
+				let aWR := GetArrayVariable "aWagonRoad" CCCore
+				let iJ := 1 + (ar_Size aWR)
 				set iK to 0
 				while iK < ar_Size aSR
 					if eval (aSR[iK] == 0)
-						set iN to 1
+						set iJ to iJ - 1
 					endif
 					set iK to iK + 1
 				loop
+				if iJ <= 0
+					set iN to 1
+				endif
 			endif
 			if iN == 0
+				let iOffer := GetVariable "iHireOffer" CCCore
 				ar_Append aSN aCN[iIdx]
 				ar_Append aSR aCR[iIdx]
 				ar_Append aSS aCS[iIdx]
 				ar_Append aSH aCH[iIdx]
-				ar_Append aSW aCW[iIdx]
+				let iWage := aCW[iIdx]
+				set iJ to 55
+				if iOffer == 1
+					set iWage to iWage - 2
+					set iJ to 45
+				elseif iOffer == 2
+					set iWage to iWage + 3
+					set iJ to 65
+				endif
+				if iWage < 1
+					set iWage to 1
+				endif
+				ar_Append aSW iWage
+				ar_Append aSV aCV[iIdx]
+				ar_Append aSL iJ
+				ar_Append aST aCT[iIdx]
+				ar_Append aSRes aCRes[iIdx]
+				let aRec := Ar_Construct "array"
+				if iOffer == 1
+					ar_Append aRec "low offer -10"
+				elseif iOffer == 2
+					ar_Append aRec "generous offer +10"
+				endif
+				ar_Append aWhy aRec
+				ar_Erase aCV iIdx
+				ar_Erase aCT iIdx
+				ar_Erase aCRes iIdx
 				ar_Erase aCN iIdx
 				ar_Erase aCR iIdx
 				ar_Erase aCS iIdx
@@ -92,6 +152,11 @@ begin Function {iAct iIdx}
 			ar_Erase aSS iIdx
 			ar_Erase aSH iIdx
 			ar_Erase aSW iIdx
+			ar_Erase aSV iIdx
+			ar_Erase aSL iIdx
+			ar_Erase aST iIdx
+			ar_Erase aSRes iIdx
+			ar_Erase aWhy iIdx
 			set iOk to 1
 		endif
 
@@ -125,6 +190,11 @@ begin Function {iAct iIdx}
 		ar_Resize aCW 0
 		ar_Resize aCU 0
 		ar_Resize aCC 0
+		ar_Resize aCV 0
+		ar_Resize aCT 0
+		ar_Resize aCRes 0
+		let iTier := GetVariable "iTier" CCCore
+		let aTW := Ar_List 0, 2, 0, 0, (0 - 2), 3, 2, 0, 0
 		let iN := 3 + ((iBase + 20 * 31) % 100) % 4
 		set iJ to 0
 		while iJ < iN
@@ -152,19 +222,38 @@ begin Function {iAct iIdx}
 					let iK := (iK + 1) % 40
 				endif
 			loop
+			let iTr := (iBase + (30 + iJ) * 31) % 100
 			set iRole to 1
-			if eval ((iBase + (30 + iJ) * 31) % 100 < 25)
+			if iTr < 25
 				set iRole to 0
+			elseif iTier >= 2 && iTr >= 85
+				set iRole to 3
+			elseif iTier >= 2 && iTr >= 70
+				set iRole to 2
 			endif
 			let iSkill := 30 + ((iBase + (40 + iJ) * 31) % 100) % 50
 			let iHon := 10 + ((iBase + (50 + iJ) * 31) % 100) % 85
 			set iWage to 12
 			if iRole == 0
 				set iWage to 10
+			elseif iRole == 2
+				set iWage to 20
+			elseif iRole == 3
+				set iWage to 15
 			endif
 			if iSkill > 50
 				let iWage += Floor ((iSkill - 50) / 10)
 			endif
+			let iNerve := 20 + ((iBase + (70 + iJ) * 31) % 100) % 70
+			let iTr := (iBase + (80 + iJ) * 31) % 100
+			set iTrait to 0
+			if iTier >= 2 && iTr < 70
+				let iTrait := 1 + iTr % 7
+				let iWage += aTW[iTrait]
+			endif
+			ar_Append aCV iNerve
+			ar_Append aCT iTrait
+			ar_Append aCRes 0
 			ar_Append aCN sName
 			ar_Append aCR iRole
 			ar_Append aCS iSkill
@@ -174,6 +263,47 @@ begin Function {iAct iIdx}
 			ar_Append aCC 0
 			set iJ to iJ + 1
 		loop
+		; the lived-in residents who can be hired (tools/town_model.py hireable), not already on the books
+		if iTier >= 2 && (GetVariable "iGangersTown" CCCore) == 0
+			set iJ to 0
+			while iJ < 2
+				if iJ == 0
+					let sName := "Wes Harlan"
+				else
+					let sName := "Marisol"
+				endif
+				set iUsed to 0
+				set iIdx to 0
+				while iIdx < ar_Size aSN
+					if eval (aSN[iIdx] == sName)
+						set iUsed to 1
+					endif
+					set iIdx to iIdx + 1
+				loop
+				if iUsed == 0
+					ar_Append aCN sName
+					if iJ == 0
+						ar_Append aCR 0
+						ar_Append aCS 55
+						ar_Append aCH 80
+						ar_Append aCW 10
+						ar_Append aCV 70
+						ar_Append aCT 8
+					else
+						ar_Append aCR 1
+						ar_Append aCS 65
+						ar_Append aCH 75
+						ar_Append aCW 12
+						ar_Append aCV 75
+						ar_Append aCT 2
+					endif
+					ar_Append aCU "Lives in Goodsprings."
+					ar_Append aCC 0
+					ar_Append aCRes 1
+				endif
+				set iJ to iJ + 1
+			loop
+		endif
 		set iOk to 1
 
 	elseif iAct == 5
@@ -182,6 +312,21 @@ begin Function {iAct iIdx}
 		ar_Resize aSS 0
 		ar_Resize aSH 0
 		ar_Resize aSW 0
+		ar_Resize aSV 0
+		ar_Resize aSL 0
+		ar_Resize aST 0
+		ar_Resize aSRes 0
+		ar_Resize aWhy 0
+		set iK to 0
+		while iK < 2
+			ar_Append aSV 50
+			ar_Append aSL 55
+			ar_Append aST 0
+			ar_Append aSRes 0
+			let aRec := Ar_Construct "array"
+			ar_Append aWhy aRec
+			set iK to iK + 1
+		loop
 		ar_Append aSN "Ruth Coyle"
 		ar_Append aSR 0
 		ar_Append aSS 50

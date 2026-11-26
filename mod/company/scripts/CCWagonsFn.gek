@@ -1,0 +1,92 @@
+scn CCWagonsFn
+
+; The M2 Wagons screen (tools/terminal_model.py wagon_rows; company_model.py can_buy_road, buy_road).
+; From tier 2 the Routes screen (CCTerm screen 4) has, after wagon 1's row, a row for the Sloan road
+; (road 2) and the Outpost road (road 3): its wagon (runs or idle), BUY one for 700, or the tier that
+; opens it (road 2 at tier 2, road 3 at tier 3).
+; iAct 0: draw rows 1 and 2. iAct 1: buy the wagon for road iA, from owner money first, then cash;
+; returns 1 if bought.
+
+int iAct
+int iA
+int iOut
+int iTier
+int iRoad
+int iRow
+int iK
+int iMine
+int iCash
+int iOwner
+int iFrom
+int iN
+array_var aWR
+array_var aWO
+array_var aRun
+string_var sR
+
+begin Function {iAct iA}
+	set iOut to 0
+	let iTier := GetVariable "iTier" CCCore
+	let aWR := GetArrayVariable "aWagonRoad" CCCore
+	let aWO := GetArrayVariable "aWagonOk" CCCore
+	if iAct == 0
+		let aRun := call CCRoadsFn 0 0
+		set iRoad to 2
+		while iRoad <= 3
+			set iRow to iRoad - 1
+			set iMine to 0
+			set iK to 0
+			while iK < ar_Size aWR
+				if eval (aWR[iK] == iRoad && iMine == 0)
+					set iMine to iK + 2
+				endif
+				set iK to iK + 1
+			loop
+			let sR := call CCTextFn 1 iRoad
+			if iMine
+				if eval (aRun[iRoad] > 0)
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qWAGON %.0f  %z  runs%q" iRow iMine sR
+				else
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qWAGON %.0f  %z  idle%q" iRow iMine sR
+				endif
+			else
+				let sR := sv_ToUpper sR
+				if iTier < iRoad
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q%z  opens at tier %.0f%q" iRow sR iRoad
+				else
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q%z  BUY a wagon for 700%q" iRow sR
+				endif
+			endif
+			set iRoad to iRoad + 1
+		loop
+	elseif iAct == 1 && (iA == 2 || iA == 3) && iTier >= iA && (GetVariable "iEnded" CCCore) == 0
+		set iMine to 0
+		set iK to 0
+		while iK < ar_Size aWR
+			if eval (aWR[iK] == iA)
+				set iMine to 1
+			endif
+			set iK to iK + 1
+		loop
+		let iCash := GetVariable "iCash" CCCore
+		let iOwner := GetVariable "iOwner" CCCore
+		if iMine == 0 && iCash + iOwner >= 700
+			set iFrom to iOwner
+			if iFrom > 700
+				set iFrom to 700
+			endif
+			set iOwner to iOwner - iFrom
+			set iCash to iCash - (700 - iFrom)
+			SetVariable "iCash" iCash CCCore
+			SetVariable "iOwner" iOwner CCCore
+			let iN := (GetVariable "iAssets" CCCore) + 700
+			SetVariable "iAssets" iN CCCore
+			let iN := (GetVariable "iBuildings" CCCore) + 700
+			SetVariable "iBuildings" iN CCCore
+			ar_Append aWR iA
+			ar_Append aWO 1
+			set iOut to 1
+		endif
+	endif
+	SetFunctionValue iOut
+end

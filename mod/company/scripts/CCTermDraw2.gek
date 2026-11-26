@@ -39,6 +39,13 @@ array_var aGood
 array_var aRole
 array_var aTownN
 array_var aKindN
+array_var aTraitN
+int iTier
+array_var aCT
+array_var aCG
+array_var aCP
+array_var aCD
+array_var aCM
 string_var sT
 string_var sN
 string_var sR
@@ -47,10 +54,11 @@ begin Function {}
 	let iScreen := GetVariable "iScreen" CCTerm
 	let iPick := GetVariable "iPick" CCTerm
 	let iConfirm := GetVariable "iConfirm" CCTerm
-	let aGood := Ar_List "water", "powder", "ammo", "dirty", "herbs", "materials"
-	let aRole := Ar_List "driver", "guard"
-	let aTownN := Ar_List "GS", "PR"
+	let aGood := Ar_List "water", "powder", "ammo", "dirty", "herbs", "materials", "meat"
+	let aRole := Ar_List "driver", "guard", "trader", "clerk"
+	let aTownN := Ar_List "GS", "PR", "SL", "MO"
 	let aKindN := Ar_List "empty", "keep stocked", "sell above", "pay at most"
+	let aTraitN := Ar_List "", "Haggler", "Cautious", "Reckless", "Drinker", "NCR veteran", "Family man", "Ambitious", "Steady"
 	set iRow to 0
 
 	if iScreen == 9
@@ -130,51 +138,111 @@ begin Function {}
 				let sR := "high"
 			endif
 			let sT := aCU[iPick]
+			; M2 (tier 2): Nerve and the trait
+			let iTier := GetVariable "iTier" CCCore
+			if iTier >= 2
+				let aCT := GetArrayVariable "aCandNerve" CCCore
+				let iA := aCT[iPick]
+				let sT := sv_Construct "%z Nerve %.0f." sT iA
+				let aCT := GetArrayVariable "aCandTrait" CCCore
+				if eval (aCT[iPick])
+					let sN := aTraitN[aCT[iPick]]
+					let sT := sv_Construct "%z %z." sT sN
+				endif
+			endif
 			if eval (aCC[iPick])
 				let sT := sv_Construct "%z Honesty: %z." sT sR
 			endif
 			Console "SetTerminalMenuItemText CCOfficeTerm 2 0 %q%z%q" sT
+			; a driver for each wagon (wagon 1 and aWagonRoad)
+			let aCT := GetArrayVariable "aWagonRoad" CCCore
 			set iDriver to 0
 			if eval (aCR[iPick] == 0)
+				let iDriver := 0 - (ar_Size aCT)
 				set iK to 0
 				while iK < ar_Size aSR
 					if eval (aSR[iK] == 0)
-						set iDriver to 1
+						set iDriver to iDriver + 1
 					endif
 					set iK to iK + 1
 				loop
 			endif
+			set iRow to 2
 			if eval ((ar_Size aSR) >= 10)
 				Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qHIRE: the books are full (10)%q"
-			elseif iDriver
+			elseif eval (iDriver > 0 && (ar_Size aCT) > 0)
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qHIRE: a driver for each wagon%q"
+			elseif iDriver > 0
 				Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qHIRE: one driver is enough%q"
+			elseif iTier >= 2
+				let iA := iN - 2
+				if iA < 1
+					set iA to 1
+				endif
+				let iK := iN + 3
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qHIRE fair, %.0f a day%q" iN
+				Console "SetTerminalMenuItemText CCOfficeTerm 2 1 %qLoyalty starts at 55.%q"
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qHIRE low, %.0f a day%q" iA
+				Console "SetTerminalMenuItemText CCOfficeTerm 2 2 %qLoyalty starts at 45.%q"
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 3 %qHIRE generous, %.0f a day%q" iK
+				Console "SetTerminalMenuItemText CCOfficeTerm 2 3 %qLoyalty starts at 65.%q"
+				set iRow to 4
 			else
 				Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qHIRE for %.0f a day%q" iN
 			endif
 			if eval (aCC[iPick])
-				Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qHONESTY  %z%q" sR
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qHONESTY  %z%q" iRow sR
 			else
-				Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qREFERENCE CHECK  10 caps%q"
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qREFERENCE CHECK  10 caps%q" iRow
 			endif
-			set iRow to 3
+			set iRow to iRow + 1
 		endif
 
 	elseif iScreen == 12
-		; Contracts: Primm's trust, then the running contract or the offer
+		; Contracts: the first contract's buyer's trust, then 3 rows for each running contract
 		let aTrust := GetArrayVariable "aTrust" CCCore
-		let iA := aTrust[1]
-		Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qPRIMM TRUST %.0f%q" iA
+		let aCT := GetArrayVariable "aConTown" CCCore
+		set iK to 1
+		if eval ((ar_Size aCT) > 0)
+			let iK := aCT[0]
+		endif
+		let iA := aTrust[iK]
+		let sR := call CCTextFn 3 iK
+		let sT := sv_Construct "%z" sR
+		let sT := sv_ToUpper sT
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %q%z TRUST %.0f%q" sT iA
 		set iRow to 1
-		if eval (GetVariable "iConOn" CCCore)
-			let iA := GetVariable "iConPrice" CCCore
-			Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qWATER 4 crates every 3d at %.0f%q" iA
-			let iA := GetVariable "iConNext" CCCore
-			let iN := 28 + (GetVariable "iConStart" CCCore)
-			Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qNEXT day %.0f  ENDS day %.0f%q" iA iN
-			let iA := GetVariable "iConDone" CCCore
-			let iN := GetVariable "iConMissed" CCCore
-			Console "SetTerminalMenuItemText CCOfficeTerm 1 3 %qDELIVERED %.0f  MISSED %.0f%q" iA iN
-			set iRow to 4
+		if eval ((ar_Size aCT) > 0)
+			let aCG := GetArrayVariable "aConGood" CCCore
+			let aCP := GetArrayVariable "aConPrice" CCCore
+			let aCN := GetArrayVariable "aConNext" CCCore
+			let aCS := GetArrayVariable "aConStart" CCCore
+			let aCD := GetArrayVariable "aConDone" CCCore
+			let aCM := GetArrayVariable "aConMissed" CCCore
+			set iK to 0
+			while iK < ar_Size aCT
+				let iA := aCG[iK]
+				let sR := call CCTextFn 4 iA
+				let sT := sv_Construct "%z" sR
+				let sT := sv_ToUpper sT
+				let iA := aCP[iK]
+				if eval (aCT[iK] == 1)
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q%z 4 crates every 3d at %.0f%q" iRow sT iA
+				else
+					let sN := aTownN[aCT[iK]]
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q%z 4 crates every 3d at %.0f to %z%q" iRow sT iA sN
+				endif
+				let iA := aCN[iK]
+				let iN := 28 + aCS[iK]
+				set iRow to iRow + 1
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qNEXT day %.0f  ENDS day %.0f%q" iRow iA iN
+				let iA := aCD[iK]
+				let iN := aCM[iK]
+				set iRow to iRow + 1
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qDELIVERED %.0f  MISSED %.0f%q" iRow iA iN
+				set iRow to iRow + 1
+				set iK to iK + 1
+			loop
 		else
 			let aMK := GetArrayVariable "aMemoKind" CCCore
 			set iN to 0
@@ -251,6 +319,8 @@ begin Function {}
 
 	if iScreen == 15
 		let iRow := call CCBuildFn 0
+	elseif iScreen == 16
+		let iRow := call CCTownsFn 0 0
 	endif
 
 	Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qBACK%q" iRow

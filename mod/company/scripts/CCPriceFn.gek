@@ -2,7 +2,8 @@ scn CCPriceFn
 
 ; One crate's price in whole caps (tools/company_model.py Company.price): the same expression, in
 ; the same order, evaluated in doubles, rounded half up. iSide 0 = the company buys from the town,
-; 1 = the company sells to the town.
+; 1 = the company sells to the town. M2: the spread is less the best trader's cut (CCCore fCut, set by
+; CCWagesFn), never under 2%.
 
 float fAnchor
 float fStock
@@ -10,12 +11,17 @@ float fUse
 float fTrust
 int iSide
 float fP
+float fS
 
 begin Function {fAnchor fStock fUse fTrust iSide}
+	let fS := 0.1 - 0.08 * fTrust / 100 - (GetVariable "fCut" CCCore)
+	if fS < 0.02
+		set fS to 0.02
+	endif
 	if iSide == 0
-		let fP := Floor ((fAnchor * (0.5 + 1 / (1 + fStock / (3 * fUse)))) * (1 + (0.1 - 0.08 * fTrust / 100)) + 0.5)
+		let fP := Floor ((fAnchor * (0.5 + 1 / (1 + fStock / (3 * fUse)))) * (1 + fS) + 0.5)
 	else
-		let fP := Floor ((fAnchor * (0.5 + 1 / (1 + fStock / (3 * fUse)))) * (1 - (0.1 - 0.08 * fTrust / 100)) + 0.5)
+		let fP := Floor ((fAnchor * (0.5 + 1 / (1 + fStock / (3 * fUse)))) * (1 - fS) + 0.5)
 	endif
 	SetFunctionValue fP
 end

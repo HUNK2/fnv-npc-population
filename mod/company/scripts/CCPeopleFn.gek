@@ -1,0 +1,152 @@
+scn CCPeopleFn
+
+; Staff loyalty and the bookkeeper (tools/company_model.py Company._week_people, _loyal and the raise
+; memo in _settle_memos; M2 plan 2.5). Works on CCCore's arrays in place. Traits (aStaffTrait): 0 none,
+; 1 Haggler, 2 Cautious, 3 Reckless, 4 Drinker, 5 NCR veteran, 6 Family man, 7 Ambitious, 8 Steady.
+; Loyalty 0 to 100; aStaffWhy holds each person's last 4 reasons ("paid on time +5").
+; iAct 1: bill day (CCCore iBillsPaid): +5 paid, -10 late; the trait's weekly loyalty (Cautious -2,
+;         Drinker -3, Family man +5, Ambitious -3, Steady +2); Ambitious +1 Skill (to 90); a Strict
+;         bookkeeper costs each clerk 5. The bookkeeper (iBookkeeper 1 Strict, 2 Normal, 3 Lenient)
+;         catches a skimmer (honesty under 30) with 100, 50, 0 in 100 (roll key 90 + the person's place
+;         on the books at the start). Under 20 they leave; under 35 a raise memo (kind 3, 3 days).
+; iAct 2: settle raise memo iIdx with answer iPick: 0 a raise of 25% (+20), 1 refuse (-10, default).
+
+int iAct
+int iIdx
+int iPick
+int iK
+int iI
+int iN
+int iJ
+int iDay
+int iSeed
+int iCatch
+int iPaid
+int iBk
+int iGone
+array_var aSN
+array_var aSR
+array_var aSS
+array_var aSH
+array_var aSW
+array_var aSL
+array_var aST
+array_var aWhy
+array_var aMK
+array_var aMD
+array_var aMDue
+array_var aMP
+array_var aMX
+array_var aMW
+array_var aTL
+array_var aTN
+string_var sName
+string_var sR
+
+begin Function {iAct iIdx iPick}
+	let aSN := GetArrayVariable "aStaffName" CCCore
+	let aSR := GetArrayVariable "aStaffRole" CCCore
+	let aSS := GetArrayVariable "aStaffSkill" CCCore
+	let aSH := GetArrayVariable "aStaffHon" CCCore
+	let aSW := GetArrayVariable "aStaffWage" CCCore
+	let aSL := GetArrayVariable "aStaffLoyal" CCCore
+	let aST := GetArrayVariable "aStaffTrait" CCCore
+	let aWhy := GetArrayVariable "aStaffWhy" CCCore
+	let iDay := GetVariable "iDay" CCCore
+
+	if iAct == 1
+		let iSeed := GetVariable "iSeed" CCCore
+		let iPaid := GetVariable "iBillsPaid" CCCore
+		let iBk := GetVariable "iBookkeeper" CCCore
+		set iCatch to 0
+		if iBk == 1
+			set iCatch to 100
+		elseif iBk == 2
+			set iCatch to 50
+		endif
+		let aTL := Ar_List 0, 0, (0 - 2), 0, (0 - 3), 0, 5, (0 - 3), 2
+		let aTN := Ar_List "", "haggler", "cautious", "reckless", "drinker", "ncr veteran", "family man", "ambitious", "steady"
+		let aMK := GetArrayVariable "aMemoKind" CCCore
+		let aMW := GetArrayVariable "aMemoWho" CCCore
+		set iK to 0
+		set iI to 0
+		while iK < ar_Size aSN
+			set iGone to 0
+			if iPaid == 1
+				call CCLoyalFn iK 5 "paid on time"
+			else
+				let iN := 0 - 10
+				call CCLoyalFn iK iN "wages late"
+			endif
+			if eval (aTL[aST[iK]] != 0)
+				let sR := aTN[aST[iK]]
+				let iN := aTL[aST[iK]]
+				call CCLoyalFn iK iN sR
+			endif
+			if eval (aST[iK] == 7 && aSS[iK] < 90)
+				let aSS[iK] += 1
+			endif
+			if eval (aSR[iK] == 3 && iBk == 1)
+				let iN := 0 - 5
+				call CCLoyalFn iK iN "a strict bookkeeper"
+			endif
+			if eval (aSH[iK] < 30 && iCatch > 0)
+				if eval (((iDay % 100) * 19 + (iSeed % 100) * 29 + (90 + iI) * 31) % 100 < iCatch)
+					set iGone to 1
+				endif
+			endif
+			if iGone == 0 && aSL[iK] < 20
+				set iGone to 2
+			endif
+			if iGone
+				call CCStaffFn 2 iK
+			else
+				if eval (aSL[iK] < 35 && (ar_Size aMK) < 3)
+					let sName := aSN[iK]
+					set iN to 0
+					set iJ to 0
+					while iJ < ar_Size aMK
+						if eval (aMK[iJ] == 3 && aMW[iJ] == sName)
+							set iN to 1
+						endif
+						set iJ to iJ + 1
+					loop
+					if iN == 0
+						let aMD := GetArrayVariable "aMemoDay" CCCore
+						let aMDue := GetArrayVariable "aMemoDue" CCCore
+						let aMP := GetArrayVariable "aMemoPick" CCCore
+						let aMX := GetArrayVariable "aMemoX" CCCore
+						ar_Append aMK 3
+						ar_Append aMD iDay
+						ar_Append aMDue (iDay + 3)
+						ar_Append aMP (0 - 1)
+						ar_Append aMX 0
+						ar_Append aMW sName
+					endif
+				endif
+				set iK to iK + 1
+			endif
+			set iI to iI + 1
+		loop
+
+	elseif iAct == 2
+		let aMW := GetArrayVariable "aMemoWho" CCCore
+		let sName := aMW[iIdx]
+		set iK to 0
+		while iK < ar_Size aSN
+			if eval (aSN[iK] == sName)
+				if iPick == 0
+					let aSW[iK] := Floor (aSW[iK] * 1.25 + 0.5)
+					call CCLoyalFn iK 20 "a raise"
+				else
+					let iN := 0 - 10
+					call CCLoyalFn iK iN "a raise refused"
+				endif
+				set iK to 99
+			endif
+			set iK to iK + 1
+		loop
+
+	endif
+	SetFunctionValue 1
+end

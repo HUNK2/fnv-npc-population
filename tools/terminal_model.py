@@ -12,6 +12,7 @@ from post_model import bill_estimate, days_to_bills   # noqa: F401 (used by the 
 
 FRONT, PRICES, LEDGER, ORDERS, ROUTES, SETTINGS, POST, MEMOS, NOTICE = range(9)
 STAFF, HIRE, CANDIDATE, CONTRACTS, STANDING, SLOT, BUILD = range(9, 16)
+TOWNS_SCREEN = 16               # M2 (tier 2): the towns' levels and trust, and the managers
 # BACK on a screen reached from another screen goes back there; otherwise to the front page.
 PARENT = {HIRE: STAFF, CANDIDATE: HIRE, SLOT: STANDING, STANDING: ORDERS}
 SO_LABEL = {None: 'empty', 'keep': 'keep stocked', 'sell_above': 'sell above', 'max_pay': 'pay at most'}
@@ -29,7 +30,10 @@ CLOSED = {'receivership': 'the lender took the office', 'takeover': 'the lender 
           'walked': 'you wound it up'}
 # The Build screen (tier 2): what each building does, padded as the game writes it.
 BUILD_TEXT = {'purifier': 'PURIFIER   5 dirty > 4 water  ', 'apothecary': 'APOTHECARY 1 herbs > 1 powder ',
-              'well': 'WELL RIG   4 dirty water a day', 'forager': 'FORAGER    4 herbs a day      '}
+              'well': 'WELL RIG   4 dirty water a day', 'forager': 'FORAGER    4 herbs a day      ',
+              'corral': 'CORRAL     4 brahmin a day    ', 'sandpit': 'SAND PIT   4 sand a day, PR   ',
+              'scrapyard': 'SCRAP YARD 4 scrap a day, PR  ', 'smokehouse': 'SMOKEHOUSE 1 brahmin > 4 meat ',
+              'quarry': 'QUARRY     4 stone a day, SL  ', 'stoneyard': 'STONE YARD stone, sand > mats '}
 EVENTS = {'': '', 'bandits_driven_off': '  driven off', 'bandits_took_cargo': '  bandits -%d',
           'bandits_wreck': '  WRECKED -%d', 'bandits_empty': '  nothing taken'}
 
@@ -132,12 +136,20 @@ def staff_rows(c, t):
 def candidate_rows(c, t):
     """(label, result text, action) for the Candidate screen rows before BACK."""
     p = c.candidates[t.pick]
-    text = p.rumour + (' Honesty: %s.' % c.honesty_band(p) if p.checked else '')
+    m2 = c.tier >= 2               # M2: Nerve and the trait shown, three offers
+    text = (p.rumour + (' Nerve %d.' % p.nerve if m2 else '') + (' %s.' % p.trait if p.trait else '')
+            + (' Honesty: %s.' % c.honesty_band(p) if p.checked else ''))
     rows = [(person_label(p), text, None)]
-    if c.can_hire(t.pick):
+    if c.can_hire(t.pick) and m2:
+        for offer in ('fair', 'low', 'generous'):
+            rows.append(('HIRE %s, %d a day' % (offer, max(1, p.wage + cm.OFFER_WAGE[offer])),
+                         'Loyalty starts at %d.' % (cm.LOYALTY_START + cm.OFFER_LOYALTY[offer]), ('hire', offer)))
+    elif c.can_hire(t.pick):
         rows.append(('HIRE for %d a day' % p.wage, '', 'hire'))
     elif len(c.staff) >= cm.STAFF_MAX:
         rows.append(('HIRE: the books are full (%d)' % cm.STAFF_MAX, '', None))
+    elif c.wagons:
+        rows.append(('HIRE: a driver for each wagon', '', None))
     else:
         rows.append(('HIRE: one driver is enough', '', None))
     rows.append((('HONESTY  %s' % c.honesty_band(p)) if p.checked else 'REFERENCE CHECK  %d caps' % cm.REF_CHECK,
@@ -149,18 +161,26 @@ def contract_row(c):
     k = c.contract
     if k is None:
         return 'CONTRACTS none running'
-    return 'CONTRACTS water %d/%d to PR' % (k.done, cm.CONTRACT_DAYS // k.every)
+    import post_model as pm
+    return 'CONTRACTS %s %d/%d to %s' % (pm.GOOD_NAME[k.good], k.done, cm.CONTRACT_DAYS // k.every, k.town)
 
 
 def contract_rows(c):
+    """The first contract's buyer's trust, then 3 rows for each running contract (M2: up to 3; a buyer
+    other than Primm is named after the price)."""
+    import post_model as pm
     k = c.contract
-    rows = ['PRIMM TRUST %d' % c.trust['PR']]
+    town = k.town if k else 'PR'
+    rows = ['%s TRUST %d' % (cm.TOWN_NAME[town].upper(), c.trust[town])]
     if k is None:
         offer = any(m.kind == 'contract' for m in c.memos)
         return rows + ['An offer is waiting in Memos.' if offer else 'No contract running.']
-    return rows + ['WATER %d crates every %dd at %d' % (k.crates, k.every, k.price),
-                   'NEXT day %d  ENDS day %d' % (k.next_due, k.start + cm.CONTRACT_DAYS),
-                   'DELIVERED %d  MISSED %d' % (k.done, k.missed)]
+    for k in c.contracts:
+        rows += ['%s %d crates every %dd at %d%s' % (pm.GOOD_NAME[k.good].upper(), k.crates, k.every, k.price,
+                                                     '' if k.town == 'PR' else ' to ' + k.town),
+                 'NEXT day %d  ENDS day %d' % (k.next_due, k.start + cm.CONTRACT_DAYS),
+                 'DELIVERED %d  MISSED %d' % (k.done, k.missed)]
+    return rows
 
 
 def slot_label(c, i):
@@ -208,7 +228,79 @@ def slot_click(c, t, row):
 def chains_row(c):
     if c.tier < 2:
         return 'CHAINS   none yet (tier 2)'
-    return 'CHAINS   %d of 4 built' % sum(c.built(b) for b in cm.BUILD_ORDER)
+    open_ = [b for b in cm.BUILD_ROWS if cm.BUILD_TIER[b] <= c.tier]
+    return 'CHAINS   %d of %d built' % (sum(c.built(b) for b in open_), len(open_))
+
+
+def towns_row(c):
+    return 'TOWNS    %d trusted, managers %d of 2' % (sum(1 for t in cm.TOWNS if c.trust[t] >= cm.TIER3_TRUST),
+                                                     len(c.managers))
+
+
+def wagon_rows(c):
+    """The M2 Wagons screen (tier 2): wagon 1 as in M1, then a row for the Sloan road and the Outpost road:
+    its wagon (runs or idle), BUY one, or the tier that opens it."""
+    rows = [('WAGON 1  home  cover %d' % c.cover() if c.has_driver() else 'WAGON 1  home  NO DRIVER')
+            if c.wagon_ok else 'WAGON 1  none: BUY one for %d' % (cm.WAGON + cm.BRAHMIN_PAIR)]
+    running = [road for _, road in c.running_roads()]
+    for road in (2, 3):
+        name = pm.ROAD_NAME[road]
+        mine = [i for i, w in enumerate(c.wagons) if w.road == road]
+        if mine:
+            rows.append('WAGON %d  %s  %s' % (mine[0] + 2, name, 'runs' if road in running else 'idle'))
+        elif c.tier < cm.ROAD_TIER[road]:
+            rows.append('%s  opens at tier %d' % (name.upper(), cm.ROAD_TIER[road]))
+        else:
+            rows.append('%s  BUY a wagon for %d' % (name.upper(), cm.WAGON + cm.BRAHMIN_PAIR))
+    return rows
+
+
+def town_rows(c):
+    return ['%-15s %-8s trust %d' % (cm.TOWN_NAME[t], cm.LEVELS[c.level[t]], c.trust[t]) for t in cm.TOWNS]
+
+
+MANAGER_LABEL = {'bookkeeper': 'BOOKKEEPER', 'route': 'ROUTE MGR '}
+
+
+def manager_rows(c):
+    """One row a manager: the policy (select: the next one), HIRE at 40 a day, or the tier that opens it."""
+    rows = []
+    for kind in cm.MANAGERS:
+        if kind in c.managers:
+            rows.append('%s  %s  (select: change)' % (MANAGER_LABEL[kind], c.managers[kind]))
+        elif c.tier < cm.MANAGERS[kind]:
+            rows.append('%s  opens at tier %d' % (MANAGER_LABEL[kind], cm.MANAGERS[kind]))
+        else:
+            rows.append('%s  HIRE, %d a day' % (MANAGER_LABEL[kind], cm.MANAGER_WAGE))
+    return rows
+
+
+SELL_NAME = {'water': 'purified water', 'powder': 'healing powder'}
+
+
+def sell_rows(c):
+    """The tier 2 perk: sell the company a crate (10 bottles or 10 powders) at 0.8 of the anchor."""
+    if c.tier < 2:
+        return []
+    rows = []
+    for g, n in cm.BUY_FROM_PLAYER.items():
+        left = cm.BUY_DAY_MAX - (c.bought_today if c.bought_day == c.day else 0)
+        rows.append('SELL %d %s: %d (%d left)' % (n, SELL_NAME[g], c.buy_price_from_player(g), left))
+    return rows
+
+
+def sell_click(c, good):
+    if c.carried[good] >= cm.BUY_FROM_PLAYER[good] and c.buy_from_player(good, 1):
+        c.carried[good] -= cm.BUY_FROM_PLAYER[good]
+
+
+def manager_click(c, kind):
+    """Hire with the middle policy (Normal, Balanced); once hired, each select moves to the next policy."""
+    pols = cm.POLICIES[kind]
+    if kind in c.managers:
+        c.set_policy(kind, pols[(pols.index(c.managers[kind]) + 1) % len(pols)])
+    else:
+        c.hire_manager(kind, pols[1])
 
 
 def build_rows(c):
@@ -223,8 +315,16 @@ def build_rows(c):
                 'STRIKES  %d in 56 days (needs 0)' % strikes,
                 'BACK']
     rows = ['MONEY  cash %d, own money %d' % (c.cash, c.owner_funds)]
-    for b in cm.BUILD_ORDER:
-        rows.append('%s %s' % (BUILD_TEXT[b], 'BUILT' if c.built(b) else '%d' % c.build_cost(b)))
+    for b in cm.BUILD_ROWS:
+        if c.built(b):
+            state = 'BUILT'
+        elif cm.BUILD_TIER[b] > c.tier:
+            state = 'tier %d' % cm.BUILD_TIER[b]
+        elif cm.BUILD_DEED.get(b) and cm.BUILD_DEED[b] not in c.deeds:
+            state = 'deed'
+        else:
+            state = '%d' % c.build_cost(b)
+        rows.append('%s %s' % (BUILD_TEXT[b], state))
     return rows + ['BACK']
 
 
@@ -273,6 +373,8 @@ def labels(c, t):
                 'ORDERS   %d pending (apply at 06:00)' % len(c.queue_list),
                 'SETTINGS',
                 notice_row(c)]
+        if c.tier >= 2:
+            rows.append(towns_row(c))
         return rows
     if t.screen == PRICES:
         o, d = TOWNS[t.direction], TOWNS[1 - t.direction]
@@ -299,6 +401,12 @@ def labels(c, t):
                 'CANCEL all pending orders',
                 'STANDING ORDERS  %d of %d set' % (sum(1 for o in c.standing if o), cm.SLOTS),
                 'BACK']
+    if t.screen == ROUTES and c.tier >= 2:
+        rows = wagon_rows(c)
+        for r in c.history[-3:][::-1]:
+            ev = EVENTS[r.event] % r.event_loss if '%' in EVENTS[r.event] else EVENTS[r.event]
+            rows.append('DAY %d  net %d%s' % (r.day, r.margin, ev))
+        return rows + ['BACK']
     if t.screen == ROUTES:
         rows = [('WAGON 1  home  cover %d' % c.cover() if c.has_driver() else 'WAGON 1  home  NO DRIVER')
                 if c.wagon_ok else
@@ -307,6 +415,8 @@ def labels(c, t):
             ev = EVENTS[r.event] % r.event_loss if '%' in EVENTS[r.event] else EVENTS[r.event]
             rows.append('DAY %d  net %d%s' % (r.day, r.margin, ev))
         return rows + ['BACK']
+    if t.screen == TOWNS_SCREEN:
+        return town_rows(c) + manager_rows(c) + sell_rows(c) + ['BACK']
     if t.screen == SETTINGS:
         return ['PLAN EVERY DAY   %s' % ('ON' if c.auto else 'OFF'), 'BACK']
     if t.screen == POST:
@@ -343,7 +453,7 @@ def click(c, t, row):
             c.queue_list = c.plan()
         else:
             t.screen = {2: POST, 3: MEMOS, 4: ROUTES, 5: PRICES, 7: STAFF, 8: CONTRACTS, 9: LEDGER,
-                        10: ORDERS, 11: SETTINGS, 12: NOTICE}.get(row, FRONT)
+                        10: ORDERS, 11: SETTINGS, 12: NOTICE, 13: TOWNS_SCREEN}.get(row, FRONT)
             if row == 6:
                 t.screen = BUILD
         return
@@ -367,8 +477,8 @@ def click(c, t, row):
     elif t.screen == SLOT:
         slot_click(c, t, row)
     elif t.screen == BUILD:
-        if 1 <= row <= len(cm.BUILD_ORDER) and c.can_build(cm.BUILD_ORDER[row - 1]):
-            c.build(cm.BUILD_ORDER[row - 1])
+        if 1 <= row <= len(cm.BUILD_ROWS) and c.can_build(cm.BUILD_ROWS[row - 1]):
+            c.build(cm.BUILD_ROWS[row - 1])
     elif t.screen == STAFF:
         act = staff_rows(c, t)[row][1]
         if act == 'hire':
@@ -382,13 +492,21 @@ def click(c, t, row):
         t.pick, t.screen = row, CANDIDATE
     elif t.screen == CANDIDATE:
         act = candidate_rows(c, t)[row][2]
-        if act == 'hire':
-            c.hire(t.pick)
+        if act == 'hire' or (act and act[0] == 'hire'):
+            c.hire(t.pick, 'fair' if act == 'hire' else act[1])
             t.screen = HIRE
         elif act == 'check':
             c.reference_check(t.pick)
     elif t.screen == ROUTES and row == 0:
         c.buy_wagon()
+    elif t.screen == ROUTES and c.tier >= 2 and row in (1, 2):
+        c.buy_road(row + 1)
+    elif t.screen == TOWNS_SCREEN and row >= len(cm.TOWNS):
+        k = row - len(cm.TOWNS)
+        if k < len(cm.MANAGERS):
+            manager_click(c, list(cm.MANAGERS)[k])
+        else:
+            sell_click(c, list(cm.BUY_FROM_PLAYER)[k - len(cm.MANAGERS)])
     elif t.screen == NOTICE:
         act = notice_rows(c, t)[row][2]
         if act == 'rescue':

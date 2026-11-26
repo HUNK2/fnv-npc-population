@@ -19,6 +19,12 @@ scn CCCoreScript
 ; supply contract (iCon*: 4 crates of water to Primm every 3 days for 28 days; memo kind 2 is its
 ; offer at iOfferPrice); three standing order slots aSO* (kind 0 empty, 1 keep stocked, 2 sell above,
 ; 3 pay at most) used by CCPlanFn.
+; M2 (plan 2.3 to 2.5; iInit 5, CCUpgradeFn): towns 0 Goodsprings, 1 Primm, 2 Sloan, 3 Mojave Outpost;
+; 11 goods (6 smoked meat; site goods 7 brahmin, 8 stone, 9 sand, 10 scrap), cells town*12 + good, a
+; warehouse per town (aWh), markets in aMkt. Roads 1 Goodsprings - Primm, 2 Goodsprings - Sloan, 3 Primm -
+; Outpost; wagons 2 and 3 in aWagonRoad/aWagonOk (CCRoadsFn); the trips in CCTripFn, sites, workshops and
+; town levels in CCWorkFn, loyalty and the bookkeeper in CCPeopleFn, contracts in the aCon* arrays
+; (CCContractFn). Memo kind 3 is a raise (aMemoWho); aMemoX carries a memo's road or contract offer.
 
 int iInit
 int iFounded
@@ -183,6 +189,48 @@ array_var aSOGood
 array_var aSOValue
 int iGhostPaid
 int iTierUp
+float fCut
+int iHireOffer
+int iBookkeeper
+int iRouteMgr
+int iGangersTown
+int iEvRoad
+int iBoughtDay
+int iBoughtToday
+int iDeedQuarry
+int iNeedFounders
+array_var aMkt
+array_var aBaseUse
+array_var aLevel
+array_var aMetDays
+array_var aUnmetDays
+array_var aMatIn
+array_var aWagonRoad
+array_var aWagonOk
+array_var aStaffNerve
+array_var aStaffLoyal
+array_var aStaffTrait
+array_var aStaffRes
+array_var aStaffWhy
+array_var aCandNerve
+array_var aCandTrait
+array_var aCandRes
+array_var aConTown
+array_var aConGood
+array_var aConRoad
+array_var aConOrigin
+array_var aConPrice
+array_var aConStart
+array_var aConNext
+array_var aConDone
+array_var aConMissed
+array_var aMemoX
+array_var aMemoWho
+array_var aDanger
+string_var sP2
+int iDayRuns
+int iDayRoad
+int iDayConTG
 
 begin GameMode
 
@@ -254,9 +302,46 @@ begin GameMode
 		let aSOGood := Ar_List 0, 0, 0
 		let aSOValue := Ar_List 0, 0, 0
 		set iLastOffer to -99
-		; the founding driver and guard
+		; the founding driver and guard, once the M2 staff arrays exist
+		set iNeedFounders to 1
+	endif
+	; the M2 ledger (games saved before M2 have iInit 4): CCUpgradeFn fills these and widens the rest
+	if iInit == 4
+		set iInit to 5
+		let aMkt := Ar_Construct "array"
+		let aBaseUse := Ar_Construct "array"
+		let aLevel := Ar_List 1, 2, 0, 0
+		let aMetDays := Ar_List 0, 0, 0, 0
+		let aUnmetDays := Ar_List 0, 0, 0, 0
+		let aMatIn := Ar_List 0, 0, 0, 0
+		let aWagonRoad := Ar_Construct "array"
+		let aWagonOk := Ar_Construct "array"
+		let aStaffNerve := Ar_Construct "array"
+		let aStaffLoyal := Ar_Construct "array"
+		let aStaffTrait := Ar_Construct "array"
+		let aStaffRes := Ar_Construct "array"
+		let aStaffWhy := Ar_Construct "array"
+		let aCandNerve := Ar_Construct "array"
+		let aCandTrait := Ar_Construct "array"
+		let aCandRes := Ar_Construct "array"
+		let aConTown := Ar_Construct "array"
+		let aConGood := Ar_Construct "array"
+		let aConRoad := Ar_Construct "array"
+		let aConOrigin := Ar_Construct "array"
+		let aConPrice := Ar_Construct "array"
+		let aConStart := Ar_Construct "array"
+		let aConNext := Ar_Construct "array"
+		let aConDone := Ar_Construct "array"
+		let aConMissed := Ar_Construct "array"
+		let aMemoX := Ar_Construct "array"
+		let aMemoWho := Ar_Construct "array"
+		call CCUpgradeFn
+	endif
+	if iNeedFounders
+		set iNeedFounders to 0
 		call CCStaffFn 5 0
 	endif
+	let aDanger := Ar_List 60, 60, 30, 60
 
 	; --- founding: Alice's letter of credit (Company.found) ---
 	if iFoundNow == 1 && iFounded == 0
@@ -298,6 +383,9 @@ begin GameMode
 		set iPrepaid to 0
 		set iStageNote to 0
 		set iDayCon to 0
+		set iDayRuns to 0
+		set iDayRoad to 1
+		set iDayConTG to 100
 		set iDaySigned to 0
 		set iSkim to 0
 		let iShield := call CCShieldFn
@@ -313,7 +401,9 @@ begin GameMode
 				if eval (aMemoKind[iI] == 0)
 					if iK < 0
 						set iK to 2
-						if eval (iConOn && iConNext == aMemoDue[iI])
+						let iJ := aMemoDue[iI]
+						let iN := call CCContractFn 4 iJ 0
+						if iN
 							set iK to 0
 						endif
 					endif
@@ -323,7 +413,13 @@ begin GameMode
 					if iK < 0
 						set iK to 2
 					endif
-					call CCContractFn 3 iK
+					call CCContractFn 3 iI iK
+				elseif eval (aMemoKind[iI] == 3)
+					; a raise: 0 give 25%, 1 refuse (the default)
+					if iK < 0
+						set iK to 1
+					endif
+					call CCPeopleFn 2 iI iK
 				elseif iK == 0
 					set iPay to 300
 					if iLoan < iPay
@@ -340,6 +436,8 @@ begin GameMode
 				ar_Erase aMemoDay iI
 				ar_Erase aMemoDue iI
 				ar_Erase aMemoPick iI
+				ar_Erase aMemoX iI
+				ar_Erase aMemoWho iI
 			endif
 			set iI to iI - 1
 		loop
@@ -372,8 +470,8 @@ begin GameMode
 			endif
 		endif
 
-		; the trip (Company.tick): out leg Goodsprings -> Primm, back leg Primm -> Goodsprings. A road memo
-		; may keep the wagon home (the bandits wait for nothing) or hire a gun for 25 caps.
+		; the trips (Company.tick): every running road, its contract crates, its legs, the director's
+		; event on the event road (CCTripFn). A road memo may keep the wagon home or hire a gun for 25.
 		set iDayWagon to iWagonOk
 		set iDayMode to iRoadMode
 		set iRoadMode to 0
@@ -383,129 +481,7 @@ begin GameMode
 		if iCover > 0
 			set iDayCrew to 1
 		endif
-		let iFires := call CCFiresFn iDay, iLastEventDay, iSeed
-		set iTripRuns to 0
-		if iWagonOk && iDayCrew && iDayMode == 2
-			if iFires
-				set iLastEventDay to iDay
-			endif
-		elseif iWagonOk && iDayCrew
-			set iTripRuns to 1
-			if iDayMode == 1
-				set iPay to 25
-				if iCash < iPay
-					set iPay to iCash
-				endif
-				set iCash to iCash - iPay
-				set iDayCosts to iDayCosts + iPay
-			endif
-		endif
-		; a contract delivery day (Company._contract): 4 crates of water ride the Goodsprings leg first,
-		; from the warehouse, then bought at Goodsprings, sold at the contract price without moving
-		; Primm's stock; a delivery the wagon cannot make costs 10% of its value and Primm trust 3
-		set iLoaded to 0
-		if iConOn && iConNext == iDay
-			let iLoaded := call CCContractFn 1 0
-		endif
-		if iTripRuns
-			set iLeg to 0
-			while iLeg < 2
-				set iOrigin to iLeg
-				set iDest to 1 - iLeg
-				; before the return leg the director may send bandits (Company._event): they rob the
-				; strongbox, the day's Primm takings: 30% of it, all of it in a wreck, at most 3 days of costs
-				if iLeg == 1 && iFires
-					set iLastEventDay to iDay
-					; P(clean) = r^2 / (1 + r^2), r = cover / danger 60: 36 in 100 at cover 45, 61 at 75
-					set iN to iCover
-					if iDayMode == 1
-						set iN to iN + 30
-					endif
-					let fM := iN / 60
-					let iClean := Floor (100 * fM * fM / (1 + fM * fM) + 0.5)
-					if eval (((iDay % 100) * 19 + (iSeed % 100) * 29 + 62) % 100 < iClean)
-						set iDayEvent to 1
-					elseif iDaySales <= 0
-						set iDayEvent to 4
-					else
-						let iWreck := ((iDay % 100) * 19 + (iSeed % 100) * 29 + 93) % 100 < 33
-						if iWreck
-							set iValue to iDaySales
-							set iDayEvent to 3
-						else
-							let iValue := Floor (0.3 * iDaySales + 0.5)
-							set iDayEvent to 2
-						endif
-						let iBurn := Floor (iWages + 6 + (70 + Floor (0.04 * iLoan + 0.5) + (iLoan < 300) * iLoan + (iLoan >= 300) * 300) / 7 + 0.5)
-						if iValue > 3 * iBurn
-							set iValue to 3 * iBurn
-						endif
-						if iShield
-							set iMargin to 0
-							if eval ((ar_Size aHistSales) > 0)
-								let iMargin := aHistSales[(ar_Size aHistSales) - 1] - aHistCosts[(ar_Size aHistCosts) - 1]
-							endif
-							if iMargin < 0
-								set iMargin to 0
-							endif
-							if iValue > iMargin
-								set iValue to iMargin
-							endif
-						endif
-						set iCash to iCash - iValue
-						set iDayCosts to iDayCosts + iValue
-						set iDayLoss to iValue
-					endif
-				endif
-				let aLeg := Ar_Construct "array"
-				set iLegCap to 8
-				if iOrigin == 0
-					set iLegCap to 8 - iLoaded
-				endif
-				set iI to 0
-				while iI < ar_Size aQueue
-					let iCode := aQueue[iI]
-					if eval (Floor (iCode / 10) == iOrigin && (ar_Size aLeg) < iLegCap)
-						let iG := iCode % 10
-						if eval (iOrigin == 0 && aWh[iG] > 0)
-							let aWh[iG] -= 1
-							ar_Append aLeg iG
-						else
-							let iCost := call CCPriceFn aAnchor[iG], aStock[iOrigin * 6 + iG], aUse[iOrigin * 6 + iG], aTrust[iOrigin], 0
-							if iCost <= iCash
-								set iCash to iCash - iCost
-								set iDayCosts to iDayCosts + iCost
-								let aStock[iOrigin * 6 + iG] -= 1
-								ar_Append aLeg iG
-							endif
-						endif
-					endif
-					set iI to iI + 1
-				loop
-				set iI to 0
-				while iI < ar_Size aLeg
-					let iG := aLeg[iI]
-					let iSale := call CCPriceFn aAnchor[iG], aStock[iDest * 6 + iG], aUse[iDest * 6 + iG], aTrust[iDest], 1
-					set iCash to iCash + iSale
-					set iDaySales to iDaySales + iSale
-					set iWeekSales to iWeekSales + iSale
-					let aStock[iDest * 6 + iG] += 1
-					if iOrigin == 0
-						set iDayOut to iDayOut + 1
-					else
-						set iDayBack to iDayBack + 1
-					endif
-					set iI to iI + 1
-				loop
-				if eval ((ar_Size aLeg) > 0)
-					let aTrust[iDest] += 1
-					if eval (aTrust[iDest] > 100)
-						let aTrust[iDest] := 100
-					endif
-				endif
-				set iLeg to iLeg + 1
-			loop
-		endif
+		call CCTripFn
 		let aQueue := Ar_Construct "array"
 
 		; staff with honesty under 30 skim 2% of the day's sales each (Company._skim)
@@ -526,29 +502,8 @@ begin GameMode
 			set iDayCosts to iDayCosts + iSkim
 		endif
 
-		; workshops (Company.run_workshops): raw sites, then purifier 5 dirty -> 4 water, apothecary 1 -> 1
-		if eval (aSites[0])
-			let aWh[3] += 4
-		endif
-		if eval (aSites[1])
-			let aWh[4] += 4
-		endif
-		if eval (aWorkshops[0])
-			set iN to 0
-			while aWh[3] >= 5 && iN + 4 <= 4
-				let aWh[3] -= 5
-				let aWh[0] += 4
-				set iN to iN + 4
-			loop
-		endif
-		if eval (aWorkshops[1])
-			set iN to 0
-			while aWh[4] >= 1 && iN + 1 <= 4
-				let aWh[4] -= 1
-				let aWh[1] += 1
-				set iN to iN + 1
-			loop
-		endif
+		; sites and workshops (Company.run_workshops, CCWorkFn 0)
+		call CCWorkFn 0
 
 		; running costs accrue daily, paid on bill day; wear is not cash
 		set iAccWages to iAccWages + iWages
@@ -560,7 +515,7 @@ begin GameMode
 
 		; overnight restock: short stock refills 25% of the gap, a glut drains 12%
 		set iK to 0
-		while iK < 12
+		while iK < 48
 			if eval (aStock[iK] < aNormal[iK])
 				let aStock[iK] := aStock[iK] + (aNormal[iK] - aStock[iK]) * 0.25
 			else
@@ -630,9 +585,28 @@ begin GameMode
 			endif
 		endif
 
+		; the week's loyalty and the bookkeeper (Company._week_people, CCPeopleFn 1)
+		if eval (iDay % 7 == 0)
+			call CCPeopleFn 1 0 0
+		endif
+
 		; this week's candidates on day 1 of each week (Company._new_candidates)
 		if eval (iDay % 7 == 1)
 			call CCStaffFn 4 0
+		endif
+
+		; town levels (Company._levels, CCWorkFn 1)
+		call CCWorkFn 1
+		; the Powder Gangers took Goodsprings: resident hires leave with the town
+		set iGangersTown to GetStageDone VMS16b 100
+		if iGangersTown
+			let iK := (ar_Size aStaffRes) - 1
+			while iK >= 0
+				if eval (aStaffRes[iK])
+					call CCStaffFn 2 iK
+				endif
+				set iK to iK - 1
+			loop
 		endif
 
 		; the debt ladder (Company._ladder): 2 grace, 3 final notice, 4 seized, 5 probation, 6 takeover;
@@ -696,13 +670,26 @@ begin GameMode
 			endif
 			set iK to iK + 1
 		loop
-		let iValue := iCash + iOwner + 200 * aWh[0] + 100 * aWh[1] + 200 * aWh[2] + 100 * aWh[3] + 60 * aWh[4] + 150 * aWh[5] + iAssets - iLoan - iArrears - iOwnerPaidIn
+		let iValue := iCash + iOwner + iAssets - iLoan - iArrears - iOwnerPaidIn
+		set iK to 0
+		while iK < 48
+			let iValue += aAnchor[iK % 12] * aWh[iK]
+			set iK to iK + 1
+		loop
 		set iTierUp to 0
 		if eval (iTier == 1 && iValue >= 1500 && iN == 0 && aTrust[0] >= 50 && iGhostTown)
 			set iTier to 2
 			set iTierUp to 1
 			set iLastEventDay to iDay
-			call CCBuildFn 6
+			call CCBuildFn 12
+		elseif iTier == 2 && iValue >= 18000 && iN == 0
+			; tier 3 (Company.tier_three_ready): earned worth 18,000, Liked (50) in two towns, a sheriff in Primm
+			let iK := (aTrust[0] >= 50) + (aTrust[1] >= 50) + (aTrust[2] >= 50) + (aTrust[3] >= 50)
+			if iK >= 2 && (iSheriff || GetQuestCompleted nVPrimmDeputyConv)
+				set iTier to 3
+				set iTierUp to 1
+				set iLastEventDay to iDay
+			endif
 		endif
 
 		ar_Append aHistCash iCash
@@ -725,11 +712,29 @@ begin GameMode
 		endif
 		set iRoadPosted to 0
 		if eval (iForecast == 1 && (ar_Size aMemoKind) < 3)
+			let iEvRoad := call CCRoadsFn 1 (iDay + 1)
 			ar_Append aMemoKind 0
 			ar_Append aMemoDay iDay
 			ar_Append aMemoDue (iDay + 1)
 			ar_Append aMemoPick (0 - 1)
+			ar_Append aMemoX iEvRoad
+			ar_Append aMemoWho " "
 			set iRoadPosted to 1
+			; the route manager answers it (Company.route_manager_pick): 1 Safe keeps it home, 2 Balanced
+			; hires a gun when the clean chance is under 60, 3 Fast sends it; then no letter
+			if iRouteMgr
+				set iK to 0
+				if iRouteMgr == 1
+					set iK to 2
+				elseif iRouteMgr == 2
+					let fM := iCover / aDanger[iEvRoad]
+					if eval (Floor (100 * fM * fM / (1 + fM * fM) + 0.5) < 60)
+						set iK to 1
+					endif
+				endif
+				let aMemoPick[(ar_Size aMemoPick) - 1] := iK
+				set iRoadPosted to 0
+			endif
 		endif
 		set iN to 0
 		set iK to 0
@@ -744,9 +749,11 @@ begin GameMode
 			ar_Append aMemoDay iDay
 			ar_Append aMemoDue (iDay + 3)
 			ar_Append aMemoPick (0 - 1)
+			ar_Append aMemoX 0
+			ar_Append aMemoWho " "
 		endif
-		; a supply contract offer from Primm's store (CCContractFn 2)
-		call CCContractFn 2 0
+		; a supply contract offer (CCContractFn 2)
+		call CCContractFn 2 0 0
 
 		; bills as on the front page (a quiet week): for the forecast letter and page 2
 		let iDtb := 7 - iDay % 7
@@ -827,13 +834,12 @@ begin GameMode
 			ar_Append aPostTitle sS
 		endif
 		if iRoadPosted
-			let fM := iCover / 60
+			let iJ := aDanger[iEvRoad]
+			let fM := iCover / iJ
 			let iN := Floor (100 * fM * fM / (1 + fM * fM) + 0.5)
-			if iConOn && iConNext == (iDay + 1)
-				let sS := sv_Construct "Bandit sign on the Primm road tomorrow: about 60 strong, our cover %.0f: %.0f in 100 to get through clean. Keep the wagon home tomorrow? Primm's water is due tomorrow." iCover iN
-			else
-				let sS := sv_Construct "Bandit sign on the Primm road tomorrow: about 60 strong, our cover %.0f: %.0f in 100 to get through clean. Keep the wagon home tomorrow?" iCover iN
-			endif
+			let sP1 := call CCTextFn 1 iEvRoad
+			let sP2 := call CCTextFn 2 (iDay + 1)
+			let sS := sv_Construct "Bandit sign on the %z tomorrow: about %.0f strong, our cover %.0f: %.0f in 100 to get through clean. Keep the wagon home tomorrow?%z" sP1 iJ iCover iN sP2
 			ar_Append aPostText sS
 			if iNewKind == 0
 				set iNewKind to 2
@@ -843,10 +849,11 @@ begin GameMode
 			ar_Append aPostTitle sS
 		endif
 		if iDayEvent == 2 || iDayEvent == 3
+			let sP1 := call CCTextFn 1 iEvRoad
 			if iDayEvent == 3
-				let sS := sv_Construct "Bandits took the whole strongbox on the Primm road: %.0f caps lost. The crew is unhurt." iDayLoss
+				let sS := sv_Construct "Bandits took the whole strongbox on the %z: %.0f caps lost. The crew is unhurt." sP1 iDayLoss
 			else
-				let sS := sv_Construct "Bandits robbed the wagon on the Primm road: %.0f caps lost. The crew is unhurt." iDayLoss
+				let sS := sv_Construct "Bandits robbed the wagon on the %z: %.0f caps lost. The crew is unhurt." sP1 iDayLoss
 			endif
 			ar_Append aPostText sS
 			if iNewKind == 0
@@ -857,13 +864,21 @@ begin GameMode
 			ar_Append aPostTitle sS
 		endif
 		if iTierUp
-			let sS := "Boss, we are an Outfit now. Our office next to the Prospector Saloon is open and Primm gave us a stall. The Build screen is open at the terminal: purifier, apothecary, well rig, forager hut."
+			if iTier == 3
+				let sS := "Boss, we are a caravan company now. Sloan and the Outpost gave us branches, the route manager can be hired, and the smokehouse and stone yard are on the Build screen."
+			else
+				let sS := "Boss, we are an Outfit now. Our office next to the Prospector Saloon is open and Primm gave us a stall. The Build screen is open at the terminal: purifier, apothecary, well rig, forager hut."
+			endif
 			ar_Append aPostText sS
 			if iNewKind == 0
 				set iNewKind to 7
 				let sNew := sS
 			endif
-			let sS := sv_Construct "LETTER day %.0f  an Outfit now" iDay
+			if iTier == 3
+				let sS := sv_Construct "LETTER day %.0f  a caravan company" iDay
+			else
+				let sS := sv_Construct "LETTER day %.0f  an Outfit now" iDay
+			endif
 			ar_Append aPostTitle sS
 		endif
 		while (ar_Size aPostText) > 3

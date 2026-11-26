@@ -64,6 +64,21 @@ def move(n):
     return bool(user32.SetWindowPos(h, None, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE))
 
 
+def focus():
+    """Bring the game window to the front: in the background the game drops to about 10 frames a
+    second and game time crawls. Windows only lets the foreground process hand focus over, so press
+    and release Alt first (the usual way round the foreground lock)."""
+    h = game_window()
+    if not h:
+        return False
+    user32 = ctypes.windll.user32
+    VK_MENU, KEYUP = 0x12, 0x2
+    user32.keybd_event(VK_MENU, 0, 0, 0)
+    user32.keybd_event(VK_MENU, 0, KEYUP, 0)
+    user32.ShowWindow(h, 5)
+    return bool(user32.SetForegroundWindow(h))
+
+
 def wanted_monitor():
     try:
         return int(json.loads(LOCAL.read_text(encoding='utf-8')).get('monitor', 0))
@@ -72,4 +87,7 @@ def wanted_monitor():
 
 
 if __name__ == '__main__':
+    if len(sys.argv) > 1 and sys.argv[1] == 'focus':
+        print('focused' if focus() else 'not focused')
+        sys.exit(0)
     print('moved' if move(int(sys.argv[1]) if len(sys.argv) > 1 else wanted_monitor() or 1) else 'not moved')
