@@ -1,4 +1,5 @@
-"""M1 company model: the spec for every number the in-game company shows (plan task 1.1).
+"""The company model: the spec for every number the in-game company shows (M1 plan task 1.1, widened
+in M2 task 2.1: 4 towns, site goods, 3 roads and up to 3 wagons, a warehouse per town).
 
 Rules from docs/design.md. Everything the game must reproduce is kept simple enough to write in an
 xNVSE script: whole caps rounded half up at the moment they are booked, stocks as doubles, seeded
@@ -12,18 +13,34 @@ every 7th day, the debt ladder, tier check, then the post: tomorrow's forecast, 
 """
 from dataclasses import dataclass, field
 
-GOODS = ('water', 'powder', 'ammo', 'dirty', 'herbs', 'materials')
-ANCHOR = {'water': 200, 'powder': 100, 'ammo': 200, 'dirty': 100, 'herbs': 60, 'materials': 150}
-# Starter trade (design: Goods and production chains): daily use, normal stock.
+GOODS = ('water', 'powder', 'ammo', 'dirty', 'herbs', 'materials')         # the M1 goods (price board order)
+# M2: smoked meat has markets; brahmin, stone, sand and scrap are site goods (no market: the company's
+# own sites make them for its own workshops). Game cells are town * 12 + good, in this order.
+ALL_GOODS = GOODS + ('meat', 'brahmin', 'stone', 'sand', 'scrap')
+SITE_GOODS = ('brahmin', 'stone', 'sand', 'scrap')
+ANCHOR = {'water': 200, 'powder': 100, 'ammo': 200, 'dirty': 100, 'herbs': 60, 'materials': 150,
+          'meat': 100, 'brahmin': 120, 'stone': 50, 'sand': 20, 'scrap': 30}
+TOWNS = ('GS', 'PR', 'SL', 'MO')
+TOWN_NAME = {'GS': 'Goodsprings', 'PR': 'Primm', 'SL': 'Sloan', 'MO': 'Mojave Outpost'}
+# Starter trade (design: Goods and production chains): daily use, normal stock. A good missing from a
+# town has no market there (design: a dash).
 STARTER = {
     'GS': {'water': (4, 34), 'powder': (2, 18), 'ammo': (4, 4), 'dirty': (1, 30), 'herbs': (1, 15),
-           'materials': (1, 0)},
+           'materials': (1, 0), 'meat': (4, 4)},
     'PR': {'water': (10, 14), 'powder': (4, 4), 'ammo': (2, 20), 'dirty': (2, 2), 'herbs': (1, 1),
-           'materials': (1, 10)},
+           'materials': (1, 10), 'meat': (6, 12)},
+    'SL': {'water': (6, 6), 'powder': (3, 3), 'ammo': (2, 2), 'dirty': (2, 2), 'materials': (2, 0),
+           'meat': (4, 2)},
+    'MO': {'water': (8, 12), 'powder': (2, 6), 'ammo': (4, 4), 'meat': (6, 6)},
 }
 PRIMM_AMMO_USE_NO_SHERIFF = 3
 ROUTE = ('GS', 'PR')
-TRUST_START = {'GS': 35, 'PR': 20}
+# M2 roads (my call: three, all half a day each way, one round trip a day); wagon n runs road n.
+ROADS = {1: ('GS', 'PR'), 2: ('GS', 'SL'), 3: ('PR', 'MO')}
+ROAD_DANGER = {1: 60, 2: 30, 3: 60}
+ROAD_TIER = {1: 1, 2: 2, 3: 3}         # the tier from which the road's wagon can be bought
+TRUST_START = {'GS': 35, 'PR': 20, 'SL': 20, 'MO': 20}
+SITE_LOAD = 4                          # a leg carries at most 4 crates of site goods (the rest is trade)
 CRATES_PER_LEG = 8
 MIN_MARGIN = 20
 SHORTAGE_REFILL, GLUT_DRAIN = 0.25, 0.12
@@ -94,15 +111,61 @@ RUMOURS = ('Lost a cousin to the Powder Gangers.', 'Drove for the Crimson Carava
            'Talks too much at the saloon.')
 
 TIER2_WORTH, TIER2_TRUST = 1500, 50
+TIER3_WORTH, TIER3_TRUST, TIER3_TOWNS = 18000, 50, 2   # 8000 in the design; M2 wagons and sites count in worth (balance_run: good player day 29-33)
+
+# --- M2: town levels (design: Towns grow like Anno settlements; plan 2.2 my calls) -------------------
+LEVELS = ('Camp', 'Hamlet', 'Village', 'Town')
+START_LEVEL = {'GS': 1, 'PR': 2, 'SL': 0, 'MO': 0}
+LEVEL_USE = 0.25                 # each level above the start adds a quarter to every good's daily use
+BASICS = ('water', 'meat', 'powder')
+BASIC_DAYS = 2                   # a basic is met when its stock covers 2 days of use
+LEVEL_MET_DAYS, LEVEL_DROP_DAYS = 7, 14
+LEVEL_MATERIALS = {1: 40, 2: 90, 3: 160}   # crates of building materials delivered to reach a level
+
+# --- M2: staff numbers, traits, loyalty, managers ---------------------------------------------------
+ROLE_WAGE.update({'trader': 20, 'clerk': 15})
+# trait: (cover as a guard, wage, loyalty a week, skill bonus); one at hire, Steady is earned
+TRAITS = {'Haggler': (0, 2, 0, 10), 'Cautious': (5, 0, -2, 0), 'Reckless': (10, 0, 0, -10),
+          'Drinker': (0, -2, -3, 0), 'NCR veteran': (10, 3, 0, 0), 'Family man': (0, 2, 5, 0),
+          'Ambitious': (0, 0, -3, 10), 'Steady': (5, 0, 2, 0)}
+HIRE_TRAITS = ('Haggler', 'Cautious', 'Reckless', 'Drinker', 'NCR veteran', 'Family man', 'Ambitious')
+LOYALTY_START = 55
+OFFER_LOYALTY = {'low': -10, 'fair': 0, 'generous': 10}
+OFFER_WAGE = {'low': -2, 'fair': 0, 'generous': 3}
+LOYALTY_PAID, LOYALTY_MISSED = 5, -10
+LOYALTY_RAISE_ASK, LOYALTY_LEAVE = 35, 20
+RAISE, RAISE_LOYALTY, REFUSE_LOYALTY = 1.25, 20, -10
+MEMO_ANSWERS['raise'] = ('give a raise of 25%', 'refuse')
+MEMO_DEFAULT['raise'] = 1
+# the lived-in Goodsprings residents who can be hired from tier 2 (tools/town_model.py hireable)
+RESIDENT_HIRES = (('Wes Harlan', 'driver', 55, 80, 70, 'Steady'), ('Marisol', 'guard', 65, 75, 75, 'Cautious'))
+MANAGERS = {'bookkeeper': 2, 'route': 3}          # manager: the tier that opens it
+MANAGER_WAGE = 40
+POLICIES = {'bookkeeper': ('Strict', 'Normal', 'Lenient'), 'route': ('Safe', 'Balanced', 'Fast')}
+CATCH = {'Strict': 100, 'Normal': 50, 'Lenient': 0}
+STRICT_CLERK_LOYALTY = -5
+BALANCED_GUN_BELOW = 60          # the Balanced route manager hires a gun when the clean chance is under 60
+CONTRACTS_OPEN = {1: 1, 2: 2, 3: 3}
+BUY_FROM_PLAYER = {'water': 10, 'powder': 10}     # tier 2 perk: goods and bottles (or powders) a crate
+BUY_SHARE, BUY_DAY_MAX = 0.8, 10
 DELIVERY_TRUST, DEED_TRUST = 1, 10       # a leg that sells into a town; Ghost Town Gunfight (GS)
 BUILD_ORDER = ('purifier', 'apothecary', 'well', 'forager')     # the Build screen's rows
 WORKSHOP_COST, SITE_COST, HAND_WAGE = 300, 200, 14
 WORKSHOPS = {                    # name: (inputs per batch, outputs per batch, output crates a day)
     'purifier': ({'dirty': 5}, {'water': 4}, 4),
     'apothecary': ({'herbs': 1}, {'powder': 1}, 4),
+    'smokehouse': ({'brahmin': 1}, {'meat': 4}, 4),
+    'stoneyard': ({'stone': 2, 'sand': 1}, {'materials': 2}, 4),
 }
-SITES = {'well': 'dirty', 'forager': 'herbs'}   # raw sites, 4 crates a day each
+SITES = {'well': 'dirty', 'forager': 'herbs',   # raw sites, 4 crates a day each
+         'corral': 'brahmin', 'sandpit': 'sand', 'scrapyard': 'scrap', 'quarry': 'stone'}
 SITE_RATE = 4
+# M2: where each building stands (its warehouse), the tier it needs, and a deed it waits for
+WHERE = {'purifier': 'GS', 'apothecary': 'GS', 'well': 'GS', 'forager': 'GS', 'corral': 'GS',
+         'smokehouse': 'PR', 'sandpit': 'PR', 'scrapyard': 'PR', 'quarry': 'SL', 'stoneyard': 'SL'}
+BUILD_TIER = {'purifier': 2, 'apothecary': 2, 'well': 2, 'forager': 2, 'corral': 2, 'sandpit': 2,
+              'scrapyard': 2, 'smokehouse': 3, 'quarry': 3, 'stoneyard': 3}
+BUILD_DEED = {'quarry': 'quarry_junction', 'stoneyard': 'quarry_junction'}
 
 
 def half_up(x):
@@ -138,15 +201,26 @@ class Order:
     town: str           # where the crate is loaded
     good: str
     qty: int = 1
+    wagon: int = 1      # M2: the wagon (= its road) that carries it
+
+
+@dataclass
+class Wagon:
+    road: int           # 2 or 3 (wagon 1 is the M1 wagon: Company.wagon_ok)
+    ok: bool = True
 
 
 @dataclass
 class Memo:
-    kind: str           # 'road', 'prepay' or 'contract'
+    kind: str           # 'road', 'prepay', 'contract' or (M2) 'raise'
     day: int            # the day it was posted
     due: int            # the tick that settles it with the default if nobody answers
     pick: int = None    # the answer chosen at a terminal or in a field letter
     price: int = 0      # a contract offer's price a crate
+    town: str = 'PR'    # M2: a contract offer's buyer, good and road; a raise memo's person (name)
+    good: str = 'water'
+    road: int = 1
+    who: str = ''
 
     @property
     def answers(self):
@@ -166,6 +240,9 @@ class Contract:
     next_due: int
     done: int = 0
     missed: int = 0
+    town: str = 'PR'    # M2: the buyer, the road that serves it and the town the crates load at
+    road: int = 1
+    origin: str = 'GS'
 
 
 @dataclass
@@ -179,12 +256,17 @@ class StandingOrder:
 @dataclass
 class Person:
     name: str
-    role: str           # 'driver' or 'guard'
+    role: str           # 'driver', 'guard' (M1), 'trader' or 'clerk' (M2)
     skill: int
     honesty: int        # hidden until a reference check
     wage: int
     rumour: str = ''
     checked: bool = False
+    nerve: int = 50     # M2
+    loyalty: int = LOYALTY_START
+    trait: str = ''
+    reasons: list = field(default_factory=list)    # (text, change), the last 4 (the person's page)
+    resident: bool = False                         # a lived-in towns resident (Wes, Marisol)
 
 
 @dataclass
@@ -214,6 +296,7 @@ class DayReport:
     signed: int = 0             # a contract signed today: its price a crate
     skim: int = 0               # skimmed by dishonest staff
     tier_up: bool = False       # the company reached a new tier today
+    sold_to: dict = field(default_factory=dict)     # M2: (town, good) -> crates sold there
 
     @property
     def margin(self):
@@ -249,14 +332,25 @@ class Company:
         self.wagon_ok = True
         self.ghost_town_done = False
         self.ghost_town_paid = False     # its +10 Goodsprings trust was given (game: CCCore.iGhostPaid)
-        self.warehouse = {g: 0 for g in GOODS}
+        self.wh = {t: {g: 0 for g in ALL_GOODS} for t in TOWNS}     # a warehouse per town (M2)
+        self.warehouse = self.wh['GS']                                # the M1 name for Goodsprings'
+        self.wagons = []                 # M2: wagons 2 and 3 (Wagon); wagon 1 is wagon_ok
+        self.deeds = set()               # M2: 'quarry_junction' (the stone trade), 'sheriff' (Primm)
         self.workshops, self.sites, self.hands = [], [], 0
         self.memos, self.road_mode = [], SEND
         self.last_visit, self.away_posted = 0, False
         self.letter, self.letter_shown_day, self.post = None, -1, []
-        self.contract, self.last_offer = None, -99
+        self.contracts, self.last_offer = [], -99
         self.standing = [None] * SLOTS
         self.staff, self.candidates = [], []
+        self.level = dict(START_LEVEL)                       # M2: town levels
+        self.base_use = {t: dict(v) for t, v in self.use.items()}
+        self.met_days = {t: 0 for t in TOWNS}
+        self.unmet_days = {t: 0 for t in TOWNS}
+        self.materials_in = {t: 0 for t in TOWNS}            # crates delivered since the last level
+        self.managers = {}                                   # 'bookkeeper' / 'route' -> policy
+        self.gangers_town = False                            # Goodsprings run by the Powder Gangers
+        self.bought_today, self.bought_day = 0, 0
 
     # --- founding -------------------------------------------------------------------------------
     def found(self):
@@ -272,6 +366,9 @@ class Company:
         self.auto = True             # the daily plan starts on: the company works while you are away
 
     # --- prices ---------------------------------------------------------------------------------
+    def has_market(self, town, good):
+        return good in self.stock[town]
+
     def mult(self, town, good, stock=None):
         s = self.stock[town][good] if stock is None else stock
         r = s / (3 * self.use[town][good])
@@ -286,12 +383,21 @@ class Company:
     def price(self, town, good, side, stock=None):
         """'buy': what the company pays the town for a crate; 'sell': what the town pays the company."""
         m = ANCHOR[good] * self.mult(town, good, stock)
-        s = spread(self.trust[town])
+        s = max(0.02, spread(self.trust[town]) - self.trader_cut())
         return half_up(m * (1 + s) if side == 'buy' else m * (1 - s))
 
+    def trader_cut(self):
+        """M2: the best trader's Skill takes 1 point off the spread for each 10 over 50."""
+        best = max([self.eff_skill(p) for p in self.staff if p.role == 'trader'] or [50])
+        return max(0, best - 50) // 10 / 100
+
+    @staticmethod
+    def eff_skill(p):
+        return p.skill + (TRAITS[p.trait][3] if p.trait else 0)
+
     # --- the bookkeeper's plan --------------------------------------------------------------------
-    def contract_due(self, day):
-        return self.contract is not None and self.contract.next_due == day
+    def contract_due(self, day, road=None):
+        return any(c.next_due == day and (road is None or c.road == road) for c in self.contracts)
 
     def plan(self, trip_day=None):
         """The bookkeeper's plan for the trip of `trip_day` (default: tomorrow's). For each leg: first the
@@ -304,17 +410,29 @@ class Company:
         cash = self.cash
         floor_ = {o.good: o.value for o in self.standing if o and o.kind == 'sell_above'}
         ceil_ = {o.good: o.value for o in self.standing if o and o.kind == 'max_pay'}
-        for origin, dest in (ROUTE, ROUTE[::-1]):
-            so, sd = dict(self.stock[origin]), dict(self.stock[dest])
-            wh = dict(self.warehouse) if origin == 'GS' else {g: 0 for g in GOODS}
-            cap = CRATES_PER_LEG
-            if origin == 'GS' and self.contract_due(trip_day):
-                cap -= self.contract.crates
+        whs = {t: dict(v) for t, v in self.wh.items()}
+        stocks = {t: dict(v) for t, v in self.stock.items()}
+        for w, road in self.running_roads():
+          for origin, dest in (ROADS[road], ROADS[road][::-1]):
+            so, sd = stocks[origin], stocks[dest]
+            wh = whs[origin]
+            cap = CRATES_PER_LEG - self.contract_crates(trip_day, road, origin)
             n = 0
+            # site goods first: toward the workshop that uses them, through Goodsprings (the hub)
+            for g in SITE_GOODS:
+                while n < cap and n < SITE_LOAD and wh[g] > 0 and self.site_goes(g, origin, dest):
+                    wh[g] -= 1
+                    whs[dest][g] += 1
+                    n += 1
+                    orders.append(Order('carry', origin, g, 1, w))
 
             def offer(g):
+                if not self.has_market(dest, g):
+                    return None
                 sale = self.price(dest, g, 'sell', sd[g])
                 own = wh[g] > 0
+                if not own and not self.has_market(origin, g):
+                    return None
                 cost = 0 if own else self.price(origin, g, 'buy', so[g])
                 if not own and (cost > cash or cost > ceil_.get(g, 10 ** 9)):
                     return None
@@ -331,7 +449,7 @@ class Company:
                     cash -= cost
                 sd[g] += 1
                 n += 1
-                orders.append(Order('carry', origin, g, 1))     # one order per crate, in pick order
+                orders.append(Order('carry', origin, g, 1, w))  # one order per crate, in pick order
 
             for o in self.standing:
                 if o and o.kind == 'keep' and o.town == dest:
@@ -342,7 +460,9 @@ class Company:
                         take(o.good, got[1], got[2])
             while n < cap:
                 best = None
-                for g in GOODS:
+                for g in ALL_GOODS:
+                    if g in SITE_GOODS:
+                        continue
                     got = offer(g)
                     if got is not None and (best is None or got[0] > best[0]):
                         best = (got[0], g, got[1], got[2])
@@ -350,6 +470,35 @@ class Company:
                     break
                 take(best[1], best[2], best[3])
         return orders
+
+    def running_roads(self):
+        """(wagon, road) for every wagon that runs: its wagon is whole and a driver is free for it."""
+        drivers = sum(1 for p in self.staff if p.role == 'driver')
+        slots = 1 + sum(1 for p in self.staff if p.role == 'clerk')     # each clerk runs one more wagon
+        out = []
+        if self.wagon_ok and drivers > 0:
+            out.append((1, 1))
+            drivers -= 1
+        for i, wg in enumerate(self.wagons):
+            if wg.ok and drivers > 0 and len(out) < slots:
+                out.append((i + 2, wg.road))
+                drivers -= 1
+        return out
+
+    def site_goes(self, g, origin, dest):
+        """Does a crate of site good g travel origin -> dest? Toward the town of the workshop that uses
+        it; through Goodsprings when no road joins the two."""
+        users = [WHERE[w] for w in self.workshops if g in WORKSHOPS[w][0]]
+        if not users or origin in users:
+            return False
+        if dest in users:
+            return True
+        return dest == 'GS' and not any(set(ROADS[r]) == {origin, u} for r in ROADS for u in users)
+
+    def contract_crates(self, day, road, origin):
+        """Crates the contracts due on `day` load on this road's leg out of `origin`."""
+        return sum(c.crates for c in self.contracts
+                   if c.next_due == day and c.road == road and c.origin == origin)
 
     def queue(self, order):
         self.queue_list.append(order)
@@ -366,24 +515,28 @@ class Company:
             self.queue_list = self.plan(d)
         self._pay_arrears(r)
         r.wagon, r.road_mode, r.crew = self.wagon_ok, self.road_mode, self.has_driver()
-        runs = self.wagon_ok and self.has_driver()
-        if runs and self.road_mode == HOLD:
-            if self.event_fires(d):
-                self.last_event_day = d             # the bandits waited for a wagon that stayed home
-            self._contract(r, False)
-        elif runs:
-            if self.road_mode == GUN:
+        running = dict((road, w) for w, road in self.running_roads())
+        ev_road = self.event_road(d)
+        for road in sorted(ROADS):
+            w = running.get(road)
+            mode = self.road_mode if road == ev_road else SEND
+            if w is None or mode == HOLD:
+                if w is not None and road == ev_road and self.event_fires(d):
+                    self.last_event_day = d         # the bandits waited for a wagon that stayed home
+                self._contract(r, False, road)
+                continue
+            if mode == GUN:
                 pay = min(GUN_COST, self.cash)
                 self.cash -= pay
                 r.costs += pay
-            loaded = self._contract(r, True)
-            for origin, dest in (ROUTE, ROUTE[::-1]):
-                if origin == 'PR':
-                    self._event(r)
-                self._leg(r, origin, dest, [o for o in self.queue_list if o.town == origin],
-                          CRATES_PER_LEG - (loaded if origin == 'GS' else 0))
-        else:
-            self._contract(r, False)
+            sales0 = r.sales                    # the road's takings: its contract and its out leg
+            loaded = self._contract(r, True, road)
+            out, back = ROADS[road], ROADS[road][::-1]
+            for origin, dest in (out, back):
+                if origin == back[0] and road == ev_road:
+                    self._event(r, r.sales - sales0, road)
+                self._leg(r, origin, dest, [o for o in self.queue_list if o.town == origin and o.wagon == w],
+                          CRATES_PER_LEG - (loaded.get(origin, 0)))
         self._skim(r)
         self.queue_list = []
         self.road_mode = SEND
@@ -396,8 +549,10 @@ class Company:
                 self.stock[t][g] = restock(self.stock[t][g], self.normal[t][g])
         if d % 7 == 0:
             self._bills(r)
+            self._week_people(r)
         if d % 7 == 1:
             self._new_candidates()
+        self._levels(r)
         self._ladder(r)
         if self.ghost_town_done and not self.ghost_town_paid:
             self.ghost_town_paid = True
@@ -411,12 +566,19 @@ class Company:
 
     def _leg(self, r, origin, dest, orders, cap=CRATES_PER_LEG):
         crates = []
+        wh = self.wh[origin]
         for o in orders:
             for _ in range(o.qty):
                 if len(crates) >= cap:
                     break
-                if origin == 'GS' and self.warehouse[o.good] > 0:
-                    self.warehouse[o.good] -= 1
+                if o.good in SITE_GOODS:          # carried to a workshop's warehouse, never sold
+                    if wh[o.good] > 0:
+                        wh[o.good] -= 1
+                        self.wh[dest][o.good] += 1
+                        crates.append((o.good, None))
+                    continue
+                if wh[o.good] > 0:
+                    wh[o.good] -= 1
                     crates.append((o.good, 0))
                     continue
                 cost = self.price(origin, o.good, 'buy')
@@ -426,14 +588,21 @@ class Company:
                 r.costs += cost
                 self.stock[origin][o.good] -= 1
                 crates.append((o.good, cost))
-        for g, _ in crates:
+        sold = False
+        for g, cost in crates:
+            if cost is None:
+                continue
+            sold = True
             sale = self.price(dest, g, 'sell')
             self.cash += sale
             r.sales += sale
             self.week_sales += sale
             self.stock[dest][g] += 1
             r.loads[(origin, g)] = r.loads.get((origin, g), 0) + 1
-        if crates:
+            r.sold_to[(dest, g)] = r.sold_to.get((dest, g), 0) + 1
+            if g == 'materials':
+                self.materials_in[dest] += 1
+        if sold:
             self.trust[dest] = min(100, self.trust[dest] + DELIVERY_TRUST)
 
     def event_fires(self, d):
@@ -451,12 +620,17 @@ class Company:
             return 'no_wagon'
         return 'bandits' if self.event_fires(self.day + 1) else 'quiet'
 
-    def clean_chance(self, cover):
+    def event_road(self, d):
+        """The road whose return leg the director's event meets on day d (one of the running roads)."""
+        roads = sorted(road for _, road in self.running_roads()) or [1]
+        return roads[roll(self.seed, d, 5) % len(roads)] if len(roads) > 1 else roads[0]
+
+    def clean_chance(self, cover, danger=DANGER):
         """Percent chance the crew drives the bandits off: r^2 / (1 + r^2), r = cover / danger."""
-        ratio = cover / DANGER
+        ratio = cover / danger
         return half_up(100 * ratio * ratio / (1 + ratio * ratio))
 
-    def _event(self, r):
+    def _event(self, r, takings=None, road=1):
         """Before the return leg: the director may send bandits at the wagon. They rob the strongbox, the
         cash from the day's Primm sales: 30% of it, or all of it in a wreck, never more than 3 days of
         running costs at tier 1. The loss is booked as a cost of the day."""
@@ -465,10 +639,15 @@ class Company:
             return
         self.last_event_day = d
         cover = self.cover() + (GUN_COVER if r.road_mode == GUN else 0)
-        if roll(self.seed, d, 2) < self.clean_chance(cover):
+        if roll(self.seed, d, 2) < self.clean_chance(cover, ROAD_DANGER[road]):
             r.event = 'bandits_driven_off'
+            if self.tier >= 2:                  # M2: a guard with no trait who held the road earns Steady
+                g = next((p for p in self.staff if p.role == 'guard' and not p.trait), None)
+                if g is not None:
+                    g.trait = 'Steady'
+                    r.notes.append('%s held the road: Steady' % g.name)
             return
-        takings = r.sales
+        takings = r.sales if takings is None else takings
         if takings <= 0:
             r.event = 'bandits_empty'
             return
@@ -483,19 +662,21 @@ class Company:
 
     def run_workshops(self):
         for site in self.sites:
-            self.warehouse[SITES[site]] += SITE_RATE
+            self.wh[WHERE[site]][SITES[site]] += SITE_RATE
         for w in self.workshops:
             ins, outs, cap = WORKSHOPS[w]
-            (good_in, need), = ins.items()
+            wh = self.wh[WHERE[w]]
             (good_out, per), = outs.items()
             made = 0
-            while self.warehouse[good_in] >= need and made + per <= cap:
-                self.warehouse[good_in] -= need
-                self.warehouse[good_out] += per
+            while all(wh[g] >= n for g, n in ins.items()) and made + per <= cap:
+                for g, n in ins.items():
+                    wh[g] -= n
+                wh[good_out] += per
                 made += per
 
     def daily_wages(self):
-        return sum(p.wage for p in self.staff) + HAND_WAGE * self.hands
+        return (sum(p.wage for p in self.staff) + HAND_WAGE * self.hands
+                + MANAGER_WAGE * len(self.managers))
 
     # --- staff (plan task 1.8) ---------------------------------------------------------------------
     def has_driver(self):
@@ -505,7 +686,8 @@ class Company:
         """The crew's cover on the road: 15 for the driver, 30 a guard plus a fifth of skill over 50."""
         if not self.has_driver():
             return 0
-        return DRIVER_COVER + sum(GUARD_COVER + (p.skill - 50) // 5 for p in self.staff if p.role == 'guard')
+        return DRIVER_COVER + sum(GUARD_COVER + (p.skill - 50) // 5 + (TRAITS[p.trait][0] if p.trait else 0)
+                                  for p in self.staff if p.role == 'guard')
 
     def _skim(self, r):
         """Staff with honesty under 30 each take 2% of the day's sales (only a reference check shows it)."""
@@ -526,23 +708,46 @@ class Company:
             while NAMES[k] in used:
                 k = (k + 1) % len(NAMES)
             used.add(NAMES[k])
-            role = 'driver' if roll(self.seed, d, 30 + i) < 25 else 'guard'
+            rr = roll(self.seed, d, 30 + i)
+            if self.tier < 2:
+                role = 'driver' if rr < 25 else 'guard'
+            else:
+                role = 'driver' if rr < 25 else 'guard' if rr < 70 else 'trader' if rr < 85 else 'clerk'
             skill = 30 + roll(self.seed, d, 40 + i) % 50
             honesty = 10 + roll(self.seed, d, 50 + i) % 85
             wage = ROLE_WAGE[role] + max(0, (skill - 50) // 10)
+            nerve = 20 + roll(self.seed, d, 70 + i) % 70
+            tr = roll(self.seed, d, 80 + i)
+            trait = HIRE_TRAITS[tr % len(HIRE_TRAITS)] if self.tier >= 2 and tr < 70 else ''
+            if trait:
+                wage += TRAITS[trait][1]
             self.candidates.append(Person(NAMES[k], role, skill, honesty, wage,
-                                          RUMOURS[roll(self.seed, d, 60 + i) % len(RUMOURS)]))
+                                          RUMOURS[roll(self.seed, d, 60 + i) % len(RUMOURS)],
+                                          nerve=nerve, trait=trait))
+        if self.tier >= 2 and not self.gangers_town:
+            for name, role, skill, hon, nerve, trait in RESIDENT_HIRES:
+                if name not in used:
+                    self.candidates.append(Person(name, role, skill, hon, ROLE_WAGE[role] + TRAITS[trait][1],
+                                                  'Lives in Goodsprings.', nerve=nerve, trait=trait,
+                                                  resident=True))
 
     def can_hire(self, i):
         c = self.candidates[i]
         if len(self.staff) >= STAFF_MAX:
             return False
-        return not (c.role == 'driver' and self.has_driver())     # one wagon needs one driver
+        drivers = sum(1 for p in self.staff if p.role == 'driver')
+        return not (c.role == 'driver' and drivers >= 1 + len(self.wagons))     # a driver per wagon
 
-    def hire(self, i):
+    def hire(self, i, offer='fair'):
+        """Hire candidate i with a Low, Fair or Generous offer (M2: wage and starting loyalty)."""
         if not 0 <= i < len(self.candidates) or not self.can_hire(i):
             return False
-        self.staff.append(self.candidates.pop(i))
+        p = self.candidates.pop(i)
+        p.wage = max(1, p.wage + OFFER_WAGE[offer])
+        p.loyalty = LOYALTY_START + OFFER_LOYALTY[offer]
+        if offer != 'fair':
+            p.reasons = [('%s offer' % offer, OFFER_LOYALTY[offer])]
+        self.staff.append(p)
         return True
 
     def fire(self, i):
@@ -564,42 +769,184 @@ class Company:
     def honesty_band(p):
         return 'low' if p.honesty < 35 else 'fair' if p.honesty < 70 else 'high'
 
+    # --- M2: loyalty, managers ------------------------------------------------------------------------
+    @staticmethod
+    def _loyal(p, change, why):
+        p.loyalty = max(0, min(100, p.loyalty + change))
+        p.reasons = (p.reasons + [(why, change)])[-4:]
+
+    def _week_people(self, r):
+        """Bill day: loyalty for pay (and traits), the bookkeeper's check for skimmers, raise memos and
+        people who leave."""
+        catch = CATCH.get(self.managers.get('bookkeeper'), 0)
+        for i, p in enumerate(list(self.staff)):
+            self._loyal(p, LOYALTY_PAID if r.bills_paid else LOYALTY_MISSED,
+                        'paid on time' if r.bills_paid else 'wages late')
+            if p.trait and TRAITS[p.trait][2]:
+                self._loyal(p, TRAITS[p.trait][2], p.trait.lower())
+            if p.trait == 'Ambitious':
+                p.skill = min(90, p.skill + 1)
+            if p.role == 'clerk' and self.managers.get('bookkeeper') == 'Strict':
+                self._loyal(p, STRICT_CLERK_LOYALTY, 'a strict bookkeeper')
+            if p.honesty < SKIM_HONESTY and catch and roll(self.seed, self.day, 90 + i) < catch:
+                self.staff.remove(p)
+                r.notes.append('%s was caught skimming and let go' % p.name)
+                continue
+            if p.loyalty < LOYALTY_LEAVE:
+                self.staff.remove(p)
+                r.notes.append('%s left the company' % p.name)
+            elif p.loyalty < LOYALTY_RAISE_ASK and not any(m.kind == 'raise' and m.who == p.name
+                                                           for m in self.memos):
+                self.post_memo(Memo('raise', self.day, self.day + 3, who=p.name))
+
+    def can_hire_manager(self, kind):
+        return self.tier >= MANAGERS[kind] and kind not in self.managers and not self.ended
+
+    def hire_manager(self, kind, policy):
+        if not self.can_hire_manager(kind) or policy not in POLICIES[kind]:
+            return False
+        self.managers[kind] = policy
+        return True
+
+    def set_policy(self, kind, policy):
+        if kind in self.managers and policy in POLICIES[kind]:
+            self.managers[kind] = policy
+
+    def route_manager_pick(self):
+        """The route manager answers a road memo when it is posted (None: no manager)."""
+        pol = self.managers.get('route')
+        if pol is None:
+            return None
+        if pol == 'Safe':
+            return HOLD
+        if pol == 'Fast':
+            return SEND
+        road = self.event_road(self.day + 1)
+        return GUN if self.clean_chance(self.cover(), ROAD_DANGER[road]) < BALANCED_GUN_BELOW else SEND
+
+    # --- M2: town levels ---------------------------------------------------------------------------------
+    def basics_met(self, t):
+        return all(self.stock[t][g] >= BASIC_DAYS * self.use[t][g] for g in BASICS if self.has_market(t, g))
+
+    def _set_level(self, t, lv):
+        self.level[t] = lv
+        k = 1 + LEVEL_USE * (lv - START_LEVEL[t])
+        self.use[t] = {g: u * k for g, u in self.base_use[t].items()}
+        if t == 'PR' and not self.sheriff and 'ammo' in self.use[t]:
+            self.use[t]['ammo'] = PRIMM_AMMO_USE_NO_SHERIFF * k
+
+    def _levels(self, r):
+        """After the day's trade: 7 met days and the building materials raise a level; 14 unmet days drop
+        one (never below the level the town started at)."""
+        for t in TOWNS:
+            if self.basics_met(t):
+                self.met_days[t] += 1
+                self.unmet_days[t] = 0
+            else:
+                self.met_days[t] = 0
+                self.unmet_days[t] += 1
+            lv = self.level[t]
+            if (lv < len(LEVELS) - 1 and self.met_days[t] >= LEVEL_MET_DAYS
+                    and self.materials_in[t] >= LEVEL_MATERIALS[lv + 1]):
+                self._set_level(t, lv + 1)
+                self.materials_in[t] = 0
+                self.met_days[t] = 0
+                r.notes.append('%s grew to a %s' % (TOWN_NAME[t], LEVELS[lv + 1]))
+            elif lv > START_LEVEL[t] and self.unmet_days[t] >= LEVEL_DROP_DAYS:
+                self._set_level(t, lv - 1)
+                self.unmet_days[t] = 0
+                r.notes.append('%s slipped back to a %s' % (TOWN_NAME[t], LEVELS[lv - 1]))
+
+    # --- M2: the tier 2 perk: the company buys trade goods from the player ----------------------------
+    def buy_price_from_player(self, good):
+        return half_up(BUY_SHARE * ANCHOR[good])
+
+    def buy_from_player(self, good, crates=1):
+        """At a branch from tier 2: a crate is 10 bottles of purified water or 10 healing powders, paid at
+        0.8 of the anchor from operating cash, at most 10 crates a day; it goes to the Goodsprings
+        warehouse. Returns the crates bought."""
+        if self.tier < 2 or good not in BUY_FROM_PLAYER or self.ended:
+            return 0
+        if self.bought_day != self.day:
+            self.bought_day, self.bought_today = self.day, 0
+        price = self.buy_price_from_player(good)
+        n = max(0, min(crates, BUY_DAY_MAX - self.bought_today, self.cash // price))
+        self.cash -= n * price
+        self.pocket += n * price
+        self.warehouse[good] += n
+        self.bought_today += n
+        return n
+
     # --- the supply contract (plan task 1.8) ---------------------------------------------------------
     def offer_price(self):
         """Primm's sell price for water at normal stock, plus 9%."""
         g = CONTRACT_GOOD
         return half_up((1 + CONTRACT_PREMIUM) * self.price('PR', g, 'sell', self.normal['PR'][g]))
 
-    def _sign(self, price, r):
-        self.contract = Contract(CONTRACT_GOOD, CONTRACT_CRATES, CONTRACT_EVERY, price, self.day, self.day)
+    def _sign(self, price, r, m=None):
+        town, good, road = (m.town, m.good, m.road) if m else ('PR', CONTRACT_GOOD, 1)
+        origin = [t for t in ROADS[road] if t != town][0]
+        self.contracts.append(Contract(good, CONTRACT_CRATES, CONTRACT_EVERY, price, self.day, self.day,
+                                       town=town, road=road, origin=origin))
         r.signed = price
 
-    def _contract(self, r, runs):
+    def contract_offer(self):
+        """M2: (town, good, road) of this week's offer. Tier 1: Primm water (the M1 contract). From tier 2:
+        the biggest standing shortage (3 days of use less the normal stock) at either end of a road the
+        company runs, for a good the other end sells or a workshop there makes, not under contract."""
+        if self.tier < 2:
+            return ('PR', CONTRACT_GOOD, 1)
+        best = None
+        taken = {(c.town, c.good) for c in self.contracts}
+        for _, road in self.running_roads():
+            for town in ROADS[road]:
+                origin = [t for t in ROADS[road] if t != town][0]
+                for g in ALL_GOODS:
+                    if g in SITE_GOODS or (town, g) in taken or not self.has_market(town, g):
+                        continue
+                    made = any(WHERE[w] == origin and g in WORKSHOPS[w][1] for w in self.workshops)
+                    if not (self.has_market(origin, g) or made):
+                        continue
+                    short = 3 * self.use[town][g] - self.normal[town][g]
+                    if best is None or short > best[0]:
+                        best = (short, town, g, road)
+        return best[1:] if best else None
+
+    def offer_price_for(self, town, good):
+        return half_up((1 + CONTRACT_PREMIUM) * self.price(town, good, 'sell', self.normal[town][good]))
+
+    def _contract(self, r, runs, road=1):
+        """Every contract this road serves that is due today. Returns {origin: crates loaded}."""
+        loaded = {}
+        for c in [c for c in self.contracts if c.road == road and c.next_due == self.day]:
+            n = self._deliver(r, runs, c)
+            loaded[c.origin] = loaded.get(c.origin, 0) + n
+        return loaded
+
+    def _deliver(self, r, runs, c):
         """A delivery day: load the crates on the Goodsprings leg (warehouse first, then bought at
         Goodsprings), sell them at the contract price without moving Primm's stock. A delivery the
         wagon cannot make is a miss: 10% of its value and Primm trust -3. Returns crates loaded."""
-        c = self.contract
-        if not self.contract_due(self.day):
-            return 0
         loaded = 0
+        o = c.origin
         if runs:
-            own = min(self.warehouse[c.good], c.crates)
-            stock, cost = self.stock['GS'][c.good], 0
+            own = min(self.wh[o][c.good], c.crates)
+            stock, cost = self.stock[o][c.good], 0
             for _ in range(c.crates - own):
-                cost += self.price('GS', c.good, 'buy', stock)
+                cost += self.price(o, c.good, 'buy', stock)
                 stock -= 1
             if cost <= self.cash:
-                self.warehouse[c.good] -= own
+                self.wh[o][c.good] -= own
                 for _ in range(c.crates - own):
-                    p = self.price('GS', c.good, 'buy')
+                    p = self.price(o, c.good, 'buy')
                     self.cash -= p
                     r.costs += p
-                    self.stock['GS'][c.good] -= 1
+                    self.stock[o][c.good] -= 1
                 sale = c.crates * c.price
                 self.cash += sale
                 r.sales += sale
                 self.week_sales += sale
-                self.trust['PR'] = min(100, self.trust['PR'] + 1)
+                self.trust[c.town] = min(100, self.trust[c.town] + 1)
                 c.done += 1
                 r.contract = 'delivered'
                 loaded = c.crates
@@ -607,13 +954,13 @@ class Company:
             pay = min(self.cash, half_up(CONTRACT_MISS * c.crates * c.price))
             self.cash -= pay
             r.costs += pay
-            self.trust['PR'] = max(0, self.trust['PR'] - 3)
+            self.trust[c.town] = max(0, self.trust[c.town] - 3)
             c.missed += 1
             r.contract = 'missed'
         c.next_due += c.every
         if c.next_due >= c.start + CONTRACT_DAYS:
-            self.trust['PR'] = min(100, self.trust['PR'] + 3)
-            self.contract = None
+            self.trust[c.town] = min(100, self.trust[c.town] + 3)
+            self.contracts.remove(c)
             r.contract += ' completed'
         return loaded
 
@@ -888,12 +1235,19 @@ class Company:
                 self.road_mode = a
             elif m.kind == 'contract':
                 if a == 0:
-                    self._sign(m.price, r)
+                    self._sign(m.price, r, m)
                 elif a == 1:
                     if roll(self.seed, self.day, 4) < COUNTER_WALK:
                         r.contract = 'walked'
                     else:
-                        self._sign(half_up(m.price * (1 + COUNTER_PREMIUM)), r)
+                        self._sign(half_up(m.price * (1 + COUNTER_PREMIUM)), r, m)
+            elif m.kind == 'raise':
+                p = next((x for x in self.staff if x.name == m.who), None)
+                if p is not None and a == 0:
+                    p.wage = half_up(p.wage * RAISE)
+                    self._loyal(p, RAISE_LOYALTY, 'a raise')
+                elif p is not None:
+                    self._loyal(p, REFUSE_LOYALTY, 'a raise refused')
             elif m.kind == 'prepay' and a == 0:
                 pay = min(PREPAY, self.loan, self.cash)
                 self.cash -= pay
@@ -906,15 +1260,25 @@ class Company:
         paid bills when the cash allows. Returns whether a road memo was posted."""
         road = False
         if self.forecast() == 'bandits':
-            road = self.post_memo(Memo('road', self.day, self.day + 1))
+            road = self.post_memo(Memo('road', self.day, self.day + 1, road=self.event_road(self.day + 1)))
+            pick = self.route_manager_pick()
+            if road and pick is not None:
+                self.memos[-1].pick = pick
+                road = False                    # the manager answered it: no letter
         if (r.bills_paid and self.loan > 0 and not any(m.kind == 'prepay' for m in self.memos)
                 and self.cash - PREPAY >= PREPAY_RUNWAY * self.daily_burn()):
             self.post_memo(Memo('prepay', self.day, self.day + 3))
-        if (self.contract is None and self.stage == 'ok' and self.wagon_ok and self.has_driver()
+        if (len(self.contracts) < CONTRACTS_OPEN[min(self.tier, 3)] and self.stage == 'ok'
+                and self.wagon_ok and self.has_driver()
                 and not any(m.kind == 'contract' for m in self.memos)
                 and self.day % 7 == OFFER_WEEKDAY and self.day - self.last_offer >= OFFER_EVERY):
-            if self.post_memo(Memo('contract', self.day, self.day + 1, price=self.offer_price())):
-                self.last_offer = self.day
+            offer = self.contract_offer()
+            if offer is not None:
+                town, good, road = offer
+                price = self.offer_price() if self.tier < 2 else self.offer_price_for(town, good)
+                if self.post_memo(Memo('contract', self.day, self.day + 1, price=price, town=town, good=good,
+                                       road=road)):
+                    self.last_offer = self.day
         return road
 
     def notice_values(self):
@@ -954,12 +1318,13 @@ class Company:
                                                  self.cash, self.runway(), len(self.memos))))
         if road:
             cover = self.cover()
-            new.append(Letter(self.day, 'road', (DANGER, cover, self.clean_chance(cover),
+            dg = ROAD_DANGER[self.event_road(self.day + 1)]       # M2: the danger of the road at risk
+            new.append(Letter(self.day, 'road', (dg, cover, self.clean_chance(cover, dg),
                                                  int(self.contract_due(self.day + 1)))))
         if r.event in ('bandits_took_cargo', 'bandits_wreck'):
             new.append(Letter(self.day, 'loss', (r.event, r.event_loss)))
         if r.tier_up:
-            new.append(Letter(self.day, 'tier', (2,)))
+            new.append(Letter(self.day, 'tier', (self.tier,)))
         self.post = (self.post + new)[-POST_KEEP:]
         waiting = list(new)
         if self.stage == 'deferred' and not any(x.kind == 'notice' for x in new):
@@ -1010,9 +1375,23 @@ class Company:
         elif a == 'sell':
             self.sell_wagon()
 
+    @property
+    def contract(self):
+        """The first open contract (M1 had one)."""
+        return self.contracts[0] if self.contracts else None
+
+    @contract.setter
+    def contract(self, c):
+        if c is None:
+            self.contracts = self.contracts[1:]
+        elif self.contracts:
+            self.contracts[0] = c
+        else:
+            self.contracts = [c]
+
     # --- worth and tiers --------------------------------------------------------------------------
     def net_worth(self):
-        stock_value = sum(ANCHOR[g] * n for g, n in self.warehouse.items())
+        stock_value = sum(ANCHOR[g] * n for wh in self.wh.values() for g, n in wh.items())
         return self.cash + self.owner_funds + stock_value + self.assets - self.loan - self.arrears
 
     def earned_worth(self):
@@ -1023,12 +1402,23 @@ class Company:
         return (self.tier == 1 and self.earned_worth() >= TIER2_WORTH and not recent
                 and self.trust['GS'] >= TIER2_TRUST and self.ghost_town_done)
 
+    def tier_three_ready(self):
+        recent = [s for s in self.strikes if self.day - s < 56]
+        liked = sum(1 for t in TOWNS if self.trust[t] >= TIER3_TRUST)
+        return (self.tier == 2 and self.earned_worth() >= TIER3_WORTH and not recent
+                and liked >= TIER3_TOWNS and (self.sheriff or 'sheriff' in self.deeds))
+
     def _tier_check(self, r):
         if self.tier_two_ready():
             self.tier = 2
             r.notes.append('tier 2: Outfit')
             r.tier_up = True
             self.last_event_day = self.day      # no bad event for the 2 days after a new tier (design)
+        elif self.tier_three_ready():
+            self.tier = 3
+            r.notes.append('tier 3: Caravan company')
+            r.tier_up = True
+            self.last_event_day = self.day
 
     def build_cost(self, name):
         return WORKSHOP_COST if name in WORKSHOPS else SITE_COST
@@ -1037,9 +1427,30 @@ class Company:
         return name in self.workshops or name in self.sites
 
     def can_build(self, name):
-        """From tier 2, each once, paid from owner money first, then cash."""
-        return (self.tier >= 2 and not self.ended and not self.built(name)
+        """From its tier (2 or 3) and deed, each once, paid from owner money first, then cash."""
+        deed = BUILD_DEED.get(name)
+        return (self.tier >= BUILD_TIER[name] and not self.ended and not self.built(name)
+                and (deed is None or deed in self.deeds)
                 and self.cash + self.owner_funds >= self.build_cost(name))
+
+    # --- more wagons (M2) -----------------------------------------------------------------------------
+    def can_buy_road(self, road):
+        """A wagon for road 2 (tier 2) or 3 (tier 3): 700 from owner money first, then cash."""
+        return (road in (2, 3) and self.tier >= ROAD_TIER[road] and not self.ended
+                and not any(w.road == road for w in self.wagons)
+                and self.cash + self.owner_funds >= WAGON + BRAHMIN_PAIR)
+
+    def buy_road(self, road):
+        if not self.can_buy_road(road):
+            return False
+        cost = WAGON + BRAHMIN_PAIR
+        from_owner = min(self.owner_funds, cost)
+        self.owner_funds -= from_owner
+        self.cash -= cost - from_owner
+        self.assets += cost
+        self.buildings += cost          # not wagon 1: a seizure takes the first wagon only
+        self.wagons.append(Wagon(road))
+        return True
 
     def build(self, name):
         if name in WORKSHOPS:
