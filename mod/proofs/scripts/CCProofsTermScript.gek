@@ -1,0 +1,15 @@
+scn CCProofsTermScript
+
+; M0 proofs 0.7: rows relabelled in OnActivate are drawn on the first frame the terminal opens.
+; The label is built with JIP Console (format string; %q is a quote mark).
+; An OnActivate block replaces the default activation, so the labels are set first, then Activate opens it.
+
+int iOpens
+
+begin OnActivate
+	if IsActionRef player
+		set iOpens to iOpens + 1
+		Console "SetTerminalMenuItemText CCProofsTerm 1 1 %qOpened %.0f times (set in OnActivate)%q" iOpens
+	endif
+	Activate
+end

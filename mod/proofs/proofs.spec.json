@@ -43,14 +43,23 @@
    "script_type": "object"
   },
   "CCLedgerItem": {
-   "type": "BOOK",
-   "template": "@BookSkillBarter",
+   "type": "ARMO",
+   "template": "@ArmorLeather",
    "set": {
     "name": "Company Ledger",
     "script": "@CCLedgerItemScript",
+    "biped_flags": [],
+    "health": 100,
     "value": 0,
-    "weight": 0
+    "weight": 0,
+    "damage_resistance": 0,
+    "damage_threshold": 0
    }
+  },
+  "CCProofsTermScript": {
+   "type": "SCPT",
+   "source": "scripts/CCProofsTermScript.gek",
+   "script_type": "object"
   },
   "CCProofsTerm": {
    "type": "TERM",
@@ -182,7 +191,8 @@
       "text": "Row 30",
       "result": "Row 30 picked."
      }
-    ]
+    ],
+    "script": "@CCProofsTermScript"
    }
   },
   "CCProofsSettler1": {

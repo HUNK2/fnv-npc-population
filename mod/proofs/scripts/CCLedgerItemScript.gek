@@ -1,10 +1,23 @@
 scn CCLedgerItemScript
 
 ; M0 proofs 0.6: open the office terminal from an item used in the Pip-Boy.
+; A BOOK does not run OnEquip when used, so the ledger is an apparel item with no body slots.
+; Activate's second argument 1 runs the terminal's own OnActivate block (labels set before the first draw).
+; The item is taken off later, from GameMode (UnequipItem inside OnEquip on the same item is unreliable).
 
 int iUses
+int iTakeOff
 
 begin OnEquip player
 	set iUses to iUses + 1
-	CCProofsTermRef.Activate player
+	set CCProofsQuest.iPicked to 77
+	set iTakeOff to 1
+	CCProofsTermRef.Activate player 1
+end
+
+begin GameMode
+	if iTakeOff
+		set iTakeOff to 0
+		player.UnequipItem CCLedgerItem 0 1
+	endif
 end

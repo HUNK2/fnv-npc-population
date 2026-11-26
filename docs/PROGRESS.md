@@ -6,16 +6,21 @@ calls are mine and are marked "my call" here and in the plans.
 
 ## Now
 
-- Milestone: **M0 Proofs** (`docs/plans/2026-11-27-m0-proofs.md`), results in `docs/m0-results.md`
-- Next: 0.6 (terminal from an item), 0.7, 0.10 to 0.13, then the crowd test 0.14
+- Milestone: **M1 One road** (plan: `docs/plans/2026-11-27-m1-one-road.md`)
 
 ## Done
 
-- 0.1 Ledger reference model (8 tests pass).
-- 0.2 Tooling: `tools/fnvmcp_call.py` and `tools/rebuild.sh` build `mod/proofs` with fnv-mcp.
-- 0.3 Dependencies load (xNVSE, JIP LN, JohnnyGuitar 5.28).
-- 0.4 Live terminal labels, 0.5 clicked row (flag 4, route C), 0.8 limits (30 rows; text capped
-  at 200 characters), 0.9 day tick.
+- **M0 Proofs** (2026-11-27), results in `docs/m0-results.md`:
+  - 0.1 Ledger reference model (8 tests pass).
+  - 0.2 Tooling: `tools/fnvmcp_call.py`, `tools/rebuild.sh`, `tools/cycle.sh`, and
+    `tools/allow_new_vars.py` (3 tests) build and install with fnv-mcp.
+  - 0.3 Dependencies load (xNVSE, JIP LN, JohnnyGuitar 5.28).
+  - 0.4 Live terminal labels, 0.5 clicked row (flag 4, route C), 0.7 labels set on open,
+    0.8 limits (30 rows; text capped at 200 characters), 0.9 day tick.
+  - 0.6 terminal opened from a script: yes; from a Pip-Boy item: not proven (desk fallback, ALCH
+    retry in M1).
+  - 0.10 letters only from GameMode, out of combat; 0.11 moving people leaves no save growth;
+    0.12 busy shield by source plugin; 0.13 old saves; 0.14 crowd: 30 extra settlers, still 60 fps.
 
 ## My calls (to review)
 
@@ -24,3 +29,7 @@ calls are mine and are marked "my call" here and in the plans.
 - Clicked rows are found by polling row flag 4 (route C), not by row result scripts or JIP's
   click event: it needs no tool change and no event handler.
 - Terminal text is cut to 200 characters before it is set (JohnnyGuitar has no length check).
+- G4: towns are **plugin-first** (no engine plugin). The crowd test hit no engine limit; the only
+  near-player cap (20 actors) only stops face animation.
+- The ledger opens at desks (runner's desk, relay desks); the Pip-Boy item is a bonus if the ALCH
+  retry works.

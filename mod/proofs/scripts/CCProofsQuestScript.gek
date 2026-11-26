@@ -40,3 +40,23 @@ begin GameMode
 	set iRollSum to iRollSum + iRoll
 	set iSteps to iSteps + 1
 end
+
+; --- 0.5 and 0.7 script side (variables added at the end so the indices above stay put) ---
+; Route C: the engine's click handler sets flag 4 on the clicked row (ComputersMenu::DoClick
+; 0x00757F70). While the terminal is open, poll the rows we act on, clear the flag, relabel.
+int iPicked
+int iClicks
+float fPrice
+
+begin MenuMode 1057
+	if GetTerminalMenuItemFlags CCProofsTerm 29 != 0
+		SetTerminalMenuItemFlags CCProofsTerm 29 0
+		set iPicked to 30
+		set iClicks to iClicks + 1
+		set fPrice to 152 + iClicks * 3
+		; runtime-compiled scripts cannot pass a string_var to a plugin command, so the line is built with
+		; JIP Console (format string; %q is a quote mark)
+		Console "SetTerminalMenuItemText CCProofsTerm 1 0 %qWATER  GS %.0f > PR 236   clicks %.0f%q" fPrice iClicks
+		RefreshTerminalMenu
+	endif
+end
