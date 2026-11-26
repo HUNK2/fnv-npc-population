@@ -9,7 +9,9 @@ calls are mine and are marked "my call" here and in the plans.
 - Milestone: **M1 One road** (plan: `docs/plans/2026-11-27-m1-one-road.md`)
 - Done: 1.1 company model (21 tests), 1.2 two plugins (`LivedInMojave.esp` with the master flag,
   `MojaveCaravanCompany.esp`; in game `CCVersion` = 101 read from the core's `LIMVersion`).
-- Next: 1.3 the day tick and the ledger in game, checked day by day against the model.
+  1.3 the day tick in game (`CCCoreScript`, `CCPriceFn`): `tools/ingame_run.py 14` matches the model
+  on all 14 days (cash, sales, costs, events, losses), no script errors.
+- Next: 1.4 the terminal with virtual screens.
 
 ## Done
 

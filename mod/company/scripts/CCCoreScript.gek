@@ -1,11 +1,493 @@
 scn CCCoreScript
 
-; M1.2 bootstrap: proves the company plugin reads the core master. Grows in M1.3.
+; Mojave Caravan Company: the ledger and the day tick (M1 plan task 1.3).
+; tools/company_model.py is the spec: same formulas, same order, whole caps rounded half up, the
+; same seeded rolls. Towns: 0 Goodsprings, 1 Primm. Goods: 0 purified water, 1 healing powder,
+; 2 ammo, 3 dirty water, 4 herbs, 5 building materials. Town-good cells are index town*6 + good.
+; The company day ticks at 06:00 game time; missed days run in order, at most 14 per script run.
+; Variables are only ever appended (saves keep them by index); one GameMode block, no early return.
+
 int iInit
+int iFounded
+int iEnded
+int iSeed
+int iDay
+int iLastClock
+int iClock
+int iTier
+int iCash
+int iOwner
+int iOwnerPaidIn
+int iLoan
+int iAssets
+int iSheriff
+int iPresent
+int iShield
+int iAuto
+int iFoundNow
+int iWeekSales
+int iAccWages
+int iAccFeed
+int iArrears
+int iStage
+int iServedDay
+int iStageDay
+int iArrearsAtFinal
+int iLastEventDay
+int iWagonOk
+int iGhostTown
+int iHands
+int iDaySales
+int iDayCosts
+int iDayLoss
+int iDayEvent
+int iBillsPaid
+int iBillTotal
+int iRuns
+int iT
+int iG
+int iK
+int iN
+int iI
+int iLeg
+int iOrigin
+int iDest
+int iBest
+int iBestG
+int iBestOwn
+int iBestCost
+int iCost
+int iSale
+int iOwn
+int iLost
+int iCap
+int iValue
+int iWreck
+int iChance
+int iBurn
+int iPay
+int iTake
+int iCode
+int iPlanCash
+int iBill
+float fM
+array_var aStock
+array_var aUse
+array_var aNormal
+array_var aAnchor
+array_var aTrust
+array_var aWh
+array_var aQueue
+array_var aLeg
+array_var aLegCost
+array_var aSo
+array_var aSd
+array_var aWhPlan
+array_var aStrikes
+array_var aWorkshops
+array_var aSites
+array_var aHistCash
+array_var aHistSales
+array_var aHistCosts
+array_var aHistEvent
+array_var aHistLoss
+array_var aBill
+array_var aKeep
 
 begin GameMode
+
+	; --- the markets exist before the company: Starter trade, Goodsprings then Primm ---
 	if iInit == 0
 		set iInit to 1
-		set CCVersion to LIMVersion + 100
+		let aAnchor := Ar_List 200, 100, 200, 100, 60, 150
+		let aUse := Ar_List 4, 2, 4, 1, 1, 1, 10, 4, 2, 2, 1, 1
+		let aNormal := Ar_List 34, 18, 4, 30, 15, 0, 14, 4, 20, 2, 1, 10
+		let aTrust := Ar_List 35, 20
+		let aWh := Ar_List 0, 0, 0, 0, 0, 0
+		let aWorkshops := Ar_List 0, 0
+		let aSites := Ar_List 0, 0
+		let aQueue := Ar_Construct "array"
+		let aStrikes := Ar_Construct "array"
+		let aHistCash := Ar_Construct "array"
+		let aHistSales := Ar_Construct "array"
+		let aHistCosts := Ar_Construct "array"
+		let aHistEvent := Ar_Construct "array"
+		let aHistLoss := Ar_Construct "array"
+		; Primm without a sheriff uses more ammo (My Kind of Town not done)
+		if GetQuestCompleted nVPrimmDeputyConv == 0
+			let aUse[8] := 3
+		else
+			set iSheriff to 1
+		endif
+		let aStock := Ar_Copy aNormal
+		set iPresent to 1
+		set iWagonOk to 1
+		set iLastEventDay to -99
+		if iSeed == 0
+			set iSeed to 1 + GetRandomPercent * 100 + GetRandomPercent
+		endif
 	endif
+
+	; --- founding: Alice's letter of credit (Company.found) ---
+	if iFoundNow == 1 && iFounded == 0
+		set iFoundNow to 0
+		set iFounded to 1
+		set iTier to 1
+		set iLoan to 3000
+		set iCash to 3000
+		set iOwner to 500
+		set iOwnerPaidIn to 500
+		; setup: wagon 400 and two brahmin 300 from owner funds first, the rest from operating cash
+		if iOwner >= 700
+			set iPay to 700
+		else
+			set iPay to iOwner
+		endif
+		set iOwner to iOwner - iPay
+		set iCash to iCash - (700 - iPay) - 150 - 150
+		set iAssets to 700
+		let iLastClock := Floor (GameDaysPassed - 0.25)
+	endif
+
+	; --- the day tick ---
+	let iClock := Floor (GameDaysPassed - 0.25)
+	set iRuns to 0
+	while iFounded == 1 && iEnded == 0 && iLastClock < iClock && iRuns < 14
+		let iLastClock += 1
+		let iRuns += 1
+		let iDay += 1
+		set iDaySales to 0
+		set iDayCosts to 0
+		set iDayLoss to 0
+		set iDayEvent to 0
+		set iBillsPaid to -1
+
+		; test mode: accept the bookkeeper's plan (Company.plan, before the tick)
+		if iAuto
+			let aQueue := Ar_Construct "array"
+			set iPlanCash to iCash
+			set iLeg to 0
+			while iLeg < 2
+				set iOrigin to iLeg
+				set iDest to 1 - iLeg
+				let aSo := Ar_Copy aStock
+				let aSd := Ar_Copy aStock
+				if iOrigin == 0
+					let aWhPlan := Ar_Copy aWh
+				else
+					let aWhPlan := Ar_List 0, 0, 0, 0, 0, 0
+				endif
+				set iK to 0
+				while iK < 8
+					set iBestG to -1
+					set iG to 0
+					while iG < 6
+						let iSale := call CCPriceFn aAnchor[iG], aSd[iDest * 6 + iG], aUse[iDest * 6 + iG], aTrust[iDest], 1
+						let iOwn := aWhPlan[iG] > 0
+						if iOwn
+							set iCost to 0
+						else
+							let iCost := call CCPriceFn aAnchor[iG], aSo[iOrigin * 6 + iG], aUse[iOrigin * 6 + iG], aTrust[iOrigin], 0
+						endif
+						if iOwn || iCost <= iPlanCash
+							if iBestG < 0 || iSale - iCost > iBest
+								set iBest to iSale - iCost
+								set iBestG to iG
+								set iBestOwn to iOwn
+								set iBestCost to iCost
+							endif
+						endif
+						set iG to iG + 1
+					loop
+					if iBestG < 0 || iBest < 20
+						set iK to 8
+					else
+						if iBestOwn
+							let aWhPlan[iBestG] -= 1
+						else
+							let aSo[iOrigin * 6 + iBestG] -= 1
+							set iPlanCash to iPlanCash - iBestCost
+						endif
+						let aSd[iDest * 6 + iBestG] += 1
+						ar_Append aQueue (iOrigin * 10 + iBestG)
+						set iK to iK + 1
+					endif
+				loop
+				set iLeg to iLeg + 1
+			loop
+		endif
+
+		; pay arrears from cash first (Company._pay_arrears)
+		if iArrears > 0 && iCash > 0
+			if iCash < iArrears
+				set iTake to iCash
+			else
+				set iTake to iArrears
+			endif
+			set iCash to iCash - iTake
+			set iArrears to iArrears - iTake
+			if iArrears == 0
+				set iStage to 5
+				set iStageDay to iDay
+			endif
+		endif
+
+		; the trip: out leg Goodsprings -> Primm, back leg Primm -> Goodsprings (Company._leg)
+		set iLeg to 0
+		while iLeg < 2 && iWagonOk
+			set iOrigin to iLeg
+			set iDest to 1 - iLeg
+			let aLeg := Ar_Construct "array"
+			let aLegCost := Ar_Construct "array"
+			set iI to 0
+			while iI < ar_Size aQueue
+				let iCode := aQueue[iI]
+				if eval (Floor (iCode / 10) == iOrigin)
+					let iG := iCode % 10
+					if eval (iOrigin == 0 && aWh[iG] > 0)
+						let aWh[iG] -= 1
+						ar_Append aLeg iG
+						ar_Append aLegCost 0
+					else
+						let iCost := call CCPriceFn aAnchor[iG], aStock[iOrigin * 6 + iG], aUse[iOrigin * 6 + iG], aTrust[iOrigin], 0
+						if iCost <= iCash
+							set iCash to iCash - iCost
+							set iDayCosts to iDayCosts + iCost
+							let aStock[iOrigin * 6 + iG] -= 1
+							ar_Append aLeg iG
+							ar_Append aLegCost iCost
+						endif
+					endif
+				endif
+				set iI to iI + 1
+			loop
+			set iN to ar_Size aLeg
+			set iLost to 0
+			; the director may place a bandit event on the return leg (Company._event)
+			if eval (iN > 0 && iOrigin == 1 && iDay - iLastEventDay >= 3 && iDay % 7 != 0 && iDay % 7 != 6)
+				if iDay <= 10
+					set iChance to 25
+				else
+					set iChance to 50
+				endif
+				if eval ((iDay * 7919 + iSeed * 104729 + 31) % 100 < iChance)
+					set iLastEventDay to iDay
+					; P(clean) = r^2 / (1 + r^2), r = cover 45 / danger 60 -> 36 in 100
+					if eval ((iDay * 7919 + iSeed * 104729 + 62) % 100 < 36)
+						set iDayEvent to 1
+					else
+						let iWreck := (iDay * 7919 + iSeed * 104729 + 93) % 100 < 33
+						if iWreck
+							set iK to iN
+						else
+							let iK := Floor (0.3 * iN + 0.5)
+							if iK < 1
+								set iK to 1
+							endif
+						endif
+						; tier 1 cap: never more than 3 days of runway (Company.daily_burn)
+						let iBurn := Floor (22 + 14 * iHands + 6 + (70 + Floor (0.04 * iLoan + 0.5) + (iLoan < 300) * iLoan + (iLoan >= 300) * 300) / 7 + 0.5)
+						set iCap to 3 * iBurn
+						set iValue to 0
+						set iLost to 0
+						set iI to iN - 1
+						while iI >= 0 && iLost < iK
+							if eval (iValue + aLegCost[iI] > iCap)
+								set iI to -1
+							else
+								let iValue += aLegCost[iI]
+								set iLost to iLost + 1
+								set iI to iI - 1
+							endif
+						loop
+						if iWreck
+							set iDayEvent to 3
+						else
+							set iDayEvent to 2
+						endif
+						set iDayLoss to iValue
+					endif
+				endif
+			endif
+			set iI to 0
+			while iI < iN - iLost
+				let iG := aLeg[iI]
+				let iSale := call CCPriceFn aAnchor[iG], aStock[iDest * 6 + iG], aUse[iDest * 6 + iG], aTrust[iDest], 1
+				set iCash to iCash + iSale
+				set iDaySales to iDaySales + iSale
+				set iWeekSales to iWeekSales + iSale
+				let aStock[iDest * 6 + iG] += 1
+				set iI to iI + 1
+			loop
+			set iLeg to iLeg + 1
+		loop
+		let aQueue := Ar_Construct "array"
+
+		; workshops (Company.run_workshops): raw sites, then purifier 5 dirty -> 4 water, apothecary 1 -> 1
+		if eval (aSites[0])
+			let aWh[3] += 4
+		endif
+		if eval (aSites[1])
+			let aWh[4] += 4
+		endif
+		if eval (aWorkshops[0])
+			set iN to 0
+			while aWh[3] >= 5 && iN + 4 <= 4
+				let aWh[3] -= 5
+				let aWh[0] += 4
+				set iN to iN + 4
+			loop
+		endif
+		if eval (aWorkshops[1])
+			set iN to 0
+			while aWh[4] >= 1 && iN + 1 <= 4
+				let aWh[4] -= 1
+				let aWh[1] += 1
+				set iN to iN + 1
+			loop
+		endif
+
+		; running costs accrue daily, paid on bill day; wear is not cash
+		set iAccWages to iAccWages + 22 + 14 * iHands
+		set iAccFeed to iAccFeed + 6
+		set iAssets to iAssets - 7
+		if iAssets < 0
+			set iAssets to 0
+		endif
+
+		; overnight restock: short stock refills 25% of the gap, a glut drains 12%
+		set iK to 0
+		while iK < 12
+			if eval (aStock[iK] < aNormal[iK])
+				let aStock[iK] := aStock[iK] + (aNormal[iK] - aStock[iK]) * 0.25
+			else
+				let aStock[iK] := aStock[iK] + (aNormal[iK] - aStock[iK]) * 0.12
+			endif
+			set iK to iK + 1
+		loop
+
+		; bills on every 7th day (Company._bills): wages, duty, rent, feed, licence, interest, principal
+		if eval (iDay % 7 == 0)
+			let aBill := Ar_List 0, 0, 70, 0, 0, 0, 0
+			let aBill[0] := iAccWages
+			; NCR duty: 2%, 3.5% on the part above 5,000, 5% above 20,000
+			let fM := 0.02 * iWeekSales
+			if iWeekSales > 5000
+				let fM := 0.02 * 5000 + 0.035 * ((iWeekSales < 20000) * iWeekSales + (iWeekSales >= 20000) * 20000 - 5000)
+			endif
+			if iWeekSales > 20000
+				let fM := fM + 0.05 * (iWeekSales - 20000)
+			endif
+			let aBill[1] := Floor (fM + 0.5)
+			let aBill[3] := iAccFeed
+			if eval (iDay % 28 == 0)
+				let aBill[4] := 150
+			endif
+			let aBill[5] := Floor (0.04 * iLoan + 0.5)
+			if iLoan < 300
+				let aBill[6] := iLoan
+			else
+				let aBill[6] := 300
+			endif
+			let iBillTotal := aBill[0] + aBill[1] + aBill[2] + aBill[3] + aBill[4] + aBill[5] + aBill[6]
+			set iAccWages to 0
+			set iAccFeed to 0
+			set iWeekSales to 0
+			if iCash >= iBillTotal
+				set iCash to iCash - iBillTotal
+				let iLoan -= aBill[6]
+				set iBillsPaid to 1
+			else
+				set iBillsPaid to 0
+				set iPay to 0
+				set iK to 0
+				while iK < 7
+					let iBill := aBill[iK]
+					if iCash < iBill
+						set iTake to iCash
+					else
+						set iTake to iBill
+					endif
+					set iCash to iCash - iTake
+					set iPay to iPay + iTake
+					if iK == 6
+						set iLoan to iLoan - iTake
+					endif
+					set iK to iK + 1
+				loop
+				let iArrears += (iBillTotal - iPay) + Floor (0.1 * (iBillTotal - iPay) + 0.5)
+				if iStage == 0 || iStage == 5
+					set iStage to 1
+					set iStageDay to iDay
+					if iPresent && iShield == 0
+						set iStage to 2
+						set iServedDay to iDay
+						let aKeep := Ar_Construct "array"
+						set iK to 0
+						while iK < ar_Size aStrikes
+							if eval (iDay - aStrikes[iK] < 56)
+								ar_Append aKeep aStrikes[iK]
+							endif
+							set iK to iK + 1
+						loop
+						ar_Append aKeep iDay
+						let aStrikes := aKeep
+					endif
+				endif
+			endif
+		endif
+
+		; the debt ladder (Company._ladder): 2 grace, 3 final notice, 4 seized, 5 probation
+		if iStage == 5
+			if iDay - iStageDay >= 14
+				set iStage to 0
+			endif
+		elseif iStage >= 2
+			if iShield
+				set iServedDay to iServedDay + 1
+			elseif iStage == 2 && iDay - iServedDay >= 3
+				set iStage to 3
+				set iArrearsAtFinal to iArrears
+			elseif iStage == 3 && iDay - iServedDay >= 5
+				if iArrears > 0.4 * iArrearsAtFinal
+					let iValue := Floor (0.6 * iAssets + 0.5)
+					set iAssets to 0
+					set iWagonOk to 0
+					set iArrears to iArrears - iValue
+					if iArrears < 0
+						set iArrears to 0
+					endif
+				endif
+				set iStage to 4
+				if iArrears == 0
+					set iStage to 5
+					set iStageDay to iDay
+				endif
+			elseif iStage == 4 && iDay - iServedDay >= 7 && iArrears > 0
+				set iEnded to 1
+			endif
+		endif
+
+		set iGhostTown to GetQuestCompleted VMS16
+		; tier 2 gate (Company.tier_two_ready): earned worth 1,500, no strike in 56 days,
+		; Goodsprings trust 50, Ghost Town Gunfight done
+		set iN to 0
+		set iK to 0
+		while iK < ar_Size aStrikes
+			if eval (iDay - aStrikes[iK] < 56)
+				set iN to 1
+			endif
+			set iK to iK + 1
+		loop
+		let iValue := iCash + iOwner + 200 * aWh[0] + 100 * aWh[1] + 200 * aWh[2] + 100 * aWh[3] + 60 * aWh[4] + 150 * aWh[5] + iAssets - iLoan - iArrears - iOwnerPaidIn
+		if eval (iTier == 1 && iValue >= 1500 && iN == 0 && aTrust[0] >= 50 && iGhostTown)
+			set iTier to 2
+		endif
+
+		ar_Append aHistCash iCash
+		ar_Append aHistSales iDaySales
+		ar_Append aHistCosts iDayCosts
+		ar_Append aHistEvent iDayEvent
+		ar_Append aHistLoss iDayLoss
+	loop
 end

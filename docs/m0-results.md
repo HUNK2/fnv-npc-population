@@ -29,9 +29,18 @@ runs (plan: `docs/plans/2026-11-27-m0-proofs.md`). Evidence screenshots stay on 
   (read from the bytecode): xNVSE writes a 4-byte scriptname statement before compiling and stores
   the `while` exit jump as an absolute offset into that buffer (58 in a probe script); fnv-mcp's
   `compile_spec_scripts` dropped those 4 bytes, so the exit landed 4 bytes inside the next
-  statement. Fixed in fnv-mcp's working tree (`fnv_data.py`: the header is kept; not committed
-  there). Proven live: a loop in `CCProofsQuestScript` set `iLoopI` 3 and the line after it set
-  `iLoopOut` 103. Snippets run by `fnv_run_script` never had the bug.
+  statement. First fix kept the 4 bytes (proven: a loop in `CCProofsQuestScript` set `iLoopI` 3
+  and the line after it set `iLoopOut` 103), but then xNVSE could not find a `Begin Function` block
+  (it reads the block type at byte 8, after one scriptname). Final fix (M1 1.3, fnv-mcp working tree,
+  not committed there): `drop_partial_scriptname` drops the extra statement and moves each
+  `While` (0x153B) and `ForEach` (0x153D) exit offset back by 4; unit test
+  `tests/test_partial_scriptname.py`. Snippets run by `fnv_run_script` never had the bug.
+- In-game compile reports `array_var` and `string_var` as float. xNVSE reads the stored variable
+  type at run time when the script text is not loaded (`Script::GetVariableType`), so fnv-mcp now
+  writes SLSD type 3 / 2 from the source declarations (same uncommitted change).
+- Quest scripts stop while the pause menu or a message box is up: a fresh coc start shows the DLC
+  "has been loaded" boxes, and focus loss opens the pause menu. `tools/ingame_run.py` sets
+  `fnv_window background` and presses the boxes first.
 - `return` in any block ends the whole script for that frame, so a later block of the same type
   never runs after an early `return`.
 - `fnv_ui_do click` cannot pick one terminal row: every row has the same tile path and id -1, so

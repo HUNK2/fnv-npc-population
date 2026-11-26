@@ -163,7 +163,6 @@ class Company:
         for origin, dest in (ROUTE, ROUTE[::-1]):
             so, sd = dict(self.stock[origin]), dict(self.stock[dest])
             wh = dict(self.warehouse) if origin == 'GS' else {g: 0 for g in GOODS}
-            load = {}
             for _ in range(CRATES_PER_LEG):
                 best = None
                 for g in GOODS:
@@ -184,8 +183,7 @@ class Company:
                     so[g] -= 1
                     cash -= cost
                 sd[g] += 1
-                load[g] = load.get(g, 0) + 1
-            orders += [Order('carry', origin, g, q) for g, q in load.items()]
+                orders.append(Order('carry', origin, g, 1))     # one order per crate, in pick order
         return orders
 
     def queue(self, order):
