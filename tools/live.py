@@ -6,6 +6,7 @@ server's own live tools are talking to the game: the companion pipe has one inst
 import asyncio
 import contextlib
 import json
+import time
 from pathlib import Path
 
 import fnvmcp_call
@@ -13,6 +14,7 @@ import fnvmcp_call
 HERE = Path(__file__).resolve().parent
 COMPANY_SPEC = HERE.parent / 'mod' / 'company' / 'company.spec.json'
 SEED = 1234
+ARRIVAL_WINDOW = 105    # fnv-mcp closes message boxes for 90 s after a coc launch; margin for the load
 
 
 class Session:
@@ -54,7 +56,16 @@ class Session:
 
     async def to_game_mode(self):
         """Quest scripts stop while the pause menu or a message box is up: the pause menu opens on focus
-        loss, and a fresh coc start shows the DLC "has been loaded" boxes one after another."""
+        loss, and a fresh coc start shows the DLC "has been loaded" boxes one after another.
+
+        After a coc launch fnv-mcp's companion closes every message box (every 0.3 s) for 90 s, which
+        would close the mod's field letters too: wait until that window is over."""
+        launched = (((await self.tool('fnv_status', {})).get('data') or {}).get('session') or {}).get('launchedAt')
+        if launched:
+            left = launched + ARRIVAL_WINDOW - time.time()
+            if left > 0:
+                print('waiting %.0f s for the launch message closer to stop' % left)
+                await asyncio.sleep(left)
         await self.tool('fnv_window', {'action': 'background'})
         for _ in range(30):
             data = await self.menus()

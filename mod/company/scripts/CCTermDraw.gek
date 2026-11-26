@@ -65,6 +65,11 @@ int iMemo
 int iA
 int iPick
 int iDue
+int iEnded
+int iEndReason
+int iPocket
+int iConfirm
+array_var aS
 
 begin Function {}
 	; result text is typed above the menu when a row is selected (ComputersMenu::DoClick 0x00757F70)
@@ -85,6 +90,20 @@ begin Function {}
 	let iCash := GetVariable "iCash" CCCore
 	let iDay := GetVariable "iDay" CCCore
 	let iLoan := GetVariable "iLoan" CCCore
+	; a closed company: two rows, nothing to select
+	let iEnded := GetVariable "iEnded" CCCore
+	if iEnded
+		let iEndReason := GetVariable "iEndReason" CCCore
+		let iArrears := GetVariable "iArrears" CCCore
+		if iEndReason == 3
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qCLOSED: you wound it up%q"
+		else
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qCLOSED: the lender took the office%q"
+		endif
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qDAY %.0f  CASH %.0f  OWED %.0f%q" iDay iCash iArrears
+		SetVariable "iRows" 2 CCTerm
+		return
+	endif
 	let iWeek := GetVariable "iWeekSales" CCCore
 	let iHands := GetVariable "iHands" CCCore
 	let iWagonOk := GetVariable "iWagonOk" CCCore
@@ -165,7 +184,7 @@ begin Function {}
 		if iWagonOk
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 4 %qROUTES   wagon home%q"
 		else
-			Console "SetTerminalMenuItemText CCOfficeTerm 1 4 %qROUTES   wagon seized%q"
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 4 %qROUTES   wagon none%q"
 		endif
 		; the best crate Goodsprings > Primm at today's stock (first good on a tie)
 		set iBestG to -1
@@ -200,7 +219,9 @@ begin Function {}
 		let iN := ar_Size aQ
 		Console "SetTerminalMenuItemText CCOfficeTerm 1 10 %qORDERS   %.0f pending (apply at 06:00)%q" iN
 		Console "SetTerminalMenuItemText CCOfficeTerm 1 11 %qSETTINGS%q"
-		SetVariable "iRows" 12 CCTerm
+		let sT := call CCNoticeFn 1
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 12 %q%z%q" sT
+		SetVariable "iRows" 13 CCTerm
 
 	elseif iScreen == 1
 		set iO to iDirT
@@ -255,6 +276,8 @@ begin Function {}
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qNOTICE FINAL%q"
 		elseif iStage == 4
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qNOTICE SEIZED%q"
+		elseif iStage == 6
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qNOTICE TAKEOVER%q"
 		else
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qNOTICE probation%q"
 		endif
@@ -318,7 +341,7 @@ begin Function {}
 		if iWagonOk
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qWAGON 1  home  driver and guard%q"
 		else
-			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qWAGON 1  SEIZED  driver and guard%q"
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qWAGON 1  none: BUY one for 700%q"
 		endif
 		; the last three days, newest first
 		set iRow to 1
@@ -427,6 +450,45 @@ begin Function {}
 			set iRow to iRow + 1
 			set iMemo to iMemo + 1
 		loop
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qBACK%q" iRow
+		set iN to iRow + 1
+		SetVariable "iRows" iN CCTerm
+
+	elseif iScreen == 8
+		; the Notice: what is owed and the strikes (the notice text is its result text), then the cures
+		let aS := GetArrayVariable "aStrikes" CCCore
+		set iN to 0
+		set iK to 0
+		while iK < ar_Size aS
+			if eval (iDay - aS[iK] < 56)
+				set iN to iN + 1
+			endif
+			set iK to iK + 1
+		loop
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qOWED %.0f  STRIKES %.0f of 3%q" iArrears iN
+		let sT := call CCNoticeFn 0
+		Console "SetTerminalMenuItemText CCOfficeTerm 2 0 %q%z%q" sT
+		set iRow to 1
+		if iStage == 2 || iStage == 3 || iStage == 4 || iStage == 6
+			let iA := call CCCureFn 11
+			if iA > 0
+				let iPocket := player.GetItemCount Caps001
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qRESCUE  pay %.0f (you have %.0f)%q" iRow iA iPocket
+				set iRow to iRow + 1
+			endif
+			let iA := call CCCureFn 12
+			if iA > 0
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qSELL wagon and brahmin  +%.0f%q" iRow iA
+				set iRow to iRow + 1
+			endif
+			let iConfirm := GetVariable "iConfirm" CCTerm
+			if iConfirm
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qWALK AWAY  select again to confirm%q" iRow
+			else
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qWALK AWAY  wind the company up%q" iRow
+			endif
+			set iRow to iRow + 1
+		endif
 		Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qBACK%q" iRow
 		set iN to iRow + 1
 		SetVariable "iRows" iN CCTerm

@@ -18,7 +18,26 @@ FORECAST_TEXT = {
     'quiet': 'the road looks quiet.',
     'no_wagon': 'no wagon on the road.',
 }
-BUTTONS = {'road': 'Keep it home|Send as planned|Hire a gun (25)|Later', 'away': 'Ok', 'loss': 'Ok'}
+BUTTONS = {'road': 'Keep it home|Send as planned|Hire a gun (25)|Later', 'away': 'Ok', 'loss': 'Ok',
+           'forecast': 'Ok', 'closed': 'Ok'}
+NOTICE_TEXT = {
+    'grace': 'Boss, we missed bill day. %d is owed to the lender. Pay it within %d days or a final notice '
+             'follows. Strike %d of 3 this season.',
+    'final': 'Final notice: %d is owed. Pay %d of it within %d days or the lender takes the wagon and '
+             'brahmin. Strike %d of 3 this season.',
+    'seized': "The lender's men took the wagon and brahmin. %d is still owed. Pay it within %d days or the "
+              'office becomes a Crimson Caravan branch.',
+    'takeover': 'Third strike this season: a takeover notice. Pay %d from company cash within %d days or the '
+                'lender takes the office. Your own caps will not do.',
+    'probation': 'We missed bill day, but it is paid now. The lender still marks a strike, %d of 3 this '
+                 'season. Probation for %d days.',
+}
+CLOSED_TEXT = {
+    'receivership': "It is over, boss. The lender's men changed the locks: the office is a Crimson Caravan "
+                    'branch now. The company is closed.',
+    'takeover': 'The lender used the takeover clause and took the office. The company is closed.',
+    'walked': 'You wound the company up. The lender took what was left, and the books are closed.',
+}
 
 
 def days_to_bills(c):
@@ -88,8 +107,36 @@ def answer_label(m, i):
     return '  %s %s%s' % (mark, m.answers[i], default)
 
 
+def notice_text(values):
+    stage, owed, need, days, strikes = values
+    if stage == 'grace':
+        return NOTICE_TEXT[stage] % (owed, days, strikes)
+    if stage == 'final':
+        return NOTICE_TEXT[stage] % (owed, need, days, strikes)
+    if stage in ('seized', 'takeover'):
+        return NOTICE_TEXT[stage] % (owed, days)
+    return NOTICE_TEXT['probation'] % (strikes, days)
+
+
+def forecast_text(short, days):
+    return ('Boss, cash is thin: at this rate we are short by about %d caps on bill day, in %d days, '
+            'unless sales pick up.' % (short, days))
+
+
+def notice_buttons(c, acts):
+    """A notice letter's buttons for the actions Company.letter_buttons gave."""
+    words = {'later': 'Later', 'rescue': 'Pay %d from my pocket' % c.rescue_amount(),
+             'sell': 'Sell the wagon for %d' % c.sell_value()}
+    return '|'.join(words[a] for a in acts)
+
+
 def letter_title(letter):
-    word = {'away': 'while you were away', 'road': 'bandit sign', 'loss': 'robbed'}[letter.kind]
+    if letter.kind == 'notice':
+        word = {'grace': 'notice served', 'final': 'final notice', 'seized': 'wagon seized',
+                'takeover': 'takeover notice', 'probation': 'strike'}[letter.values[0]]
+    else:
+        word = {'away': 'while you were away', 'road': 'bandit sign', 'loss': 'robbed',
+                'forecast': 'short on bill day', 'closed': 'company closed'}[letter.kind]
     return 'LETTER day %d  %s' % (letter.day, word)
 
 
@@ -98,6 +145,12 @@ def letter_text(letter):
     if letter.kind == 'away':
         return ('Boss, you have been away %d days. Since day %d: sales %d, costs %d. Cash %d, runway %dd. '
                 'Memos waiting at the office: %d.' % v)
+    if letter.kind == 'notice':
+        return notice_text(v)
+    if letter.kind == 'forecast':
+        return forecast_text(*v)
+    if letter.kind == 'closed':
+        return CLOSED_TEXT[v[0]]
     if letter.kind == 'road':
         return ('Bandit sign on the Primm road tomorrow: about %d strong, our cover is %d. '
                 'Keep the wagon home tomorrow?' % v)

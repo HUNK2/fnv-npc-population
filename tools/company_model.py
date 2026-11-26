@@ -48,11 +48,22 @@ GUN_COST, GUN_COVER = 25, 30     # a hired gun for one trip: 25 caps, cover 45 -
 ROB_SHARE = 0.3                  # a robbery takes 30% of the strongbox, a wreck all of it (capped)
 AWAY_DAYS = 3                    # the while-you-were-away letter after 3 days without a terminal visit
 POST_KEEP = 3                    # the Post screen keeps the last 3 letters
+LETTER_ORDER = ('closed', 'notice', 'forecast', 'away', 'road', 'loss')    # which letter waits first
 # Memo answers in order; the default is the cautious one (design: Memos).
 MEMO_ANSWERS = {'road': ('send as planned', 'hire a gun for 25', 'keep the wagon home'),
                 'prepay': ('pay 300 off the loan', 'keep the cash')}
 MEMO_DEFAULT = {'road': 2, 'prepay': 1}
 SEND, GUN, HOLD = 0, 1, 2        # road memo answers
+
+# The debt ladder (plan task 1.7, design: Losing and coming back).
+STRIKE_DAYS, STRIKES_TAKEOVER = 56, 3
+GRACE_DAYS, FINAL_DAYS, SEIZE_DAYS, TAKEOVER_DAYS = 3, 5, 7, 7
+PROBATION_DAYS = 14
+FINAL_CURE = 0.4                 # at the final notice, cure down to 40% of the arrears, or lose the wagon
+SEIZE_SHARE, SELL_SHARE = 0.6, 0.6   # the creditor and a buyer both pay 60% of the wagon's value
+RESCUE_WEEKS, RESCUE_EVERY = 2, 28   # owner rescue: up to 2 weeks of bills, once a season
+FORECAST_RUNWAY = 5              # the forecast warning when runway is under 5 days
+SERVED = ('grace', 'final', 'seized', 'takeover')    # a served notice whose clock runs
 
 TIER2_WORTH, TIER2_TRUST = 1500, 50
 WORKSHOP_COST, SITE_COST, HAND_WAGE = 300, 200, 14
@@ -113,7 +124,7 @@ class Memo:
 @dataclass
 class Letter:
     day: int
-    kind: str           # 'away', 'road' or 'loss'
+    kind: str           # 'notice', 'closed', 'forecast', 'away', 'loss' or 'road' (in priority order)
     values: tuple       # the numbers the text needs (tools/post_model.py letter_text)
 
 
@@ -139,8 +150,8 @@ class DayReport:
 
 
 class Company:
-    def __init__(self, seed, sheriff=False, present=True):
-        self.seed, self.sheriff, self.present = seed, sheriff, present
+    def __init__(self, seed, sheriff=False):
+        self.seed, self.sheriff = seed, sheriff
         self.auto = False            # accept the bookkeeper's plan at every tick (game: CCCore.iAuto)
         self.use = {t: {g: float(u) for g, (u, n) in goods.items()} for t, goods in STARTER.items()}
         self.normal = {t: {g: float(n) for g, (u, n) in goods.items()} for t, goods in STARTER.items()}
@@ -156,7 +167,13 @@ class Company:
         self.arrears, self.stage, self.served_day, self.stage_day = 0, 'ok', None, 0
         self.arrears_at_final = 0
         self.strikes = []
-        self.shield = False
+        self.shield = False          # the busy shield: the player is in a DLC's own lands (game: CCCore.iShield)
+        self.from_probation = False  # the deferred miss happened on probation: serving it skips Grace
+        self.end_reason = ''         # 'receivership', 'takeover' or 'walked'
+        self.pocket = 0              # the player's own caps (the game reads them); owner rescue takes from here
+        self.last_rescue = -99
+        self.buildings = 0           # value of workshops and sites in self.assets (the rest is the wagon)
+        self.forecast_bill_day = 0   # the bill day the last forecast letter warned about
         self.last_event_day = -99
         self.wagon_ok = True
         self.ghost_town_done = False
@@ -334,6 +351,8 @@ class Company:
             return
         wreck = roll(self.seed, d, 3) < 33
         loss = min(takings if wreck else half_up(ROB_SHARE * takings), 3 * self.daily_burn())
+        if self.shield:                         # in a DLC's lands paper losses stay under a day's profit
+            loss = min(loss, max(0, self.history[-1].margin if self.history else 0))
         self.cash -= loss
         r.costs += loss
         r.event = 'bandits_wreck' if wreck else 'bandits_took_cargo'
@@ -393,15 +412,38 @@ class Company:
         rest = total - paid
         self.arrears += rest + half_up(LATE_FEE * rest)
         if self.stage in ('ok', 'probation'):
+            self.from_probation = self.stage == 'probation'
             self.stage, self.stage_day = 'deferred', self.day
-            if self.present and not self.shield:
-                self.visit()
+            r.notes.append('bills missed: notice deferred')
 
-    def visit(self):
-        """The player reaches a terminal (or a runner finds them): a deferred notice is served."""
-        if self.stage == 'deferred':
-            self.stage, self.served_day = 'grace', self.day
-            self.strikes = [s for s in self.strikes if self.day - s < 56] + [self.day]
+    # served notices: a deferred notice reaches the player at a terminal or in a field letter
+    def recent_strikes(self):
+        return [s for s in self.strikes if self.day - s < STRIKE_DAYS]
+
+    def serve_outcome(self):
+        """The stage a deferred notice becomes when it is served now."""
+        if self.arrears == 0:
+            return 'probation'
+        if len(self.recent_strikes()) + 1 >= STRIKES_TAKEOVER:
+            return 'takeover'
+        return 'final' if self.from_probation else 'grace'
+
+    def serve(self):
+        """Serve a deferred notice: it becomes a strike whoever pays it later (design: Strikes)."""
+        if self.stage != 'deferred':
+            return False
+        stage = self.serve_outcome()
+        self.strikes = self.recent_strikes() + [self.day]
+        self.served_day, self.from_probation = self.day, False
+        if stage == 'probation':
+            self.stage, self.stage_day = 'probation', self.day
+        elif stage == 'final':                  # a second miss on probation skips Grace
+            self.stage, self.served_day, self.arrears_at_final = 'final', self.day - GRACE_DAYS, self.arrears
+        else:
+            self.stage = stage
+        return True
+
+    visit = serve
 
     def _pay_arrears(self, r):
         if self.arrears and self.cash > 0:
@@ -411,42 +453,152 @@ class Company:
             if self.arrears == 0:
                 self._cured(r)
 
-    def _cured(self, r):
+    def _cured(self, r=None):
+        """Arrears paid: probation. A deferred notice stays to be served (it is still a strike)."""
+        if self.stage == 'deferred':
+            return
+        if self.stage == 'takeover' and self.strikes:
+            self.strikes = self.strikes[1:]         # curing a takeover clears the oldest strike
         self.stage, self.stage_day = 'probation', self.day
-        r.notes.append('notice cured')
+        if r is not None:
+            r.notes.append('notice cured')
+
+    def days_left(self):
+        """Days until the open notice's next step (the final notice, seizure, the end)."""
+        since = self.day - self.served_day if self.served_day is not None else 0
+        step = {'grace': GRACE_DAYS, 'final': FINAL_DAYS, 'seized': SEIZE_DAYS, 'takeover': TAKEOVER_DAYS,
+                'probation': PROBATION_DAYS}
+        if self.stage == 'probation':
+            return max(0, PROBATION_DAYS - (self.day - self.stage_day))
+        return max(0, step.get(self.stage, 0) - since)
+
+    def final_need(self):
+        """At the final notice: what must be paid now to keep the wagon (arrears down to 40%)."""
+        import math
+        return max(0, self.arrears - math.floor(FINAL_CURE * self.arrears_at_final))
 
     def _ladder(self, r):
         if self.stage in ('ok', 'deferred'):
             return
         if self.stage == 'probation':
-            if self.day - self.stage_day >= 14:
+            if self.day - self.stage_day >= PROBATION_DAYS:
                 self.stage = 'ok'
             return
         if self.shield:
             self.served_day += 1                   # clocks stop in a DLC's own lands
             return
         since = self.day - self.served_day
-        if self.stage == 'grace' and since >= 3:
+        if self.stage == 'grace' and since >= GRACE_DAYS:
             self.stage, self.arrears_at_final = 'final', self.arrears
-        elif self.stage == 'final' and since >= 5:
-            if self.arrears > 0.4 * self.arrears_at_final:
-                value = half_up(0.6 * self.assets)
-                self.assets = 0
+            r.notes.append('final notice')
+        elif self.stage == 'final' and since >= FINAL_DAYS:
+            if self.final_need() > 0 and self.wagon_ok:
+                value = half_up(SEIZE_SHARE * self.wagon_value())
+                self.assets -= self.wagon_value()
                 self.wagon_ok = False
                 self.arrears = max(0, self.arrears - value)
                 r.notes.append('seized: the wagon and brahmin, %d caps against the arrears' % value)
             self.stage = 'seized'
             if self.arrears == 0:
                 self._cured(r)
-        elif self.stage == 'seized' and since >= 7 and self.arrears > 0:
-            self.ended = True
-            r.notes.append('receivership: the office is now a Crimson Caravan branch')
+        elif self.stage in ('seized', 'takeover') and since >= SEIZE_DAYS and self.arrears > 0:
+            self._end(r, 'receivership' if self.stage == 'seized' else 'takeover')
+
+    def _end(self, r, reason):
+        self.ended, self.end_reason = True, reason
+        if r is not None:
+            r.notes.append({'receivership': 'receivership: the office is now a Crimson Caravan branch',
+                            'takeover': 'takeover: Alice took the office',
+                            'walked': 'wound up by the owner'}[reason])
+
+    # cures (design: Cures at Final notice); each one works at a terminal or from a notice letter
+    def wagon_value(self):
+        return max(0, self.assets - self.buildings) if self.wagon_ok else 0
+
+    def rescue_cap(self):
+        return RESCUE_WEEKS * (self.week_running_costs() + min(MIN_PRINCIPAL, self.loan))
+
+    def rescue_amount(self):
+        """What an owner rescue would pay now (0: not offered). Not for a takeover, once a season."""
+        if self.stage not in ('grace', 'final', 'seized') or self.arrears <= 0:
+            return 0
+        if self.day - self.last_rescue < RESCUE_EVERY:
+            return 0
+        return min(self.arrears, self.rescue_cap())
 
     def owner_rescue(self):
-        """Up to 2 weeks of bills from the owner's pocket: cures the notice, the strike stays."""
-        self.owner_paid_in += self.arrears
-        self.arrears = 0
-        self.stage, self.stage_day = 'probation', self.day
+        """Pay up to 2 weeks of bills from the owner's pocket: cures the notice (if it covers it), the
+        strike stays, and the money is owner money (never toward a tier). False if not possible."""
+        pay = self.rescue_amount()
+        if pay <= 0 or self.pocket < pay:
+            return False
+        self.pocket -= pay
+        self.owner_paid_in += pay
+        self.arrears -= pay
+        self.last_rescue = self.day
+        if self.arrears == 0:
+            self._cured()
+        return True
+
+    def sell_value(self):
+        return half_up(SELL_SHARE * self.wagon_value()) if self.stage in SERVED and self.wagon_ok else 0
+
+    def sell_wagon(self):
+        """Sell the wagon and brahmin to a buyer at 60%; the money pays the arrears at once."""
+        value = self.sell_value()
+        if value <= 0:
+            return False
+        self.assets -= self.wagon_value()
+        self.wagon_ok = False
+        self.cash += value
+        take = min(self.cash, self.arrears)
+        self.cash -= take
+        self.arrears -= take
+        if self.arrears == 0:
+            self._cured()
+        return True
+
+    def can_walk_away(self):
+        return self.stage in SERVED and not self.ended
+
+    def walk_away(self):
+        """Wind the company up: on better terms than receivership (the successor chapter is M2+)."""
+        if not self.can_walk_away():
+            return False
+        self._end(None, 'walked')
+        return True
+
+    def can_buy_wagon(self):
+        return not self.wagon_ok and self.arrears == 0 and self.cash + self.owner_funds >= WAGON + BRAHMIN_PAIR
+
+    def buy_wagon(self):
+        """A new wagon and brahmin pair (700) after a seizure or a sale, once nothing is owed."""
+        if not self.can_buy_wagon():
+            return False
+        cost = WAGON + BRAHMIN_PAIR
+        from_owner = min(self.owner_funds, cost)
+        self.owner_funds -= from_owner
+        self.cash -= cost - from_owner
+        self.assets += cost
+        self.wagon_ok = True
+        return True
+
+    def notice_actions(self):
+        """The cures a notice letter offers as buttons after 'Later', in order."""
+        acts = []
+        if self.rescue_amount() > 0:
+            acts.append('rescue')
+        if self.sell_value() > 0:
+            acts.append('sell')
+        return acts
+
+    def forecast_short(self):
+        """The forecast warning: runway under 5 days and no notice open. The shortfall on bill day
+        (the bill estimate less cash, at least 1), or 0 when there is no warning."""
+        if self.stage not in ('ok', 'probation') or self.runway() >= FORECAST_RUNWAY:
+            return 0
+        import post_model
+        return max(1, post_model.bill_estimate(self) - self.cash)
 
     def history_text(self):
         return ' '.join(n for r in self.history for n in r.notes)
@@ -492,10 +644,35 @@ class Company:
             self.post_memo(Memo('prepay', self.day, self.day + 3))
         return road
 
+    def notice_values(self):
+        """(stage, arrears, to pay, days left, strikes) for a notice letter. A deferred notice is written
+        as it will be once served (serving happens when the letter is shown)."""
+        import math
+        if self.stage == 'deferred':
+            st = self.serve_outcome()
+            days = {'grace': GRACE_DAYS, 'final': FINAL_DAYS - GRACE_DAYS, 'takeover': TAKEOVER_DAYS,
+                    'probation': PROBATION_DAYS}[st]
+            need = self.arrears - math.floor(FINAL_CURE * self.arrears) if st == 'final' else self.arrears
+            return (st, self.arrears, need, days, len(self.recent_strikes()) + 1)
+        need = self.final_need() if self.stage == 'final' else self.arrears
+        return (self.stage, self.arrears, need, self.days_left(), len(self.recent_strikes()))
+
     def _post_letters(self, r, road):
-        """Letters of the day go to the Post; the first one waits to be shown in the field. A waiting
-        while-you-were-away letter is kept; any other waiting letter is stale after a tick."""
+        """Letters of the day go to the Post; the most urgent one waits to be shown in the field
+        (LETTER_ORDER). A waiting while-you-were-away letter is kept; a deferred notice is rewritten at
+        every tick until it is served; any other waiting letter is stale after a tick."""
+        import post_model
         new = []
+        if self.ended:
+            new.append(Letter(self.day, 'closed', (self.end_reason,)))
+        elif (self.stage == 'deferred' and r.bills_paid is False) or any(
+                n == 'final notice' or n.startswith('seized') for n in r.notes):
+            new.append(Letter(self.day, 'notice', self.notice_values()))
+        short = self.forecast_short()
+        bill_day = self.day + post_model.days_to_bills(self)
+        if short and self.forecast_bill_day != bill_day:
+            self.forecast_bill_day = bill_day
+            new.append(Letter(self.day, 'forecast', (short, post_model.days_to_bills(self))))
         if self.day - self.last_visit >= AWAY_DAYS and not self.away_posted:
             self.away_posted = True
             days = [h for h in self.history if h.day > self.last_visit]
@@ -507,27 +684,54 @@ class Company:
         if r.event in ('bandits_took_cargo', 'bandits_wreck'):
             new.append(Letter(self.day, 'loss', (r.event, r.event_loss)))
         self.post = (self.post + new)[-POST_KEEP:]
-        if not (self.letter and self.letter.kind == 'away'):
-            self.letter = new[0] if new else None
+        waiting = list(new)
+        if self.stage == 'deferred' and not any(x.kind == 'notice' for x in new):
+            waiting.append(Letter(self.day, 'notice', self.notice_values()))     # rewritten, not re-posted
+        if self.letter and self.letter.kind == 'away':
+            waiting.append(self.letter)
+        waiting.sort(key=lambda x: LETTER_ORDER.index(x.kind))                # stable: new letters first
+        self.letter = waiting[0] if waiting else None
 
     def terminal_visit(self):
-        """The player opens a company terminal: the post is read there, so no field letter waits."""
+        """The player opens a company terminal: a deferred notice is served there and the post is read,
+        so no field letter waits."""
+        self.serve()
         self.last_visit, self.away_posted, self.letter = self.day, False, None
 
     def field_letter(self, in_combat=False, in_menu=False):
-        """The letter shown in the field now, if any: out of combat and menus, at most one a game day."""
-        if self.letter is None or in_combat or in_menu or self.letter_shown_day == self.day:
+        """The letter shown in the field now, if any: out of combat and menus, at most one a game day,
+        none in a DLC's own lands (no runner finds you there). Showing a deferred notice serves it."""
+        if self.letter is None or in_combat or in_menu or self.shield or self.letter_shown_day == self.day:
             return None
         letter, self.letter, self.letter_shown_day = self.letter, None, self.day
+        if letter.kind == 'notice':
+            self.serve()
         return letter
 
-    def answer_letter(self, letter, button):
-        """A road letter's buttons: 0 keep it home, 1 send as planned, 2 hire a gun, 3 later."""
-        if letter.kind != 'road' or button == 3:
+    def letter_buttons(self, letter):
+        """The actions behind a letter's buttons, in order (texts in tools/post_model.py)."""
+        if letter.kind == 'road':
+            return ['hold', 'send', 'gun', 'later']
+        if letter.kind == 'notice':
+            acts = [a for a in self.notice_actions()
+                    if a != 'rescue' or self.pocket >= self.rescue_amount()]
+            return ['later'] + acts
+        return ['ok']
+
+    def answer_letter(self, letter, button, buttons=None):
+        """Apply a letter's button. `buttons` is what letter_buttons gave when the box was shown."""
+        acts = buttons if buttons is not None else self.letter_buttons(letter)
+        if not 0 <= button < len(acts):
             return
-        memo = next((m for m in self.memos if m.kind == 'road'), None)
-        if memo:
-            self.answer(memo, (HOLD, SEND, GUN)[button])
+        a = acts[button]
+        if a in ('hold', 'send', 'gun'):
+            memo = next((m for m in self.memos if m.kind == 'road'), None)
+            if memo:
+                self.answer(memo, {'hold': HOLD, 'send': SEND, 'gun': GUN}[a])
+        elif a == 'rescue':
+            self.owner_rescue()
+        elif a == 'sell':
+            self.sell_wagon()
 
     # --- worth and tiers --------------------------------------------------------------------------
     def net_worth(self):
@@ -559,3 +763,4 @@ class Company:
         self.owner_funds -= from_owner
         self.cash -= cost - from_owner
         self.assets += cost
+        self.buildings += cost

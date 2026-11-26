@@ -26,11 +26,12 @@ class Labels(unittest.TestCase):
     def test_front_page_on_founding_day(self):
         c = founded()
         rows = tm.labels(c, tm.Terminal())
-        self.assertEqual(len(rows), 12)
+        self.assertEqual(len(rows), 13)
         burn = c.daily_burn()
         self.assertEqual(rows[0], 'CASH 2500 BILLS 7d:%d RUNWAY %dd' % (tm.bill_estimate(c), 2500 // burn))
         self.assertEqual(rows[2], 'POST     nothing yet')
-        self.assertEqual(rows[-1], 'SETTINGS')
+        self.assertEqual(rows[-2], 'SETTINGS')
+        self.assertEqual(rows[-1], 'NOTICE   none')
 
     def test_bill_estimate_is_a_quiet_week_and_the_licence_every_28_days(self):
         c = founded()
@@ -88,7 +89,7 @@ class Clicks(unittest.TestCase):
     def test_front_rows_open_their_screens_and_back_returns(self):
         c, t = founded(), tm.Terminal()
         for row, screen in ((2, tm.POST), (3, tm.MEMOS), (4, tm.ROUTES), (5, tm.PRICES), (9, tm.LEDGER),
-                            (10, tm.ORDERS), (11, tm.SETTINGS)):
+                            (10, tm.ORDERS), (11, tm.SETTINGS), (12, tm.NOTICE)):
             tm.click(c, t, row)
             self.assertEqual(t.screen, screen)
             tm.click(c, t, len(tm.labels(c, t)) - 1)
@@ -96,7 +97,7 @@ class Clicks(unittest.TestCase):
 
     def test_info_rows_and_hidden_rows_do_nothing(self):
         c, t = founded(), tm.Terminal()
-        for row in (0, 6, 7, 8, 12, 13):
+        for row in (0, 6, 7, 8, 13):
             tm.click(c, t, row)
             self.assertEqual(t.screen, tm.FRONT)
         self.assertEqual(c.queue_list, [])

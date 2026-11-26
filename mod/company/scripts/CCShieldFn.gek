@@ -1,0 +1,68 @@
+scn CCShieldFn
+
+; The busy shield (design: Losing and coming back): 1 while the player is in a DLC's own lands and that
+; DLC's main quest is not done. The player's cell comes from the DLC's plugin (M0 0.12: GetSourceModIndex
+; of the parent cell is 0 in the Mojave, interiors included). DLC quests are looked up at run time, so
+; the mod needs no DLC. CCCore.iShieldTest: 1 forces the shield on, 2 off (tests only).
+
+int iT
+int iM
+int iOn
+int iD
+ref rC
+ref rQ
+
+begin Function {}
+	set iOn to 0
+	let iT := GetVariable "iShieldTest" CCCore
+	if iT == 1
+		set iOn to 1
+	elseif iT == 0
+		let rC := player.GetParentCell
+		let iM := GetSourceModIndex rC
+		if iM > 0
+			let iD := GetModIndex "DeadMoney.esm"
+			if iM == iD
+				; Heist of the Centuries
+				let rQ := GetFormFromMod "DeadMoney.esm" "000FC1"
+				if GetQuestCompleted rQ == 0
+					set iOn to 1
+				endif
+			endif
+			let iD := GetModIndex "HonestHearts.esm"
+			if iM == iD
+				; any ending: Crush the White Legs, Flight from Zion, Chaos in Zion
+				set iOn to 1
+				let rQ := GetFormFromMod "HonestHearts.esm" "008A36"
+				if GetQuestCompleted rQ
+					set iOn to 0
+				endif
+				let rQ := GetFormFromMod "HonestHearts.esm" "008A37"
+				if GetQuestCompleted rQ
+					set iOn to 0
+				endif
+				let rQ := GetFormFromMod "HonestHearts.esm" "00AE9C"
+				if GetQuestCompleted rQ
+					set iOn to 0
+				endif
+			endif
+			let iD := GetModIndex "OldWorldBlues.esm"
+			if iM == iD
+				; Old World Blues (afterwards the Sink is an ordinary home)
+				let rQ := GetFormFromMod "OldWorldBlues.esm" "002FCC"
+				if GetQuestCompleted rQ == 0
+					set iOn to 1
+				endif
+			endif
+			let iD := GetModIndex "LonesomeRoad.esm"
+			if iM == iD
+				; The Apocalypse
+				let rQ := GetFormFromMod "LonesomeRoad.esm" "00BF03"
+				if GetQuestCompleted rQ == 0
+					set iOn to 1
+				endif
+			endif
+		endif
+	endif
+	SetFunctionValue iOn
+end

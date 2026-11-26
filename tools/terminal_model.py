@@ -10,7 +10,7 @@ import post_model as pm
 from company_model import GOODS
 from post_model import bill_estimate, days_to_bills   # noqa: F401 (used by the tests and the game check)
 
-FRONT, PRICES, LEDGER, ORDERS, ROUTES, SETTINGS, POST, MEMOS = range(8)
+FRONT, PRICES, LEDGER, ORDERS, ROUTES, SETTINGS, POST, MEMOS, NOTICE = range(9)
 MAX_ROWS = 14
 ROW_WIDTH = 39
 # Good names padded to one width, as the game writes them (fixed text in each Console line).
@@ -18,7 +18,9 @@ NAMES = {'water': 'water      ', 'powder': 'powder     ', 'ammo': 'ammo       ',
          'herbs': 'herbs      ', 'materials': 'materials  '}
 TOWNS = ('GS', 'PR')
 STAGES = {'ok': 'none', 'deferred': 'deferred', 'grace': 'SERVED', 'final': 'FINAL', 'seized': 'SEIZED',
-          'probation': 'probation'}
+          'probation': 'probation', 'takeover': 'TAKEOVER'}
+CLOSED = {'receivership': 'the lender took the office', 'takeover': 'the lender took the office',
+          'walked': 'you wound it up'}
 EVENTS = {'': '', 'bandits_driven_off': '  driven off', 'bandits_took_cargo': '  bandits -%d',
           'bandits_wreck': '  WRECKED -%d', 'bandits_empty': '  nothing taken'}
 
@@ -29,6 +31,7 @@ class Terminal:
     def __init__(self):
         self.screen = FRONT
         self.direction = 0          # 0: Goodsprings > Primm, 1: Primm > Goodsprings
+        self.confirm = False        # WALK AWAY was selected once; a second select winds the company up
 
 
 def best_margin(c, origin=0):
@@ -67,6 +70,40 @@ def memo_rows(c):
     return rows
 
 
+def notice_row(c):
+    """The front page's NOTICE row: the forecast warning, or the open notice and its clock."""
+    short = c.forecast_short()
+    if short:
+        return 'WARNING  short ~%d on bill day' % short
+    d = c.days_left()
+    return {'ok': 'NOTICE   none',
+            'deferred': 'NOTICE   unread: %d owed' % c.arrears,
+            'probation': 'NOTICE   probation, %dd left' % d,
+            'grace': 'NOTICE   SERVED: %d owed, %dd' % (c.arrears, d),
+            'final': 'NOTICE   FINAL: pay %d in %dd' % (c.final_need(), d),
+            'seized': 'NOTICE   SEIZED: %d owed, %dd' % (c.arrears, d),
+            'takeover': 'NOTICE   TAKEOVER: %d owed, %dd' % (c.arrears, d)}[c.stage]
+
+
+def notice_rows(c, t):
+    """(label, result text, action) for each Notice screen row before BACK."""
+    if c.stage in cm.SERVED or c.stage == 'probation':
+        text = pm.notice_text(c.notice_values())
+    elif c.forecast_short():
+        text = pm.forecast_text(c.forecast_short(), days_to_bills(c))
+    else:
+        text = 'No notice. The bills are paid on time.'
+    rows = [('OWED %d  STRIKES %d of 3' % (c.arrears, len(c.recent_strikes())), text, None)]
+    if c.stage in cm.SERVED:
+        if c.rescue_amount() > 0:
+            rows.append(('RESCUE  pay %d (you have %d)' % (c.rescue_amount(), c.pocket), '', 'rescue'))
+        if c.sell_value() > 0:
+            rows.append(('SELL wagon and brahmin  +%d' % c.sell_value(), '', 'sell'))
+        rows.append(('WALK AWAY  select again to confirm' if t.confirm else 'WALK AWAY  wind the company up',
+                     '', 'walk'))
+    return rows
+
+
 def post_rows(c):
     """(label, result text) for each Post screen row before BACK: the report's pages, then letters newest first."""
     pages = pm.report_pages(c)
@@ -83,6 +120,8 @@ def results(c, t):
         return [text for _, text in post_rows(c)] + ['']
     if c.founded and t.screen == MEMOS:
         return [row[1] for row in memo_rows(c)] + ['']
+    if c.founded and not c.ended and t.screen == NOTICE:
+        return [row[1] for row in notice_rows(c, t)] + ['']
     return [''] * len(labels(c, t))
 
 
@@ -90,6 +129,8 @@ def labels(c, t):
     """Row labels of the screen that is up."""
     if not c.founded:
         return ["No company yet: see Alice's agent."]
+    if c.ended:
+        return ['CLOSED: %s' % CLOSED[c.end_reason], 'DAY %d  CASH %d  OWED %d' % (c.day, c.cash, c.arrears)]
     if t.screen == FRONT:
         r = last_report(c)
         g, m = best_margin(c)
@@ -97,14 +138,15 @@ def labels(c, t):
                 'PLAN     accept the plan (%d crates)' % len(c.plan()),
                 ('POST     day %d: net %d' % (r.day, r.margin)) if r else 'POST     nothing yet',
                 memos_row(c),
-                'ROUTES   wagon %s' % ('home' if c.wagon_ok else 'seized'),
+                'ROUTES   wagon %s' % ('home' if c.wagon_ok else 'none'),
                 'PRICES   best GS>PR: %s %d' % (NAMES[g].strip(), m),
                 'CHAINS   none yet (tier 2)',
                 'STAFF    %d on the books' % (2 + c.hands),
                 'CONTRACTS none running',
                 'LEDGER   loan %d, week sales %d' % (c.loan, c.week_sales),
                 'ORDERS   %d pending (apply at 06:00)' % len(c.queue_list),
-                'SETTINGS']
+                'SETTINGS',
+                notice_row(c)]
         return rows
     if t.screen == PRICES:
         o, d = TOWNS[t.direction], TOWNS[1 - t.direction]
@@ -131,7 +173,8 @@ def labels(c, t):
                 'CANCEL all pending orders',
                 'BACK']
     if t.screen == ROUTES:
-        rows = ['WAGON 1  %s  driver and guard' % ('home' if c.wagon_ok else 'SEIZED')]
+        rows = ['WAGON 1  home  driver and guard' if c.wagon_ok else
+                'WAGON 1  none: BUY one for %d' % (cm.WAGON + cm.BRAHMIN_PAIR)]
         for r in c.history[-3:][::-1]:
             ev = EVENTS[r.event] % r.event_loss if '%' in EVENTS[r.event] else EVENTS[r.event]
             rows.append('DAY %d  net %d%s' % (r.day, r.margin, ev))
@@ -142,19 +185,23 @@ def labels(c, t):
         return [label for label, _ in post_rows(c)] + ['BACK']
     if t.screen == MEMOS:
         return [row[0] for row in memo_rows(c)] + ['BACK']
+    if t.screen == NOTICE:
+        return [row[0] for row in notice_rows(c, t)] + ['BACK']
     raise ValueError(t.screen)
 
 
 def click(c, t, row):
     """What selecting a row does. Rows past the screen's labels are hidden: a click there does nothing."""
     rows = labels(c, t)
-    if not c.founded or row >= len(rows):
+    if not c.founded or c.ended or row >= len(rows):
         return
+    confirm, t.confirm = t.confirm, False
     if t.screen == FRONT:
         if row == 1:
             c.queue_list = c.plan()
         else:
-            t.screen = {2: POST, 3: MEMOS, 4: ROUTES, 5: PRICES, 9: LEDGER, 10: ORDERS, 11: SETTINGS}.get(row, FRONT)
+            t.screen = {2: POST, 3: MEMOS, 4: ROUTES, 5: PRICES, 9: LEDGER, 10: ORDERS, 11: SETTINGS,
+                        12: NOTICE}.get(row, FRONT)
         return
     if row == len(rows) - 1:                    # BACK is always the last row
         t.screen = FRONT
@@ -169,6 +216,19 @@ def click(c, t, row):
             c.queue_list = c.plan()
         elif row == 3:
             c.queue_list = []
+    elif t.screen == ROUTES and row == 0:
+        c.buy_wagon()
+    elif t.screen == NOTICE:
+        act = notice_rows(c, t)[row][2]
+        if act == 'rescue':
+            c.owner_rescue()
+        elif act == 'sell':
+            c.sell_wagon()
+        elif act == 'walk':
+            if confirm:
+                c.walk_away()
+            else:
+                t.confirm = True
     elif t.screen == SETTINGS and row == 0:
         c.auto = not c.auto
     elif t.screen == MEMOS:

@@ -31,7 +31,17 @@ calls are mine and are marked "my call" here and in the plans.
   letters, the Post and Memos screens read back, answers applied at the next tick), no script
   errors. Pictures: `docs/evidence/m1/m1_post_*.png`, `m1_memos_*.png`, `m1_field_letter.png`.
   Not checked by eye: a real click on a Post row typing its text (read back by command instead).
-- Next: 1.7 debt ladder, strikes, cures, busy shield, forecast banner.
+  1.7 the debt ladder (`tools/test_ladder.py`, 25 tests; 89 model tests pass): a missed bill is a
+  deferred notice until it is served (a terminal visit or the notice letter shown); grace 3 days,
+  final notice 5, seizure 7, receivership 7 more; a strike on each missed bill, 3 within 56 days is
+  a takeover; cures: owner rescue from the player's pocket, sell the wagon (60%), walk away (two
+  clicks); probation 14 days; a forecast warning on the front page and a letter when runway < 5;
+  the busy shield stops the clocks and letters while the player is in a DLC's lands before its main
+  quest is done. `tools/ingame_ladder.py`: 18 days, every day's numbers, letter text and ladder
+  state match the model; Notice, Routes and closed screens read back; rescue, wagon sale from a
+  letter and receivership; no script errors. Pictures: `docs/evidence/m1/m1_notice_letter.png`,
+  `m1_notice_screen.png`, `m1_closed_terminal.png`.
+- Next: 1.8 supply contracts, standing orders, hiring.
 
 ## Done
 
@@ -90,6 +100,20 @@ calls are mine and are marked "my call" here and in the plans.
 - Field letters are `MessageBoxEx` boxes from a GameMode quest script (`CCLetterScript`); a road
   letter's buttons answer the road memo.
 - The ALCH ledger retry (Pip-Boy item) is not done in 1.6; the desks stay the way in.
+- 1.7: a notice is served only at a terminal visit or when its letter is shown; until then it is
+  deferred and its clock does not run. Paying a deferred notice still counts the strike.
+- 1.7: a second miss on probation skips Grace (straight to a final notice). A third strike within
+  56 days is a takeover (7 days) that owner money cannot cure; curing it drops the oldest strike.
+- 1.7: owner rescue comes from the player's caps, at most 2 weeks of running costs plus principal,
+  once every 28 days, never in a takeover; it is booked as owner money and never counts for a tier.
+- 1.7: selling the wagon gives 60% of its value (assets less buildings) and pays the arrears at
+  once; a new wagon (700) can be bought on Routes when nothing is owed. Walk away needs two clicks.
+- 1.7: the forecast warning shows when runway < 5 days and the company is ok or on probation;
+  one forecast letter a bill cycle.
+- 1.7: the busy shield is the player's cell coming from a DLC whose main quest is not done (quests
+  looked up with `GetFormFromMod`); it stops the clocks, holds field letters and caps a day's event
+  losses at the previous day's margin. A test switch `CCCore.iShieldTest` forces it.
+- 1.7: letter order when several wait: closed, notice, forecast, away, road, loss.
 
 ## Open items for the final report
 
@@ -99,3 +123,11 @@ calls are mine and are marked "my call" here and in the plans.
 - fnv-mcp `fnv_ui_do button` cannot pick a terminal row by its label (all rows share one tile name).
 - Terminal typing speed, vanilla interior references, `Quest.var` in compile, console echo lines.
 - The weekly statement (doc) is not built yet.
+- Not in M1: the successor chapter, rescue loans, the contract advance and the Hail Mary; the
+  "after the loan is repaid" strike rules.
+- 1.7 checked in game but only by the model: the takeover path and the walk-away second click.
+  The busy shield's DLC detection is not checked in real DLC cells (M0 0.12 proved the source
+  plugin test; the game used the test switch).
+- fnv-mcp: after a `coc` launch the companion closes every message box for 90 s (the arrival
+  closer), the mod's field letters too, and `fnv_status` does not list that task. The checks now
+  wait until 105 s after launch (`tools/live.py`).

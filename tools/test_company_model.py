@@ -120,57 +120,7 @@ class Bills(unittest.TestCase):
         self.assertEqual(cm.duty(25000), 100 + 525 + 250)
 
 
-class DebtLadder(unittest.TestCase):
-    def broke(self, present=True):
-        c = fresh(present=present)
-        c.cash = 50          # far short of the day-7 bill
-        for _ in range(6):
-            c.tick()
-            c.cash = min(c.cash, 50)
-        r = c.tick()         # day 7
-        return c, r
-
-    def test_a_miss_serves_a_notice_and_a_strike_when_present(self):
-        c, r = self.broke()
-        self.assertFalse(r.bills_paid)
-        self.assertGreater(c.arrears, 0)
-        self.assertEqual(c.strikes, [7])
-        self.assertEqual(c.stage, 'grace')
-
-    def test_away_defers_without_a_strike_until_served(self):
-        c, r = self.broke(present=False)
-        self.assertEqual(c.strikes, [])
-        self.assertEqual(c.stage, 'deferred')
-        c.visit()
-        self.assertEqual(c.strikes, [7])
-        self.assertEqual(c.stage, 'grace')
-
-    def test_ladder_runs_final_notice_seizure_receivership(self):
-        c, _ = self.broke()
-        stages = []
-        for _ in range(7):
-            c.cash = 0
-            c.tick()
-            stages.append(c.stage)
-        self.assertEqual(stages[2], 'final')       # day 10 = served + 3
-        self.assertIn('seized', c.history_text())  # day 12 = served + 5
-        self.assertTrue(c.ended)                   # day 14 = served + 7
-
-    def test_owner_rescue_cures_the_notice_but_keeps_the_strike(self):
-        c, _ = self.broke()
-        c.owner_rescue()
-        self.assertEqual(c.arrears, 0)
-        self.assertEqual(c.stage, 'probation')
-        self.assertEqual(c.strikes, [7])
-
-    def test_busy_shield_stops_the_clock(self):
-        c, _ = self.broke()
-        c.shield = True
-        for _ in range(10):
-            c.cash = 0
-            c.tick()
-        self.assertFalse(c.ended)
-        self.assertEqual(c.stage, 'grace')
+# The debt ladder, strikes, cures and the busy shield: tools/test_ladder.py (task 1.7).
 
 
 class Determinism(unittest.TestCase):

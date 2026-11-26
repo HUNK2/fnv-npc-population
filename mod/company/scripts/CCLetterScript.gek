@@ -1,10 +1,13 @@
 scn CCLetterScript
 
-; Field post (plan task 1.6, tools/company_model.py Company.field_letter). CCCore leaves at most one
-; letter waiting (iLetterKind 1 robbed, 2 road, 3 away; its text in aLetter[0]). It is shown here with
-; MessageBoxEx, only in GameMode (this block does not run in menus or dialogue), out of combat, and at
+; Field post (tools/company_model.py Company.field_letter, letter_buttons, answer_letter). CCCore leaves
+; at most one letter waiting (iLetterKind 1 robbed, 2 road, 3 away, 4 notice, 5 forecast, 6 closed; its
+; text in aLetter[0]). It is shown with MessageBoxEx, only in GameMode (this block does not run in menus
+; or dialogue), out of combat, outside a DLC's own lands (CCShieldFn: no runner finds you there), at
 ; most once a company day. A road letter's buttons answer the road memo: 0 keep it home, 1 send as
-; planned, 2 hire a gun, 3 later. If the box was closed without a button, nothing is answered.
+; planned, 2 hire a gun, 3 later. Showing a notice serves it (CCServeFn); its buttons are Later and the
+; cures that work now: pay from your pocket (owner rescue), sell the wagon. A box closed without a
+; button answers nothing.
 
 int iShown
 int iKind
@@ -16,6 +19,12 @@ array_var aL
 array_var aMK
 array_var aMP
 string_var sT
+int iAct1
+int iAct2
+int iA
+int iB
+int iPocket
+int iAct
 
 begin GameMode
 	if iShown
@@ -37,6 +46,14 @@ begin GameMode
 				endif
 				set iK to iK + 1
 			loop
+		elseif iKind == 4 && iBtn > 0
+			set iAct to iAct1
+			if iBtn == 2
+				set iAct to iAct2
+			endif
+			if iAct
+				call CCCureFn iAct
+			endif
 		endif
 	else
 		let iKind := GetVariable "iLetterKind" CCCore
@@ -44,16 +61,42 @@ begin GameMode
 			let iDay := GetVariable "iDay" CCCore
 			let iShownDay := GetVariable "iLetterShownDay" CCCore
 			if iShownDay != iDay && player.IsInCombat == 0
-				let aL := GetArrayVariable "aLetter" CCCore
-				let sT := aL[0]
-				if iKind == 2
-					MessageBoxEx "%z|Keep it home|Send as planned|Hire a gun (25)|Later" sT
-				else
-					MessageBoxEx "%z|Ok" sT
+				let iA := call CCShieldFn
+				if iA == 0
+					let aL := GetArrayVariable "aLetter" CCCore
+					let sT := aL[0]
+					if iKind == 2
+						MessageBoxEx "%z|Keep it home|Send as planned|Hire a gun (25)|Later" sT
+					elseif iKind == 4
+						call CCServeFn
+						set iAct1 to 0
+						set iAct2 to 0
+						let iA := call CCCureFn 11
+						let iB := call CCCureFn 12
+						let iPocket := player.GetItemCount Caps001
+						if iA > 0 && iPocket < iA
+							set iA to 0
+						endif
+						if iA > 0 && iB > 0
+							set iAct1 to 1
+							set iAct2 to 2
+							MessageBoxEx "%z|Later|Pay %.0f from my pocket|Sell the wagon for %.0f" sT iA iB
+						elseif iA > 0
+							set iAct1 to 1
+							MessageBoxEx "%z|Later|Pay %.0f from my pocket" sT iA
+						elseif iB > 0
+							set iAct1 to 2
+							MessageBoxEx "%z|Later|Sell the wagon for %.0f" sT iB
+						else
+							MessageBoxEx "%z|Later" sT
+						endif
+					else
+						MessageBoxEx "%z|Ok" sT
+					endif
+					set iShown to 1
+					SetVariable "iLetterKind" 0 CCCore
+					SetVariable "iLetterShownDay" iDay CCCore
 				endif
-				set iShown to 1
-				SetVariable "iLetterKind" 0 CCCore
-				SetVariable "iLetterShownDay" iDay CCCore
 			endif
 		endif
 	endif

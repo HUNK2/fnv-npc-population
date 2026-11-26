@@ -21,6 +21,12 @@ int iM
 int iKeep
 array_var aMK
 array_var aMP
+int iConfirm
+int iWas
+int iEnded
+int iStage
+int iA
+int iB
 
 begin GameMode
 	; dev and test switch: place a terminal at the player (once) and open it
@@ -55,11 +61,24 @@ begin MenuMode 1057
 	loop
 	; the running game's compiler cannot resolve Quest.variable: CCCore is read by name
 	let iFounded := GetVariable "iFounded" CCCore
+	let iEnded := GetVariable "iEnded" CCCore
+	if iEnded
+		set iClick to -1
+	endif
 	; a row that only shows its result text (a report page, a letter, a memo's title) must not redraw:
 	; redrawing the menu wipes the text the click just typed
 	set iKeep to 0
 	if iClick >= 0 && iClick < iRows - 1 && (iScreen == 6 || iScreen == 7)
 		set iKeep to 1
+	endif
+	; WALK AWAY needs a second select; any other select cancels it
+	set iWas to 0
+	if iClick >= 0 && iFounded
+		set iWas to iConfirm
+		set iConfirm to 0
+		if iScreen == 8 && iClick == 0 && iWas == 0
+			set iKeep to 1
+		endif
 	endif
 	if iClick >= 0 && iFounded
 		let aQ := GetArrayVariable "aQueue" CCCore
@@ -86,6 +105,8 @@ begin MenuMode 1057
 				set iScreen to 3
 			elseif iClick == 11
 				set iScreen to 5
+			elseif iClick == 12
+				set iScreen to 8
 			endif
 		elseif iClick == iRows - 1
 			set iScreen to 0
@@ -135,6 +156,37 @@ begin MenuMode 1057
 				set iRow to iRow + 1 + iN
 				set iM to iM + 1
 			loop
+		elseif iScreen == 4
+			if iClick == 0
+				call CCCureFn 4
+			endif
+		elseif iScreen == 8
+			; the cure rows, in the order CCTermDraw wrote them
+			let iStage := GetVariable "iStage" CCCore
+			if iStage == 2 || iStage == 3 || iStage == 4 || iStage == 6
+				let iA := call CCCureFn 11
+				let iB := call CCCureFn 12
+				set iRow to 1
+				if iA > 0
+					if iClick == iRow
+						call CCCureFn 1
+					endif
+					set iRow to iRow + 1
+				endif
+				if iB > 0
+					if iClick == iRow
+						call CCCureFn 2
+					endif
+					set iRow to iRow + 1
+				endif
+				if iClick == iRow
+					if iWas
+						call CCCureFn 3
+					else
+						set iConfirm to 1
+					endif
+				endif
+			endif
 		elseif iScreen == 5
 			if iClick == 0
 				let iAuto := 1 - (GetVariable "iAuto" CCCore)

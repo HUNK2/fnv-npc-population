@@ -1,0 +1,53 @@
+scn CCServeFn
+
+; Serve a deferred notice (tools/company_model.py Company.serve): at a company terminal or when its
+; field letter is shown. It becomes a strike whoever pays it later; strikes count 56 days. Stages:
+; 1 deferred, 2 grace, 3 final notice, 4 seized, 5 probation, 6 takeover. Returns 1 if one was served.
+
+int iStage
+int iDay
+int iArrears
+int iFromProb
+int iN
+int iK
+int iV
+int iDone
+array_var aS
+
+begin Function {}
+	set iDone to 0
+	let iStage := GetVariable "iStage" CCCore
+	if iStage == 1
+		set iDone to 1
+		let iDay := GetVariable "iDay" CCCore
+		let iArrears := GetVariable "iArrears" CCCore
+		let iFromProb := GetVariable "iFromProb" CCCore
+		let aS := GetArrayVariable "aStrikes" CCCore
+		let iK := (ar_Size aS) - 1
+		while iK >= 0
+			if eval (iDay - aS[iK] >= 56)
+				ar_Erase aS iK
+			endif
+			set iK to iK - 1
+		loop
+		let iN := ar_Size aS
+		ar_Append aS iDay
+		SetVariable "iServedDay" iDay CCCore
+		SetVariable "iFromProb" 0 CCCore
+		if iArrears == 0
+			SetVariable "iStage" 5 CCCore
+			SetVariable "iStageDay" iDay CCCore
+		elseif iN + 1 >= 3
+			SetVariable "iStage" 6 CCCore
+		elseif iFromProb
+			; a second miss on probation skips Grace: the final notice, as if served 3 days ago
+			SetVariable "iStage" 3 CCCore
+			set iV to iDay - 3
+			SetVariable "iServedDay" iV CCCore
+			SetVariable "iArrearsAtFinal" iArrears CCCore
+		else
+			SetVariable "iStage" 2 CCCore
+		endif
+	endif
+	SetFunctionValue iDone
+end

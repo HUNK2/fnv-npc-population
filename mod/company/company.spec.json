@@ -724,6 +724,26 @@
    "source": "scripts/CCFiresFn.gek",
    "script_type": "object"
   },
+  "CCServeFn": {
+   "type": "SCPT",
+   "source": "scripts/CCServeFn.gek",
+   "script_type": "object"
+  },
+  "CCCureFn": {
+   "type": "SCPT",
+   "source": "scripts/CCCureFn.gek",
+   "script_type": "object"
+  },
+  "CCNoticeFn": {
+   "type": "SCPT",
+   "source": "scripts/CCNoticeFn.gek",
+   "script_type": "object"
+  },
+  "CCShieldFn": {
+   "type": "SCPT",
+   "source": "scripts/CCShieldFn.gek",
+   "script_type": "object"
+  },
   "CCLetterScript": {
    "type": "SCPT",
    "source": "scripts/CCLetterScript.gek",

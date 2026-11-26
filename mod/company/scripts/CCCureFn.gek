@@ -1,0 +1,148 @@
+scn CCCureFn
+
+; The cures for a served notice (tools/company_model.py: rescue_amount, owner_rescue, sell_value,
+; sell_wagon, walk_away, buy_wagon), used by the terminal's Notice and Routes screens and by notice
+; letters. iAct: 1 owner rescue, 2 sell the wagon, 3 walk away, 4 buy a wagon; 11 and 12 only ask what
+; a rescue would pay and what the wagon would sell for. Returns 1 when done (or the amount asked).
+
+int iAct
+int iStage
+int iDay
+int iArrears
+int iCash
+int iLoan
+int iHands
+int iAssets
+int iBuildings
+int iWagonOk
+int iOwner
+int iOwnerPaidIn
+int iLastRescue
+int iEnded
+int iServed
+int iAmt
+int iCap
+int iWv
+int iSell
+int iTake
+int iPocket
+int iOut
+array_var aS
+
+begin Function {iAct}
+	let iStage := GetVariable "iStage" CCCore
+	let iDay := GetVariable "iDay" CCCore
+	let iArrears := GetVariable "iArrears" CCCore
+	let iCash := GetVariable "iCash" CCCore
+	let iLoan := GetVariable "iLoan" CCCore
+	let iHands := GetVariable "iHands" CCCore
+	let iAssets := GetVariable "iAssets" CCCore
+	let iBuildings := GetVariable "iBuildings" CCCore
+	let iWagonOk := GetVariable "iWagonOk" CCCore
+	let iOwner := GetVariable "iOwner" CCCore
+	let iOwnerPaidIn := GetVariable "iOwnerPaidIn" CCCore
+	let iLastRescue := GetVariable "iLastRescue" CCCore
+	let iEnded := GetVariable "iEnded" CCCore
+	set iServed to 0
+	if iStage == 2 || iStage == 3 || iStage == 4 || iStage == 6
+		set iServed to 1
+	endif
+	; owner rescue: up to 2 weeks of bills, not for a takeover, once a season
+	set iAmt to 0
+	if iServed && iStage != 6 && iArrears > 0 && iDay - iLastRescue >= 28
+		let iCap := 7 * (22 + 14 * iHands) + 42 + 70 + Floor (0.04 * iLoan + 0.5)
+		if iLoan < 300
+			set iCap to iCap + iLoan
+		else
+			set iCap to iCap + 300
+		endif
+		set iCap to 2 * iCap
+		set iAmt to iArrears
+		if iCap < iAmt
+			set iAmt to iCap
+		endif
+	endif
+	; the wagon and brahmin: the assets less the buildings, sold at 60%
+	set iWv to 0
+	if iWagonOk
+		set iWv to iAssets - iBuildings
+		if iWv < 0
+			set iWv to 0
+		endif
+	endif
+	set iSell to 0
+	if iServed && iWagonOk
+		let iSell := Floor (0.6 * iWv + 0.5)
+	endif
+
+	set iOut to 0
+	if iAct == 11
+		set iOut to iAmt
+	elseif iAct == 12
+		set iOut to iSell
+	elseif iAct == 1
+		let iPocket := player.GetItemCount Caps001
+		if iAmt > 0 && iPocket >= iAmt
+			player.RemoveItem Caps001 iAmt 1
+			set iOwnerPaidIn to iOwnerPaidIn + iAmt
+			set iArrears to iArrears - iAmt
+			SetVariable "iOwnerPaidIn" iOwnerPaidIn CCCore
+			SetVariable "iArrears" iArrears CCCore
+			SetVariable "iLastRescue" iDay CCCore
+			if iArrears == 0
+				SetVariable "iStage" 5 CCCore
+				SetVariable "iStageDay" iDay CCCore
+			endif
+			set iOut to 1
+		endif
+	elseif iAct == 2
+		if iSell > 0
+			set iAssets to iAssets - iWv
+			set iCash to iCash + iSell
+			set iTake to iArrears
+			if iCash < iTake
+				set iTake to iCash
+			endif
+			set iCash to iCash - iTake
+			set iArrears to iArrears - iTake
+			SetVariable "iAssets" iAssets CCCore
+			SetVariable "iWagonOk" 0 CCCore
+			SetVariable "iCash" iCash CCCore
+			SetVariable "iArrears" iArrears CCCore
+			if iArrears == 0
+				if iStage == 6
+					; curing a takeover clears the oldest strike
+					let aS := GetArrayVariable "aStrikes" CCCore
+					if eval ((ar_Size aS) > 0)
+						ar_Erase aS 0
+					endif
+				endif
+				SetVariable "iStage" 5 CCCore
+				SetVariable "iStageDay" iDay CCCore
+			endif
+			set iOut to 1
+		endif
+	elseif iAct == 3
+		if iServed && iEnded == 0
+			SetVariable "iEnded" 1 CCCore
+			SetVariable "iEndReason" 3 CCCore
+			set iOut to 1
+		endif
+	elseif iAct == 4
+		if iWagonOk == 0 && iArrears == 0 && iCash + iOwner >= 700
+			set iTake to 700
+			if iOwner < iTake
+				set iTake to iOwner
+			endif
+			set iOwner to iOwner - iTake
+			set iCash to iCash - (700 - iTake)
+			set iAssets to iAssets + 700
+			SetVariable "iOwner" iOwner CCCore
+			SetVariable "iCash" iCash CCCore
+			SetVariable "iAssets" iAssets CCCore
+			SetVariable "iWagonOk" 1 CCCore
+			set iOut to 1
+		endif
+	endif
+	SetFunctionValue iOut
+end
