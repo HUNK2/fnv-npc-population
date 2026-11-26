@@ -27,6 +27,7 @@ int iEnded
 int iStage
 int iA
 int iB
+int iPick
 
 begin GameMode
 	; dev and test switch: place a terminal at the player (once) and open it
@@ -71,6 +72,10 @@ begin MenuMode 1057
 	if iClick >= 0 && iClick < iRows - 1 && (iScreen == 6 || iScreen == 7)
 		set iKeep to 1
 	endif
+	; a candidate's first row only shows the rumour
+	if iClick == 0 && iScreen == 11
+		set iKeep to 1
+	endif
 	; WALK AWAY needs a second select; any other select cancels it
 	set iWas to 0
 	if iClick >= 0 && iFounded
@@ -99,6 +104,10 @@ begin MenuMode 1057
 				set iScreen to 4
 			elseif iClick == 5
 				set iScreen to 1
+			elseif iClick == 7
+				set iScreen to 9
+			elseif iClick == 8
+				set iScreen to 12
 			elseif iClick == 9
 				set iScreen to 2
 			elseif iClick == 10
@@ -109,7 +118,19 @@ begin MenuMode 1057
 				set iScreen to 8
 			endif
 		elseif iClick == iRows - 1
-			set iScreen to 0
+			; BACK: to the screen this one was reached from (Hire > Staff, Candidate > Hire, Slot >
+			; Standing orders > Orders), else the front page
+			if iScreen == 10
+				set iScreen to 9
+			elseif iScreen == 11
+				set iScreen to 10
+			elseif iScreen == 14
+				set iScreen to 13
+			elseif iScreen == 13
+				set iScreen to 3
+			else
+				set iScreen to 0
+			endif
 		elseif iScreen == 1
 			if iClick == 0
 				set iDir to 1 - iDir
@@ -137,6 +158,8 @@ begin MenuMode 1057
 				loop
 			elseif iClick == 3
 				ar_Resize aQ 0
+			elseif iClick == 4
+				set iScreen to 13
 			endif
 		elseif iScreen == 7
 			; an answer row picks that answer; a memo's title row only shows its text
@@ -146,7 +169,7 @@ begin MenuMode 1057
 			set iM to 0
 			while iM < ar_Size aMK
 				set iN to 2
-				if eval (aMK[iM] == 0)
+				if eval (aMK[iM] == 0 || aMK[iM] == 2)
 					set iN to 3
 				endif
 				if iClick > iRow && iClick <= iRow + iN
@@ -187,6 +210,8 @@ begin MenuMode 1057
 					endif
 				endif
 			endif
+		elseif iScreen >= 9
+			call CCTermClick2 iClick iWas
 		elseif iScreen == 5
 			if iClick == 0
 				let iAuto := 1 - (GetVariable "iAuto" CCCore)

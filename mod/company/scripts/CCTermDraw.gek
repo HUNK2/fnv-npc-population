@@ -129,7 +129,7 @@ begin Function {}
 	if iScreen == 0
 		; bills: a quiet week's running costs, the duty on this week's sales, the licence every 28 days
 		let iDtb := 7 - iDay % 7
-		set iWages to 22 + 14 * iHands
+		let iWages := call CCWagesFn
 		let iInt := Floor (0.04 * iLoan + 0.5)
 		set iPrin to 300
 		if iLoan < 300
@@ -212,9 +212,17 @@ begin Function {}
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 5 %qPRICES   best GS>PR: materials %.0f%q" iBest
 		endif
 		Console "SetTerminalMenuItemText CCOfficeTerm 1 6 %qCHAINS   none yet (tier 2)%q"
-		set iN to 2 + iHands
-		Console "SetTerminalMenuItemText CCOfficeTerm 1 7 %qSTAFF    %.0f on the books%q" iN
-		Console "SetTerminalMenuItemText CCOfficeTerm 1 8 %qCONTRACTS none running%q"
+		let aS := GetArrayVariable "aStaffName" CCCore
+		let iN := (ar_Size aS) + iHands
+		let iK := call CCCoverFn
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 7 %qSTAFF    %.0f on the books, cover %.0f%q" iN iK
+		let iA := GetVariable "iConOn" CCCore
+		if iA
+			let iA := GetVariable "iConDone" CCCore
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 8 %qCONTRACTS water %.0f/9 to PR%q" iA
+		else
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 8 %qCONTRACTS none running%q"
+		endif
 		Console "SetTerminalMenuItemText CCOfficeTerm 1 9 %qLEDGER   loan %.0f, week sales %.0f%q" iLoan iWeek
 		let iN := ar_Size aQ
 		Console "SetTerminalMenuItemText CCOfficeTerm 1 10 %qORDERS   %.0f pending (apply at 06:00)%q" iN
@@ -283,7 +291,7 @@ begin Function {}
 		endif
 		Console "SetTerminalMenuItemText CCOfficeTerm 1 3 %qWEEK SALES %.0f%q" iWeek
 		let iDtb := 7 - iDay % 7
-		set iWages to 22 + 14 * iHands
+		let iWages := call CCWagesFn
 		let iInt := Floor (0.04 * iLoan + 0.5)
 		set iPrin to 300
 		if iLoan < 300
@@ -334,12 +342,25 @@ begin Function {}
 		let iN := ar_Size aP
 		Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qACCEPT the plan (%.0f crates)%q" iN
 		Console "SetTerminalMenuItemText CCOfficeTerm 1 3 %qCANCEL all pending orders%q"
-		Console "SetTerminalMenuItemText CCOfficeTerm 1 4 %qBACK%q"
-		SetVariable "iRows" 5 CCTerm
+		let aS := GetArrayVariable "aSOKind" CCCore
+		set iN to 0
+		set iK to 0
+		while iK < ar_Size aS
+			if eval (aS[iK] > 0)
+				set iN to iN + 1
+			endif
+			set iK to iK + 1
+		loop
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 4 %qSTANDING ORDERS  %.0f of 3 set%q" iN
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 5 %qBACK%q"
+		SetVariable "iRows" 6 CCTerm
 
 	elseif iScreen == 4
-		if iWagonOk
-			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qWAGON 1  home  driver and guard%q"
+		let iK := call CCCoverFn
+		if iWagonOk && iK > 0
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qWAGON 1  home  cover %.0f%q" iK
+		elseif iWagonOk
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qWAGON 1  home  NO DRIVER%q"
 		else
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qWAGON 1  none: BUY one for 700%q"
 		endif
@@ -406,6 +427,9 @@ begin Function {}
 		let aMK := GetArrayVariable "aMemoKind" CCCore
 		let aMDue := GetArrayVariable "aMemoDue" CCCore
 		let aMP := GetArrayVariable "aMemoPick" CCCore
+		let iK := call CCCoverFn
+		let iB := GetVariable "iOfferPrice" CCCore
+		let iS := Floor (iB * (1 + 0.07) + 0.5)
 		set iRow to 0
 		if eval ((ar_Size aMK) == 0)
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qNo memos waiting.%q"
@@ -417,7 +441,11 @@ begin Function {}
 			let iPick := aMP[iMemo]
 			if eval (aMK[iMemo] == 0)
 				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qBANDIT SIGN, PRIMM ROAD  due %.0fd%q" iRow iDue
-				Console "SetTerminalMenuItemText CCOfficeTerm 2 %.0f %qBandit sign on the Primm road tomorrow: about 60 strong, our cover is 45. Send the wagon, hire a gun for 25, or keep it home? If you say nothing, it stays home.%q" iRow
+				Console "SetTerminalMenuItemText CCOfficeTerm 2 %.0f %qBandit sign on the Primm road tomorrow: about 60 strong, our cover is %.0f. Send the wagon, hire a gun for 25, or keep it home? If you say nothing, it stays home.%q" iRow iK
+				set iN to 3
+			elseif eval (aMK[iMemo] == 2)
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qPRIMM WANTS WATER  due %.0fd%q" iRow iDue
+				Console "SetTerminalMenuItemText CCOfficeTerm 2 %.0f %qPrimm's store wants 4 crates of water every 3 days for 28 days, at %.0f a crate. Accept, or counter at %.0f (they may walk)? If you say nothing, we decline.%q" iRow iB iS
 				set iN to 3
 			else
 				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qPAY DOWN THE LOAN?  due %.0fd%q" iRow iDue
@@ -439,6 +467,14 @@ begin Function {}
 						Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z hire a gun for 25%q" iRow sM
 					else
 						Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z keep the wagon home (default)%q" iRow sM
+					endif
+				elseif eval (aMK[iMemo] == 2)
+					if iA == 0
+						Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z accept at %.0f%q" iRow sM iB
+					elseif iA == 1
+						Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z counter at %.0f%q" iRow sM iS
+					else
+						Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z decline (default)%q" iRow sM
 					endif
 				elseif iA == 0
 					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z pay 300 off the loan%q" iRow sM
@@ -492,6 +528,9 @@ begin Function {}
 		Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qBACK%q" iRow
 		set iN to iRow + 1
 		SetVariable "iRows" iN CCTerm
+
+	elseif iScreen >= 9
+		call CCTermDraw2
 
 	else
 		if iAuto

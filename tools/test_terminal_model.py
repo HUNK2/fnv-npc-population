@@ -88,8 +88,8 @@ class Labels(unittest.TestCase):
 class Clicks(unittest.TestCase):
     def test_front_rows_open_their_screens_and_back_returns(self):
         c, t = founded(), tm.Terminal()
-        for row, screen in ((2, tm.POST), (3, tm.MEMOS), (4, tm.ROUTES), (5, tm.PRICES), (9, tm.LEDGER),
-                            (10, tm.ORDERS), (11, tm.SETTINGS), (12, tm.NOTICE)):
+        for row, screen in ((2, tm.POST), (3, tm.MEMOS), (4, tm.ROUTES), (5, tm.PRICES), (7, tm.STAFF),
+                            (8, tm.CONTRACTS), (9, tm.LEDGER), (10, tm.ORDERS), (11, tm.SETTINGS), (12, tm.NOTICE)):
             tm.click(c, t, row)
             self.assertEqual(t.screen, screen)
             tm.click(c, t, len(tm.labels(c, t)) - 1)
@@ -97,7 +97,7 @@ class Clicks(unittest.TestCase):
 
     def test_info_rows_and_hidden_rows_do_nothing(self):
         c, t = founded(), tm.Terminal()
-        for row in (0, 6, 7, 8, 13):
+        for row in (0, 6, 13):
             tm.click(c, t, row)
             self.assertEqual(t.screen, tm.FRONT)
         self.assertEqual(c.queue_list, [])

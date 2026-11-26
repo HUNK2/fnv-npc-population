@@ -1,0 +1,111 @@
+scn CCTermClick2
+
+; Clicks on the screens of M1 task 1.8 (tools/terminal_model.py click), BACK excepted (CCTermScript):
+; Staff (a second select on the same person fires them), Hire, Candidate, Standing orders and a Slot.
+; iWas: WALK AWAY or FIRE was selected on the click before. Changes CCTerm's screen, pick and confirm.
+
+int iClick
+int iWas
+int iScreen
+int iPick
+int iN
+int iOk
+int iKind
+int iValue
+int iMax
+int iMin
+int iStep
+array_var aSN
+array_var aCC
+array_var aSK
+array_var aST
+array_var aSG
+array_var aSV
+array_var aAnchor
+
+begin Function {iClick iWas}
+	let iScreen := GetVariable "iScreen" CCTerm
+	let iPick := GetVariable "iPick" CCTerm
+	if iScreen == 9
+		let aSN := GetArrayVariable "aStaffName" CCCore
+		let iN := ar_Size aSN
+		if iClick == iN + 1
+			SetVariable "iScreen" 10 CCTerm
+		elseif iClick >= 1 && iClick <= iN
+			set iN to iClick - 1
+			if iWas && iPick == iN
+				call CCStaffFn 2 iN
+			else
+				SetVariable "iPick" iN CCTerm
+				SetVariable "iConfirm" 1 CCTerm
+			endif
+		endif
+	elseif iScreen == 10
+		SetVariable "iPick" iClick CCTerm
+		SetVariable "iScreen" 11 CCTerm
+	elseif iScreen == 11
+		if iClick == 1
+			let iOk := call CCStaffFn 1 iPick
+			if iOk
+				SetVariable "iScreen" 10 CCTerm
+			endif
+		elseif iClick == 2
+			call CCStaffFn 3 iPick
+		endif
+	elseif iScreen == 13
+		SetVariable "iPick" iClick CCTerm
+		SetVariable "iScreen" 14 CCTerm
+	elseif iScreen == 14
+		let aSK := GetArrayVariable "aSOKind" CCCore
+		let aST := GetArrayVariable "aSOTown" CCCore
+		let aSG := GetArrayVariable "aSOGood" CCCore
+		let aSV := GetArrayVariable "aSOValue" CCCore
+		let aAnchor := GetArrayVariable "aAnchor" CCCore
+		let iKind := aSK[iPick]
+		if iClick == 0
+			; the next kind: empty, keep stocked, sell above, pay at most; values start at 8 crates or
+			; the good's anchor price; an emptied slot starts again at Primm and water
+			let iKind := (iKind + 1) % 4
+			let aSK[iPick] := iKind
+			if iKind == 0
+				let aST[iPick] := 1
+				let aSG[iPick] := 0
+				let aSV[iPick] := 0
+			elseif iKind == 1
+				let aSV[iPick] := 8
+			else
+				let aSV[iPick] := aAnchor[aSG[iPick]]
+			endif
+		elseif iKind
+			set iStep to 5
+			set iMax to 995
+			set iMin to 5
+			if iKind == 1
+				set iStep to 1
+				set iMax to 8
+				set iMin to 1
+			endif
+			let iValue := aSV[iPick]
+			if iClick == 1 && iKind == 1
+				let aST[iPick] := 1 - aST[iPick]
+			elseif iClick == 2
+				let aSG[iPick] := (aSG[iPick] + 1) % 6
+				if iKind != 1
+					let aSV[iPick] := aAnchor[aSG[iPick]]
+				endif
+			elseif iClick == 3
+				set iValue to iValue + iStep
+				if iValue > iMax
+					set iValue to iMax
+				endif
+				let aSV[iPick] := iValue
+			elseif iClick == 4
+				set iValue to iValue - iStep
+				if iValue < iMin
+					set iValue to iMin
+				endif
+				let aSV[iPick] := iValue
+			endif
+		endif
+	endif
+end

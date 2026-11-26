@@ -1,0 +1,194 @@
+scn CCStaffFn
+
+; Paper staff and hiring (tools/company_model.py: Company.hire, fire, reference_check, _new_candidates).
+; iAct 1 hire candidate iIdx (one driver at most), 2 fire staff member iIdx, 3 reference check of
+; candidate iIdx (10 caps; shows the honesty band), 4 post this week's candidates (the tick, on day 1
+; of each week), 5 the founding driver and guard. Returns 1 when it did something. Roles: 0 driver,
+; 1 guard. CCCore's arrays are changed in place.
+
+int iAct
+int iIdx
+int iOk
+int iK
+int iJ
+int iN
+int iDay
+int iSeed
+int iBase
+int iUsed
+int iRole
+int iSkill
+int iHon
+int iWage
+array_var aNames
+array_var aMore
+array_var aRum
+array_var aSN
+array_var aSR
+array_var aSS
+array_var aSH
+array_var aSW
+array_var aCN
+array_var aCR
+array_var aCS
+array_var aCH
+array_var aCW
+array_var aCU
+array_var aCC
+string_var sName
+
+begin Function {iAct iIdx}
+	set iOk to 0
+	let aSN := GetArrayVariable "aStaffName" CCCore
+	let aSR := GetArrayVariable "aStaffRole" CCCore
+	let aSS := GetArrayVariable "aStaffSkill" CCCore
+	let aSH := GetArrayVariable "aStaffHon" CCCore
+	let aSW := GetArrayVariable "aStaffWage" CCCore
+	let aCN := GetArrayVariable "aCandName" CCCore
+	let aCR := GetArrayVariable "aCandRole" CCCore
+	let aCS := GetArrayVariable "aCandSkill" CCCore
+	let aCH := GetArrayVariable "aCandHon" CCCore
+	let aCW := GetArrayVariable "aCandWage" CCCore
+	let aCU := GetArrayVariable "aCandRumour" CCCore
+	let aCC := GetArrayVariable "aCandChecked" CCCore
+
+	if iAct == 1
+		if eval (iIdx >= 0 && iIdx < (ar_Size aCN))
+			set iN to 0
+			if eval (aCR[iIdx] == 0)
+				set iK to 0
+				while iK < ar_Size aSR
+					if eval (aSR[iK] == 0)
+						set iN to 1
+					endif
+					set iK to iK + 1
+				loop
+			endif
+			if iN == 0
+				ar_Append aSN aCN[iIdx]
+				ar_Append aSR aCR[iIdx]
+				ar_Append aSS aCS[iIdx]
+				ar_Append aSH aCH[iIdx]
+				ar_Append aSW aCW[iIdx]
+				ar_Erase aCN iIdx
+				ar_Erase aCR iIdx
+				ar_Erase aCS iIdx
+				ar_Erase aCH iIdx
+				ar_Erase aCW iIdx
+				ar_Erase aCU iIdx
+				ar_Erase aCC iIdx
+				set iOk to 1
+			endif
+		endif
+
+	elseif iAct == 2
+		if eval (iIdx >= 0 && iIdx < (ar_Size aSN))
+			ar_Erase aSN iIdx
+			ar_Erase aSR iIdx
+			ar_Erase aSS iIdx
+			ar_Erase aSH iIdx
+			ar_Erase aSW iIdx
+			set iOk to 1
+		endif
+
+	elseif iAct == 3
+		if eval (iIdx >= 0 && iIdx < (ar_Size aCN))
+			let iN := GetVariable "iCash" CCCore
+			if eval (aCC[iIdx] == 0 && iN >= 10)
+				set iN to iN - 10
+				SetVariable "iCash" iN CCCore
+				let aCC[iIdx] := 1
+				set iOk to 1
+			endif
+		endif
+
+	elseif iAct == 4
+		let aNames := Ar_List "Abe Tolliver", "Bess Marlowe", "Cal Dunning", "Dora Pike", "Eli Varga", "Fay Hollins", "Gus Merritt", "Hank Ostrow", "Ida Kesey", "Jody Ramos", "Kit Albrecht", "Lou Danner", "Mae Corliss", "Ned Ashby", "Opal Reyes", "Pete Lusk", "Quinn Bodie", "Rosa Tamez", "Sam Whitlow", "Tess Garber"
+		let aMore := Ar_List "Ulla Brandt", "Vic Moreau", "Wes Calder", "Zeke Pruitt", "Ada Fenn", "Bo Hatch", "Cora Lyle", "Dale Mott", "Edie Paxton", "Floyd Skerritt", "Gail Norris", "Hal Prentiss", "Iris Okafor", "Jed Burris", "Kay Lindqvist", "Lyle Sorensen", "Mona Tuck", "Noel Harker", "Ora Bastian", "Russ Pell"
+		set iK to 0
+		while iK < ar_Size aMore
+			ar_Append aNames aMore[iK]
+			set iK to iK + 1
+		loop
+		let aRum := Ar_List "Lost a cousin to the Powder Gangers.", "Drove for the Crimson Caravan until a pay dispute.", "Says the NCR still owes back pay.", "Sober three years, folks say.", "Owes money in Primm, they say.", "Knows the Primm road by night.", "Good shot, bad temper.", "Never missed a day at the Goodsprings well.", "Came up from Mojave Outpost last month.", "Folks say they once rode with the Great Khans.", "Has a sick mother in Sloan.", "Talks too much at the saloon."
+		let iDay := GetVariable "iDay" CCCore
+		let iSeed := GetVariable "iSeed" CCCore
+		let iBase := (iDay % 100) * 19 + (iSeed % 100) * 29
+		ar_Resize aCN 0
+		ar_Resize aCR 0
+		ar_Resize aCS 0
+		ar_Resize aCH 0
+		ar_Resize aCW 0
+		ar_Resize aCU 0
+		ar_Resize aCC 0
+		let iN := 3 + ((iBase + 20 * 31) % 100) % 4
+		set iJ to 0
+		while iJ < iN
+			let iK := ((iBase + (21 + iJ) * 31) % 100) % 40
+			; the next name on the list not already on the books or posted
+			set iUsed to 1
+			while iUsed
+				set iUsed to 0
+				let sName := aNames[iK]
+				set iIdx to 0
+				while iIdx < ar_Size aSN
+					if eval (aSN[iIdx] == sName)
+						set iUsed to 1
+					endif
+					set iIdx to iIdx + 1
+				loop
+				set iIdx to 0
+				while iIdx < ar_Size aCN
+					if eval (aCN[iIdx] == sName)
+						set iUsed to 1
+					endif
+					set iIdx to iIdx + 1
+				loop
+				if iUsed
+					let iK := (iK + 1) % 40
+				endif
+			loop
+			set iRole to 1
+			if eval ((iBase + (30 + iJ) * 31) % 100 < 25)
+				set iRole to 0
+			endif
+			let iSkill := 30 + ((iBase + (40 + iJ) * 31) % 100) % 50
+			let iHon := 10 + ((iBase + (50 + iJ) * 31) % 100) % 85
+			set iWage to 12
+			if iRole == 0
+				set iWage to 10
+			endif
+			if iSkill > 50
+				let iWage += Floor ((iSkill - 50) / 10)
+			endif
+			ar_Append aCN sName
+			ar_Append aCR iRole
+			ar_Append aCS iSkill
+			ar_Append aCH iHon
+			ar_Append aCW iWage
+			ar_Append aCU aRum[((iBase + (60 + iJ) * 31) % 100) % 12]
+			ar_Append aCC 0
+			set iJ to iJ + 1
+		loop
+		set iOk to 1
+
+	elseif iAct == 5
+		ar_Resize aSN 0
+		ar_Resize aSR 0
+		ar_Resize aSS 0
+		ar_Resize aSH 0
+		ar_Resize aSW 0
+		ar_Append aSN "Ruth Coyle"
+		ar_Append aSR 0
+		ar_Append aSS 50
+		ar_Append aSH 60
+		ar_Append aSW 10
+		ar_Append aSN "Dutch Haley"
+		ar_Append aSR 1
+		ar_Append aSS 50
+		ar_Append aSH 60
+		ar_Append aSW 12
+		set iOk to 1
+	endif
+	SetFunctionValue iOk
+end

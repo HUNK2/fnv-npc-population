@@ -50,7 +50,8 @@ begin Function {iAct}
 	; owner rescue: up to 2 weeks of bills, not for a takeover, once a season
 	set iAmt to 0
 	if iServed && iStage != 6 && iArrears > 0 && iDay - iLastRescue >= 28
-		let iCap := 7 * (22 + 14 * iHands) + 42 + 70 + Floor (0.04 * iLoan + 0.5)
+		let iCap := call CCWagesFn
+		let iCap := 7 * iCap + 42 + 70 + Floor (0.04 * iLoan + 0.5)
 		if iLoan < 300
 			set iCap to iCap + iLoan
 		else

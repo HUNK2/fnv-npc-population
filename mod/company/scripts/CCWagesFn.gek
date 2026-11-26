@@ -1,0 +1,19 @@
+scn CCWagesFn
+
+; The day's wages (tools/company_model.py Company.daily_wages): every paper staff member's wage plus
+; 14 for each hand (hands come with workshops).
+
+array_var aW
+int iK
+int iN
+
+begin Function {}
+	let aW := GetArrayVariable "aStaffWage" CCCore
+	let iN := 14 * (GetVariable "iHands" CCCore)
+	set iK to 0
+	while iK < ar_Size aW
+		let iN += aW[iK]
+		set iK to iK + 1
+	loop
+	SetFunctionValue iN
+end

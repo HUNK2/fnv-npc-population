@@ -51,8 +51,9 @@ POST_KEEP = 3                    # the Post screen keeps the last 3 letters
 LETTER_ORDER = ('closed', 'notice', 'forecast', 'away', 'road', 'loss')    # which letter waits first
 # Memo answers in order; the default is the cautious one (design: Memos).
 MEMO_ANSWERS = {'road': ('send as planned', 'hire a gun for 25', 'keep the wagon home'),
-                'prepay': ('pay 300 off the loan', 'keep the cash')}
-MEMO_DEFAULT = {'road': 2, 'prepay': 1}
+                'prepay': ('pay 300 off the loan', 'keep the cash'),
+                'contract': ('accept at %d', 'counter at %d', 'decline')}
+MEMO_DEFAULT = {'road': 2, 'prepay': 1, 'contract': 2}
 SEND, GUN, HOLD = 0, 1, 2        # road memo answers
 
 # The debt ladder (plan task 1.7, design: Losing and coming back).
@@ -64,6 +65,32 @@ SEIZE_SHARE, SELL_SHARE = 0.6, 0.6   # the creditor and a buyer both pay 60% of 
 RESCUE_WEEKS, RESCUE_EVERY = 2, 28   # owner rescue: up to 2 weeks of bills, once a season
 FORECAST_RUNWAY = 5              # the forecast warning when runway is under 5 days
 SERVED = ('grace', 'final', 'seized', 'takeover')    # a served notice whose clock runs
+
+# Contracts, standing orders and staff (plan task 1.8, its "My calls").
+CONTRACT_GOOD, CONTRACT_CRATES, CONTRACT_EVERY, CONTRACT_DAYS = 'water', 4, 3, 28
+CONTRACT_PREMIUM, COUNTER_PREMIUM, COUNTER_WALK = 0.09, 0.07, 50
+CONTRACT_MISS = 0.10
+OFFER_WEEKDAY, OFFER_EVERY = 3, 7          # an offer on the third day of a week, at most one a week
+SLOTS = 3                                  # standing order slots at tier 1
+SO_KINDS = ('keep', 'sell_above', 'max_pay')
+ROLE_WAGE = {'driver': 10, 'guard': 12}
+DRIVER_COVER, GUARD_COVER = 15, 30
+SKIM_HONESTY, SKIM_SHARE = 30, 0.02
+REF_CHECK = 10
+FOUNDERS = (('Ruth Coyle', 'driver'), ('Dutch Haley', 'guard'))
+NAMES = ('Abe Tolliver', 'Bess Marlowe', 'Cal Dunning', 'Dora Pike', 'Eli Varga', 'Fay Hollins',
+         'Gus Merritt', 'Hank Ostrow', 'Ida Kesey', 'Jody Ramos', 'Kit Albrecht', 'Lou Danner',
+         'Mae Corliss', 'Ned Ashby', 'Opal Reyes', 'Pete Lusk', 'Quinn Bodie', 'Rosa Tamez',
+         'Sam Whitlow', 'Tess Garber', 'Ulla Brandt', 'Vic Moreau', 'Wes Calder', 'Zeke Pruitt',
+         'Ada Fenn', 'Bo Hatch', 'Cora Lyle', 'Dale Mott', 'Edie Paxton', 'Floyd Skerritt',
+         'Gail Norris', 'Hal Prentiss', 'Iris Okafor', 'Jed Burris', 'Kay Lindqvist', 'Lyle Sorensen',
+         'Mona Tuck', 'Noel Harker', 'Ora Bastian', 'Russ Pell')
+RUMOURS = ('Lost a cousin to the Powder Gangers.', 'Drove for the Crimson Caravan until a pay dispute.',
+           'Says the NCR still owes back pay.', 'Sober three years, folks say.',
+           'Owes money in Primm, they say.', 'Knows the Primm road by night.', 'Good shot, bad temper.',
+           'Never missed a day at the Goodsprings well.', 'Came up from Mojave Outpost last month.',
+           'Folks say they once rode with the Great Khans.', 'Has a sick mother in Sloan.',
+           'Talks too much at the saloon.')
 
 TIER2_WORTH, TIER2_TRUST = 1500, 50
 WORKSHOP_COST, SITE_COST, HAND_WAGE = 300, 200, 14
@@ -82,7 +109,8 @@ def half_up(x):
 
 
 def roll(seed, day, key):
-    """The seeded roll, 0..99; the game uses the same integer formula."""
+    """The seeded roll, 0..99. The game computes the same value as ((day % 100) * 19 + (seed % 100) * 29
+    + key * 31) % 100: its script numbers lose whole units above 2^24, and this sum is about 1.3e8."""
     return (day * 7919 + seed * 104729 + key * 31) % 100
 
 
@@ -111,14 +139,49 @@ class Order:
 
 @dataclass
 class Memo:
-    kind: str           # 'road' or 'prepay'
+    kind: str           # 'road', 'prepay' or 'contract'
     day: int            # the day it was posted
     due: int            # the tick that settles it with the default if nobody answers
     pick: int = None    # the answer chosen at a terminal or in a field letter
+    price: int = 0      # a contract offer's price a crate
 
     @property
     def answers(self):
+        if self.kind == 'contract':
+            a = MEMO_ANSWERS['contract']
+            return (a[0] % self.price, a[1] % half_up(self.price * (1 + COUNTER_PREMIUM)), a[2])
         return MEMO_ANSWERS[self.kind]
+
+
+@dataclass
+class Contract:
+    good: str
+    crates: int
+    every: int
+    price: int
+    start: int          # the day it was signed; deliveries until start + 28
+    next_due: int
+    done: int = 0
+    missed: int = 0
+
+
+@dataclass
+class StandingOrder:
+    kind: str           # 'keep' (town, good, crates), 'sell_above' (good, price), 'max_pay' (good, price)
+    town: str
+    good: str
+    value: int
+
+
+@dataclass
+class Person:
+    name: str
+    role: str           # 'driver' or 'guard'
+    skill: int
+    honesty: int        # hidden until a reference check
+    wage: int
+    rumour: str = ''
+    checked: bool = False
 
 
 @dataclass
@@ -143,6 +206,10 @@ class DayReport:
     wagon: bool = True          # the wagon ran today
     road_mode: int = 0          # SEND, GUN or HOLD (the wagon stayed home)
     prepaid: int = 0            # paid off the loan by a prepay memo
+    crew: bool = True           # a driver was on the books
+    contract: str = ''          # 'delivered' or 'missed' (+ ' completed' on the last one), or 'walked'
+    signed: int = 0             # a contract signed today: its price a crate
+    skim: int = 0               # skimmed by dishonest staff
 
     @property
     def margin(self):
@@ -182,6 +249,9 @@ class Company:
         self.memos, self.road_mode = [], SEND
         self.last_visit, self.away_posted = 0, False
         self.letter, self.letter_shown_day, self.post = None, -1, []
+        self.contract, self.last_offer = None, -99
+        self.standing = [None] * SLOTS
+        self.staff, self.candidates = [], []
 
     # --- founding -------------------------------------------------------------------------------
     def found(self):
@@ -193,6 +263,7 @@ class Company:
         self.owner_funds -= from_owner
         self.cash -= (assets - from_owner) + HIRING_FEES + LICENCE
         self.assets = assets
+        self.staff = [Person(n, role, 50, 60, ROLE_WAGE[role]) for n, role in FOUNDERS]
 
     # --- prices ---------------------------------------------------------------------------------
     def mult(self, town, good, stock=None):
@@ -213,35 +284,65 @@ class Company:
         return half_up(m * (1 + s) if side == 'buy' else m * (1 - s))
 
     # --- the bookkeeper's plan --------------------------------------------------------------------
-    def plan(self):
-        """Greedy: for each leg, the best crate by margin while it pays MIN_MARGIN, up to 8 a leg.
-        Own warehouse crates cost nothing to load and go first when they pay."""
+    def contract_due(self, day):
+        return self.contract is not None and self.contract.next_due == day
+
+    def plan(self, trip_day=None):
+        """The bookkeeper's plan for the trip of `trip_day` (default: tomorrow's). For each leg: first the
+        standing orders that keep the destination stocked (a crate that does not lose money), then
+        greedy: the best crate by margin while it pays MIN_MARGIN. Up to 8 crates a leg, less the
+        contract's crates on a delivery day. Standing orders also bar a sale below a price and a
+        purchase above one. Own warehouse crates cost nothing to load."""
+        trip_day = self.day + 1 if trip_day is None else trip_day
         orders = []
         cash = self.cash
+        floor_ = {o.good: o.value for o in self.standing if o and o.kind == 'sell_above'}
+        ceil_ = {o.good: o.value for o in self.standing if o and o.kind == 'max_pay'}
         for origin, dest in (ROUTE, ROUTE[::-1]):
             so, sd = dict(self.stock[origin]), dict(self.stock[dest])
             wh = dict(self.warehouse) if origin == 'GS' else {g: 0 for g in GOODS}
-            for _ in range(CRATES_PER_LEG):
-                best = None
-                for g in GOODS:
-                    sale = self.price(dest, g, 'sell', sd[g])
-                    own = wh[g] > 0
-                    cost = 0 if own else self.price(origin, g, 'buy', so[g])
-                    if not own and cost > cash:
-                        continue
-                    m = sale - cost
-                    if best is None or m > best[0]:
-                        best = (m, g, own, cost)
-                if best is None or best[0] < MIN_MARGIN:
-                    break
-                m, g, own, cost = best
+            cap = CRATES_PER_LEG
+            if origin == 'GS' and self.contract_due(trip_day):
+                cap -= self.contract.crates
+            n = 0
+
+            def offer(g):
+                sale = self.price(dest, g, 'sell', sd[g])
+                own = wh[g] > 0
+                cost = 0 if own else self.price(origin, g, 'buy', so[g])
+                if not own and (cost > cash or cost > ceil_.get(g, 10 ** 9)):
+                    return None
+                if sale < floor_.get(g, 0):
+                    return None
+                return sale - cost, own, cost
+
+            def take(g, own, cost):
+                nonlocal cash, n
                 if own:
                     wh[g] -= 1
                 else:
                     so[g] -= 1
                     cash -= cost
                 sd[g] += 1
+                n += 1
                 orders.append(Order('carry', origin, g, 1))     # one order per crate, in pick order
+
+            for o in self.standing:
+                if o and o.kind == 'keep' and o.town == dest:
+                    while n < cap and sd[o.good] < o.value:
+                        got = offer(o.good)
+                        if got is None or got[0] < 0:
+                            break
+                        take(o.good, got[1], got[2])
+            while n < cap:
+                best = None
+                for g in GOODS:
+                    got = offer(g)
+                    if got is not None and (best is None or got[0] > best[0]):
+                        best = (got[0], g, got[1], got[2])
+                if best is None or best[0] < MIN_MARGIN:
+                    break
+                take(best[1], best[2], best[3])
         return orders
 
     def queue(self, order):
@@ -256,21 +357,28 @@ class Company:
             return r
         self._settle_memos(r)
         if self.auto:
-            self.queue_list = self.plan()
+            self.queue_list = self.plan(d)
         self._pay_arrears(r)
-        r.wagon, r.road_mode = self.wagon_ok, self.road_mode
-        if self.wagon_ok and self.road_mode == HOLD:
+        r.wagon, r.road_mode, r.crew = self.wagon_ok, self.road_mode, self.has_driver()
+        runs = self.wagon_ok and self.has_driver()
+        if runs and self.road_mode == HOLD:
             if self.event_fires(d):
                 self.last_event_day = d             # the bandits waited for a wagon that stayed home
-        elif self.wagon_ok:
+            self._contract(r, False)
+        elif runs:
             if self.road_mode == GUN:
                 pay = min(GUN_COST, self.cash)
                 self.cash -= pay
                 r.costs += pay
+            loaded = self._contract(r, True)
             for origin, dest in (ROUTE, ROUTE[::-1]):
                 if origin == 'PR':
                     self._event(r)
-                self._leg(r, origin, dest, [o for o in self.queue_list if o.town == origin])
+                self._leg(r, origin, dest, [o for o in self.queue_list if o.town == origin],
+                          CRATES_PER_LEG - (loaded if origin == 'GS' else 0))
+        else:
+            self._contract(r, False)
+        self._skim(r)
         self.queue_list = []
         self.road_mode = SEND
         self.run_workshops()
@@ -282,6 +390,8 @@ class Company:
                 self.stock[t][g] = restock(self.stock[t][g], self.normal[t][g])
         if d % 7 == 0:
             self._bills(r)
+        if d % 7 == 1:
+            self._new_candidates()
         self._ladder(r)
         self._tier_check(r)
         r.cash = self.cash
@@ -290,10 +400,12 @@ class Company:
         self._post_letters(r, road)
         return r
 
-    def _leg(self, r, origin, dest, orders):
+    def _leg(self, r, origin, dest, orders, cap=CRATES_PER_LEG):
         crates = []
         for o in orders:
             for _ in range(o.qty):
+                if len(crates) >= cap:
+                    break
                 if origin == 'GS' and self.warehouse[o.good] > 0:
                     self.warehouse[o.good] -= 1
                     crates.append((o.good, 0))
@@ -324,7 +436,7 @@ class Company:
 
     def forecast(self):
         """Tomorrow's likeliest trouble: 'bandits' (an event meets the return leg), 'quiet' or 'no_wagon'."""
-        if not self.wagon_ok:
+        if not self.wagon_ok or not self.has_driver():
             return 'no_wagon'
         return 'bandits' if self.event_fires(self.day + 1) else 'quiet'
 
@@ -341,7 +453,7 @@ class Company:
         if not self.event_fires(d):
             return
         self.last_event_day = d
-        cover = COVER + (GUN_COVER if r.road_mode == GUN else 0)
+        cover = self.cover() + (GUN_COVER if r.road_mode == GUN else 0)
         if roll(self.seed, d, 2) < self.clean_chance(cover):
             r.event = 'bandits_driven_off'
             return
@@ -372,7 +484,135 @@ class Company:
                 made += per
 
     def daily_wages(self):
-        return sum(WAGES.values()) + HAND_WAGE * self.hands
+        return sum(p.wage for p in self.staff) + HAND_WAGE * self.hands
+
+    # --- staff (plan task 1.8) ---------------------------------------------------------------------
+    def has_driver(self):
+        return any(p.role == 'driver' for p in self.staff)
+
+    def cover(self):
+        """The crew's cover on the road: 15 for the driver, 30 a guard plus a fifth of skill over 50."""
+        if not self.has_driver():
+            return 0
+        return DRIVER_COVER + sum(GUARD_COVER + (p.skill - 50) // 5 for p in self.staff if p.role == 'guard')
+
+    def _skim(self, r):
+        """Staff with honesty under 30 each take 2% of the day's sales (only a reference check shows it)."""
+        n = sum(1 for p in self.staff if p.honesty < SKIM_HONESTY)
+        if n and r.sales > 0:
+            take = min(self.cash, n * half_up(SKIM_SHARE * r.sales))
+            self.cash -= take
+            r.costs += take
+            r.skim = take
+
+    def _new_candidates(self):
+        """3 to 6 people asking for work, posted on day 1 of each week (seeded)."""
+        d = self.day
+        used = {p.name for p in self.staff}
+        self.candidates = []
+        for i in range(3 + roll(self.seed, d, 20) % 4):
+            k = roll(self.seed, d, 21 + i) % len(NAMES)
+            while NAMES[k] in used:
+                k = (k + 1) % len(NAMES)
+            used.add(NAMES[k])
+            role = 'driver' if roll(self.seed, d, 30 + i) < 25 else 'guard'
+            skill = 30 + roll(self.seed, d, 40 + i) % 50
+            honesty = 10 + roll(self.seed, d, 50 + i) % 85
+            wage = ROLE_WAGE[role] + max(0, (skill - 50) // 10)
+            self.candidates.append(Person(NAMES[k], role, skill, honesty, wage,
+                                          RUMOURS[roll(self.seed, d, 60 + i) % len(RUMOURS)]))
+
+    def can_hire(self, i):
+        c = self.candidates[i]
+        return not (c.role == 'driver' and self.has_driver())     # one wagon needs one driver
+
+    def hire(self, i):
+        if not 0 <= i < len(self.candidates) or not self.can_hire(i):
+            return False
+        self.staff.append(self.candidates.pop(i))
+        return True
+
+    def fire(self, i):
+        if not 0 <= i < len(self.staff):
+            return False
+        self.staff.pop(i)
+        return True
+
+    def reference_check(self, i):
+        """10 caps: the honesty band of a candidate."""
+        c = self.candidates[i]
+        if c.checked or self.cash < REF_CHECK:
+            return False
+        self.cash -= REF_CHECK
+        c.checked = True
+        return True
+
+    @staticmethod
+    def honesty_band(p):
+        return 'low' if p.honesty < 35 else 'fair' if p.honesty < 70 else 'high'
+
+    # --- the supply contract (plan task 1.8) ---------------------------------------------------------
+    def offer_price(self):
+        """Primm's sell price for water at normal stock, plus 9%."""
+        g = CONTRACT_GOOD
+        return half_up((1 + CONTRACT_PREMIUM) * self.price('PR', g, 'sell', self.normal['PR'][g]))
+
+    def _sign(self, price, r):
+        self.contract = Contract(CONTRACT_GOOD, CONTRACT_CRATES, CONTRACT_EVERY, price, self.day, self.day)
+        r.signed = price
+
+    def _contract(self, r, runs):
+        """A delivery day: load the crates on the Goodsprings leg (warehouse first, then bought at
+        Goodsprings), sell them at the contract price without moving Primm's stock. A delivery the
+        wagon cannot make is a miss: 10% of its value and Primm trust -3. Returns crates loaded."""
+        c = self.contract
+        if not self.contract_due(self.day):
+            return 0
+        loaded = 0
+        if runs:
+            own = min(self.warehouse[c.good], c.crates)
+            stock, cost = self.stock['GS'][c.good], 0
+            for _ in range(c.crates - own):
+                cost += self.price('GS', c.good, 'buy', stock)
+                stock -= 1
+            if cost <= self.cash:
+                self.warehouse[c.good] -= own
+                for _ in range(c.crates - own):
+                    p = self.price('GS', c.good, 'buy')
+                    self.cash -= p
+                    r.costs += p
+                    self.stock['GS'][c.good] -= 1
+                sale = c.crates * c.price
+                self.cash += sale
+                r.sales += sale
+                self.week_sales += sale
+                self.trust['PR'] = min(100, self.trust['PR'] + 1)
+                c.done += 1
+                r.contract = 'delivered'
+                loaded = c.crates
+        if not loaded:
+            pay = min(self.cash, half_up(CONTRACT_MISS * c.crates * c.price))
+            self.cash -= pay
+            r.costs += pay
+            self.trust['PR'] = max(0, self.trust['PR'] - 3)
+            c.missed += 1
+            r.contract = 'missed'
+        c.next_due += c.every
+        if c.next_due >= c.start + CONTRACT_DAYS:
+            self.trust['PR'] = min(100, self.trust['PR'] + 3)
+            self.contract = None
+            r.contract += ' completed'
+        return loaded
+
+    # --- standing orders (plan task 1.8) --------------------------------------------------------------
+    def set_order(self, slot, kind, town='PR', good='water', value=None):
+        """Set a slot (kind None empties it). Values default to 8 crates or the good's anchor price."""
+        if kind is None:
+            self.standing[slot] = None
+            return
+        if value is None:
+            value = 8 if kind == 'keep' else ANCHOR[good]
+        self.standing[slot] = StandingOrder(kind, town, good, value)
 
     def daily_burn(self):
         """Caps a day the company spends whatever it sells (for runway and loss caps)."""
@@ -626,6 +866,14 @@ class Company:
             a = MEMO_DEFAULT[m.kind] if m.pick is None else m.pick
             if m.kind == 'road':
                 self.road_mode = a
+            elif m.kind == 'contract':
+                if a == 0:
+                    self._sign(m.price, r)
+                elif a == 1:
+                    if roll(self.seed, self.day, 4) < COUNTER_WALK:
+                        r.contract = 'walked'
+                    else:
+                        self._sign(half_up(m.price * (1 + COUNTER_PREMIUM)), r)
             elif m.kind == 'prepay' and a == 0:
                 pay = min(PREPAY, self.loan, self.cash)
                 self.cash -= pay
@@ -642,6 +890,11 @@ class Company:
         if (r.bills_paid and self.loan > 0 and not any(m.kind == 'prepay' for m in self.memos)
                 and self.cash - PREPAY >= PREPAY_RUNWAY * self.daily_burn()):
             self.post_memo(Memo('prepay', self.day, self.day + 3))
+        if (self.contract is None and self.stage == 'ok' and self.wagon_ok and self.has_driver()
+                and not any(m.kind == 'contract' for m in self.memos)
+                and self.day % 7 == OFFER_WEEKDAY and self.day - self.last_offer >= OFFER_EVERY):
+            if self.post_memo(Memo('contract', self.day, self.day + 1, price=self.offer_price())):
+                self.last_offer = self.day
         return road
 
     def notice_values(self):
@@ -680,7 +933,7 @@ class Company:
                                                  sum(h.sales for h in days), sum(h.costs for h in days),
                                                  self.cash, self.runway(), len(self.memos))))
         if road:
-            new.append(Letter(self.day, 'road', (DANGER, COVER)))
+            new.append(Letter(self.day, 'road', (DANGER, self.cover())))
         if r.event in ('bandits_took_cargo', 'bandits_wreck'):
             new.append(Letter(self.day, 'loss', (r.event, r.event_loss)))
         self.post = (self.post + new)[-POST_KEEP:]

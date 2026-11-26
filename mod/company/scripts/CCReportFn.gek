@@ -1,0 +1,122 @@
+scn CCReportFn
+
+; The morning report's two pages (tools/post_model.py report_pages) from the day CCCoreScript just ran,
+; moved out of CCCoreScript to keep it under the script size limit. Reads CCCore by name and writes
+; its aPage.
+
+int iArrears
+int iBillTotal
+int iBillsPaid
+int iCash
+int iCover
+int iDay
+int iDayBack
+int iDayCon
+int iDayCosts
+int iDayCrew
+int iDayEvent
+int iDayLoss
+int iDayMode
+int iDayOut
+int iDaySales
+int iDaySigned
+int iDayWagon
+int iDtb
+int iEst
+int iForecast
+int iPrepaid
+int iRun
+int iN
+string_var sP1
+string_var sS
+array_var aPage
+
+begin Function {}
+	let iArrears := GetVariable "iArrears" CCCore
+	let iBillTotal := GetVariable "iBillTotal" CCCore
+	let iBillsPaid := GetVariable "iBillsPaid" CCCore
+	let iCash := GetVariable "iCash" CCCore
+	let iCover := GetVariable "iCover" CCCore
+	let iDay := GetVariable "iDay" CCCore
+	let iDayBack := GetVariable "iDayBack" CCCore
+	let iDayCon := GetVariable "iDayCon" CCCore
+	let iDayCosts := GetVariable "iDayCosts" CCCore
+	let iDayCrew := GetVariable "iDayCrew" CCCore
+	let iDayEvent := GetVariable "iDayEvent" CCCore
+	let iDayLoss := GetVariable "iDayLoss" CCCore
+	let iDayMode := GetVariable "iDayMode" CCCore
+	let iDayOut := GetVariable "iDayOut" CCCore
+	let iDaySales := GetVariable "iDaySales" CCCore
+	let iDaySigned := GetVariable "iDaySigned" CCCore
+	let iDayWagon := GetVariable "iDayWagon" CCCore
+	let iDtb := GetVariable "iDtb" CCCore
+	let iEst := GetVariable "iEst" CCCore
+	let iForecast := GetVariable "iForecast" CCCore
+	let iPrepaid := GetVariable "iPrepaid" CCCore
+	let iRun := GetVariable "iRun" CCCore
+	let aPage := GetArrayVariable "aPage" CCCore
+	; the morning report, page 1: the bookkeeper's letter
+	if iDayWagon == 0
+		let sP1 := "Boss. The wagon is in the lender's yard, so nothing moved."
+	elseif iDayCrew == 0
+		let sP1 := "Boss. We have no driver on the books, so the wagon stayed in the yard."
+	elseif iDayMode == 2
+		let sP1 := "Boss. The wagon stayed home today, as the memo said: bandit sign on the Primm road."
+	elseif iDayOut + iDayBack == 0
+		let sP1 := "Boss. The wagon went to Primm and back with no cargo: nothing paid the trip."
+	else
+		let sP1 := sv_Construct "Boss. The wagon took %.0f crates to Primm and brought %.0f back." iDayOut iDayBack
+	endif
+	if iDayMode == 1
+		let sP1 := sP1 + " We hired a gun for the road."
+	endif
+	if iDayEvent == 1
+		let sP1 := sP1 + " Bandits tried the Primm road and our guard drove them off."
+	elseif iDayEvent == 2
+		let sS := sv_Construct " Bandits robbed the wagon on the way back: %.0f caps lost." iDayLoss
+		let sP1 := sP1 + sS
+	elseif iDayEvent == 3
+		let sS := sv_Construct " Bandits took the whole strongbox on the way back: %.0f caps lost." iDayLoss
+		let sP1 := sP1 + sS
+	elseif iDayEvent == 4
+		let sP1 := sP1 + " Bandits stopped the wagon on the way back and found nothing to take."
+	endif
+	if iBillsPaid == 1
+		let sS := sv_Construct " The week's bills, %.0f, are paid." iBillTotal
+		let sP1 := sP1 + sS
+	elseif iBillsPaid == 0
+		let sS := sv_Construct " We could not pay all the bills: %.0f is owed." iArrears
+		let sP1 := sP1 + sS
+	endif
+	if iPrepaid > 0
+		let sS := sv_Construct " We paid %.0f off the loan." iPrepaid
+		let sP1 := sP1 + sS
+	endif
+	if iDaySigned > 0
+		let sS := sv_Construct " We signed the Primm water contract at %.0f." iDaySigned
+		let sP1 := sP1 + sS
+	endif
+	if iDayCon == 1
+		let sP1 := sP1 + " Primm got its water."
+	elseif iDayCon == 2
+		let sP1 := sP1 + " We missed the Primm water delivery."
+	elseif iDayCon == 11
+		let sP1 := sP1 + " Primm got its water: the contract is done."
+	elseif iDayCon == 12
+		let sP1 := sP1 + " We missed the last Primm delivery: the contract is done."
+	elseif iDayCon == 3
+		let sP1 := sP1 + " Primm walked away from our counter."
+	endif
+	let aPage[0] := sP1
+
+	; page 2: the numbers and tomorrow's forecast
+	set iN to iDaySales - iDayCosts
+	if iForecast == 1
+		let sS := sv_Construct "Day %.0f: sales %.0f, costs %.0f, net %.0f. Cash %.0f, runway %.0fd. Bills in %.0fd, about %.0f. Tomorrow: bandit sign on the Primm road, about 60 strong, our cover %.0f." iDay iDaySales iDayCosts iN iCash iRun iDtb iEst iCover
+	elseif iForecast == 0
+		let sS := sv_Construct "Day %.0f: sales %.0f, costs %.0f, net %.0f. Cash %.0f, runway %.0fd. Bills in %.0fd, about %.0f. Tomorrow: the road looks quiet." iDay iDaySales iDayCosts iN iCash iRun iDtb iEst
+	else
+		let sS := sv_Construct "Day %.0f: sales %.0f, costs %.0f, net %.0f. Cash %.0f, runway %.0fd. Bills in %.0fd, about %.0f. Tomorrow: no wagon on the road." iDay iDaySales iDayCosts iN iCash iRun iDtb iEst
+	endif
+	let aPage[1] := sS
+end

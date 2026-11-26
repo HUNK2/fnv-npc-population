@@ -744,6 +744,41 @@
    "source": "scripts/CCShieldFn.gek",
    "script_type": "object"
   },
+  "CCWagesFn": {
+   "type": "SCPT",
+   "source": "scripts/CCWagesFn.gek",
+   "script_type": "object"
+  },
+  "CCCoverFn": {
+   "type": "SCPT",
+   "source": "scripts/CCCoverFn.gek",
+   "script_type": "object"
+  },
+  "CCStaffFn": {
+   "type": "SCPT",
+   "source": "scripts/CCStaffFn.gek",
+   "script_type": "object"
+  },
+  "CCTermDraw2": {
+   "type": "SCPT",
+   "source": "scripts/CCTermDraw2.gek",
+   "script_type": "object"
+  },
+  "CCTermClick2": {
+   "type": "SCPT",
+   "source": "scripts/CCTermClick2.gek",
+   "script_type": "object"
+  },
+  "CCContractFn": {
+   "type": "SCPT",
+   "source": "scripts/CCContractFn.gek",
+   "script_type": "object"
+  },
+  "CCReportFn": {
+   "type": "SCPT",
+   "source": "scripts/CCReportFn.gek",
+   "script_type": "object"
+  },
   "CCLetterScript": {
    "type": "SCPT",
    "source": "scripts/CCLetterScript.gek",

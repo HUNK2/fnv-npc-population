@@ -14,7 +14,7 @@ EVENT_TEXT = {
     'bandits_empty': ' Bandits stopped the wagon on the way back and found nothing to take.',
 }
 FORECAST_TEXT = {
-    'bandits': 'bandit sign on the Primm road, about %d strong, our cover %d.' % (cm.DANGER, cm.COVER),
+    'bandits': 'bandit sign on the Primm road, about %d strong, our cover %d.',      # danger, cover
     'quiet': 'the road looks quiet.',
     'no_wagon': 'no wagon on the road.',
 }
@@ -52,6 +52,17 @@ def bill_estimate(c):
     return est + (cm.LICENCE if due % 28 == 0 else 0)
 
 
+CONTRACT_TEXT = {'delivered': ' Primm got its water.', 'missed': ' We missed the Primm water delivery.',
+                 'delivered completed': ' Primm got its water: the contract is done.',
+                 'missed completed': ' We missed the last Primm delivery: the contract is done.',
+                 'walked': ' Primm walked away from our counter.'}
+
+
+def forecast_line(c):
+    f = c.forecast()
+    return FORECAST_TEXT[f] % (cm.DANGER, c.cover()) if f == 'bandits' else FORECAST_TEXT[f]
+
+
 def report_pages(c):
     """The morning report after the last tick: page 1 the bookkeeper's letter, page 2 the numbers."""
     if not c.history:
@@ -61,6 +72,8 @@ def report_pages(c):
     back = sum(n for (o, _), n in r.loads.items() if o == 'PR')
     if not r.wagon:
         p1 = "Boss. The wagon is in the lender's yard, so nothing moved."
+    elif not r.crew:
+        p1 = 'Boss. We have no driver on the books, so the wagon stayed in the yard.'
     elif r.road_mode == cm.HOLD:
         p1 = 'Boss. The wagon stayed home today, as the memo said: bandit sign on the Primm road.'
     elif out + back == 0:
@@ -78,9 +91,13 @@ def report_pages(c):
             p1 += ' We could not pay all the bills: %d is owed.' % c.arrears
     if r.prepaid:
         p1 += ' We paid %d off the loan.' % r.prepaid
+    if r.signed:
+        p1 += ' We signed the Primm water contract at %d.' % r.signed
+    if r.contract:
+        p1 += CONTRACT_TEXT[r.contract]
     p2 = ('Day %d: sales %d, costs %d, net %d. Cash %d, runway %dd. Bills in %dd, about %d. Tomorrow: %s'
           % (r.day, r.sales, r.costs, r.margin, c.cash, c.runway(), days_to_bills(c), bill_estimate(c),
-             FORECAST_TEXT[c.forecast()]))
+             forecast_line(c)))
     return p1, p2
 
 
@@ -88,6 +105,8 @@ def memo_title(c, m):
     due = m.due - c.day
     if m.kind == 'road':
         return 'BANDIT SIGN, PRIMM ROAD  due %dd' % due
+    if m.kind == 'contract':
+        return 'PRIMM WANTS WATER  due %dd' % due
     return 'PAY DOWN THE LOAN?  due %dd' % due
 
 
@@ -95,7 +114,12 @@ def memo_text(c, m):
     if m.kind == 'road':
         return ('Bandit sign on the Primm road tomorrow: about %d strong, our cover is %d. Send the wagon, '
                 'hire a gun for %d, or keep it home? If you say nothing, it stays home.'
-                % (cm.DANGER, cm.COVER, cm.GUN_COST))
+                % (cm.DANGER, c.cover(), cm.GUN_COST))
+    if m.kind == 'contract':
+        return ('Primm\'s store wants %d crates of water every %d days for %d days, at %d a crate. Accept, '
+                'or counter at %d (they may walk)? If you say nothing, we decline.'
+                % (cm.CONTRACT_CRATES, cm.CONTRACT_EVERY, cm.CONTRACT_DAYS, m.price,
+                   cm.half_up(m.price * (1 + cm.COUNTER_PREMIUM))))
     return ('The bills are paid and we hold %d caps. Pay %d off the loan now and save %d a week in '
             'interest? If you say nothing, we keep the cash.'
             % (c.cash, cm.PREPAY, cm.half_up(cm.INTEREST * cm.PREPAY)))

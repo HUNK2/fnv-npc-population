@@ -1,0 +1,253 @@
+scn CCTermDraw2
+
+; The terminal screens of M1 task 1.8 (tools/terminal_model.py labels): 9 Staff, 10 Hire, 11 Candidate,
+; 12 Contracts, 13 Standing orders, 14 Slot. Called by CCTermDraw; writes the rows and CCTerm.iRows.
+
+int iScreen
+int iPick
+int iConfirm
+int iRow
+int iK
+int iN
+int iA
+int iCover
+int iDriver
+int iSize
+int iKind
+int iTown
+int iGood
+int iValue
+int iDay
+array_var aSN
+array_var aSR
+array_var aSS
+array_var aSW
+array_var aCN
+array_var aCR
+array_var aCS
+array_var aCH
+array_var aCW
+array_var aCU
+array_var aCC
+array_var aSK
+array_var aST
+array_var aSG
+array_var aSV
+array_var aMK
+array_var aTrust
+array_var aGood
+array_var aRole
+array_var aTownN
+array_var aKindN
+string_var sT
+string_var sN
+string_var sR
+
+begin Function {}
+	let iScreen := GetVariable "iScreen" CCTerm
+	let iPick := GetVariable "iPick" CCTerm
+	let iConfirm := GetVariable "iConfirm" CCTerm
+	let aGood := Ar_List "water", "powder", "ammo", "dirty", "herbs", "materials"
+	let aRole := Ar_List "driver", "guard"
+	let aTownN := Ar_List "GS", "PR"
+	let aKindN := Ar_List "empty", "keep stocked", "sell above", "pay at most"
+	set iRow to 0
+
+	if iScreen == 9
+		; Staff: the cover, everyone on the books (a second select fires), the hiring row
+		let aSN := GetArrayVariable "aStaffName" CCCore
+		let aSR := GetArrayVariable "aStaffRole" CCCore
+		let aSS := GetArrayVariable "aStaffSkill" CCCore
+		let aSW := GetArrayVariable "aStaffWage" CCCore
+		let aCN := GetArrayVariable "aCandName" CCCore
+		let iCover := call CCCoverFn
+		if iCover > 0
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qCOVER %.0f on the road%q" iCover
+		else
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qCOVER 0 on the road: NO DRIVER%q"
+		endif
+		set iRow to 1
+		set iK to 0
+		while iK < ar_Size aSN
+			let sN := aSN[iK]
+			if iConfirm && iPick == iK
+				let sT := sv_Construct "FIRE %z? select again" sN
+			else
+				let sR := aRole[aSR[iK]]
+				let iA := aSS[iK]
+				let iN := aSW[iK]
+				let sT := sv_Construct "%z  %z s%.0f %.0f/d" sN sR iA iN
+			endif
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q%z%q" iRow sT
+			set iRow to iRow + 1
+			set iK to iK + 1
+		loop
+		let iN := ar_Size aCN
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qHIRE     %.0f asking for work%q" iRow iN
+		set iRow to iRow + 1
+
+	elseif iScreen == 10
+		; Hire: this week's candidates
+		let aCN := GetArrayVariable "aCandName" CCCore
+		let aCR := GetArrayVariable "aCandRole" CCCore
+		let aCS := GetArrayVariable "aCandSkill" CCCore
+		let aCW := GetArrayVariable "aCandWage" CCCore
+		set iK to 0
+		while iK < ar_Size aCN
+			let sN := aCN[iK]
+			let sR := aRole[aCR[iK]]
+			let iA := aCS[iK]
+			let iN := aCW[iK]
+			let sT := sv_Construct "%z  %z s%.0f %.0f/d" sN sR iA iN
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q%z%q" iRow sT
+			set iRow to iRow + 1
+			set iK to iK + 1
+		loop
+
+	elseif iScreen == 11
+		; Candidate: who (the rumour is the result text), hire, reference check
+		let aCN := GetArrayVariable "aCandName" CCCore
+		if eval (iPick < (ar_Size aCN))
+			let aCR := GetArrayVariable "aCandRole" CCCore
+			let aCS := GetArrayVariable "aCandSkill" CCCore
+			let aCH := GetArrayVariable "aCandHon" CCCore
+			let aCW := GetArrayVariable "aCandWage" CCCore
+			let aCU := GetArrayVariable "aCandRumour" CCCore
+			let aCC := GetArrayVariable "aCandChecked" CCCore
+			let aSR := GetArrayVariable "aStaffRole" CCCore
+			let sN := aCN[iPick]
+			let sR := aRole[aCR[iPick]]
+			let iA := aCS[iPick]
+			let iN := aCW[iPick]
+			let sT := sv_Construct "%z  %z s%.0f %.0f/d" sN sR iA iN
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %q%z%q" sT
+			let iA := aCH[iPick]
+			if iA < 35
+				let sR := "low"
+			elseif iA < 70
+				let sR := "fair"
+			else
+				let sR := "high"
+			endif
+			let sT := aCU[iPick]
+			if eval (aCC[iPick])
+				let sT := sv_Construct "%z Honesty: %z." sT sR
+			endif
+			Console "SetTerminalMenuItemText CCOfficeTerm 2 0 %q%z%q" sT
+			set iDriver to 0
+			if eval (aCR[iPick] == 0)
+				set iK to 0
+				while iK < ar_Size aSR
+					if eval (aSR[iK] == 0)
+						set iDriver to 1
+					endif
+					set iK to iK + 1
+				loop
+			endif
+			if iDriver
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qHIRE: one driver is enough%q"
+			else
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qHIRE for %.0f a day%q" iN
+			endif
+			if eval (aCC[iPick])
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qHONESTY  %z%q" sR
+			else
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qREFERENCE CHECK  10 caps%q"
+			endif
+			set iRow to 3
+		endif
+
+	elseif iScreen == 12
+		; Contracts: Primm's trust, then the running contract or the offer
+		let aTrust := GetArrayVariable "aTrust" CCCore
+		let iA := aTrust[1]
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qPRIMM TRUST %.0f%q" iA
+		set iRow to 1
+		if eval (GetVariable "iConOn" CCCore)
+			let iA := GetVariable "iConPrice" CCCore
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qWATER 4 crates every 3d at %.0f%q" iA
+			let iA := GetVariable "iConNext" CCCore
+			let iN := 28 + (GetVariable "iConStart" CCCore)
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qNEXT day %.0f  ENDS day %.0f%q" iA iN
+			let iA := GetVariable "iConDone" CCCore
+			let iN := GetVariable "iConMissed" CCCore
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 3 %qDELIVERED %.0f  MISSED %.0f%q" iA iN
+			set iRow to 4
+		else
+			let aMK := GetArrayVariable "aMemoKind" CCCore
+			set iN to 0
+			set iK to 0
+			while iK < ar_Size aMK
+				if eval (aMK[iK] == 2)
+					set iN to 1
+				endif
+				set iK to iK + 1
+			loop
+			if iN
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qAn offer is waiting in Memos.%q"
+			else
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qNo contract running.%q"
+			endif
+			set iRow to 2
+		endif
+
+	elseif iScreen == 13
+		; Standing orders: the three slots
+		let aSK := GetArrayVariable "aSOKind" CCCore
+		let aST := GetArrayVariable "aSOTown" CCCore
+		let aSG := GetArrayVariable "aSOGood" CCCore
+		let aSV := GetArrayVariable "aSOValue" CCCore
+		set iK to 0
+		while iK < 3
+			set iN to iK + 1
+			let iKind := aSK[iK]
+			let iValue := aSV[iK]
+			let sN := aGood[aSG[iK]]
+			if iKind == 0
+				let sT := sv_Construct "SLOT %.0f  empty" iN
+			elseif iKind == 1
+				let sR := aTownN[aST[iK]]
+				let sT := sv_Construct "SLOT %.0f  keep %z %.0f %z" iN sR iValue sN
+			else
+				let sR := aKindN[iKind]
+				let sT := sv_Construct "SLOT %.0f  %z %z %.0f" iN sR sN iValue
+			endif
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q%z%q" iK sT
+			set iK to iK + 1
+		loop
+		set iRow to 3
+
+	elseif iScreen == 14
+		; Slot: kind, then town, good, more, less
+		let aSK := GetArrayVariable "aSOKind" CCCore
+		let aST := GetArrayVariable "aSOTown" CCCore
+		let aSG := GetArrayVariable "aSOGood" CCCore
+		let aSV := GetArrayVariable "aSOValue" CCCore
+		let iKind := aSK[iPick]
+		let sT := aKindN[iKind]
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qKIND   %z%q" sT
+		set iRow to 1
+		if iKind
+			if iKind == 1
+				let sT := aTownN[aST[iPick]]
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qTOWN   %z%q" sT
+			else
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qTOWN   any%q"
+			endif
+			let sT := aGood[aSG[iPick]]
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qGOOD   %z%q" sT
+			let iValue := aSV[iPick]
+			if iKind == 1
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 3 %qMORE   crates %.0f%q" iValue
+			else
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 3 %qMORE   price %.0f%q" iValue
+			endif
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 4 %qLESS%q"
+			set iRow to 5
+		endif
+	endif
+
+	Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qBACK%q" iRow
+	set iN to iRow + 1
+	SetVariable "iRows" iN CCTerm
+end

@@ -11,6 +11,12 @@ from company_model import GOODS
 from post_model import bill_estimate, days_to_bills   # noqa: F401 (used by the tests and the game check)
 
 FRONT, PRICES, LEDGER, ORDERS, ROUTES, SETTINGS, POST, MEMOS, NOTICE = range(9)
+STAFF, HIRE, CANDIDATE, CONTRACTS, STANDING, SLOT = range(9, 15)
+# BACK on a screen reached from another screen goes back there; otherwise to the front page.
+PARENT = {HIRE: STAFF, CANDIDATE: HIRE, SLOT: STANDING, STANDING: ORDERS}
+SO_LABEL = {None: 'empty', 'keep': 'keep stocked', 'sell_above': 'sell above', 'max_pay': 'pay at most'}
+SO_KIND_CYCLE = (None, 'keep', 'sell_above', 'max_pay')
+PRICE_STEP = 5
 MAX_ROWS = 14
 ROW_WIDTH = 39
 # Good names padded to one width, as the game writes them (fixed text in each Console line).
@@ -31,7 +37,8 @@ class Terminal:
     def __init__(self):
         self.screen = FRONT
         self.direction = 0          # 0: Goodsprings > Primm, 1: Primm > Goodsprings
-        self.confirm = False        # WALK AWAY was selected once; a second select winds the company up
+        self.confirm = False        # WALK AWAY (or FIRE) was selected once; a second select does it
+        self.pick = 0               # the staff member, candidate or standing order slot being looked at
 
 
 def best_margin(c, origin=0):
@@ -104,6 +111,95 @@ def notice_rows(c, t):
     return rows
 
 
+def person_label(p):
+    """'Ruth Coyle  driver s50 10/d' (31 characters at most)."""
+    return '%s  %s s%d %d/d' % (p.name, p.role, p.skill, p.wage)
+
+
+def staff_rows(c, t):
+    """(label, action) for each Staff screen row before BACK."""
+    rows = [('COVER %d on the road%s' % (c.cover(), '' if c.has_driver() else ': NO DRIVER'), None)]
+    for i, p in enumerate(c.staff):
+        label = ('FIRE %s? select again' % p.name) if t.confirm and t.pick == i else person_label(p)
+        rows.append((label[:ROW_WIDTH], ('fire', i)))
+    rows.append(('HIRE     %d asking for work' % len(c.candidates), 'hire'))
+    return rows
+
+
+def candidate_rows(c, t):
+    """(label, result text, action) for the Candidate screen rows before BACK."""
+    p = c.candidates[t.pick]
+    text = p.rumour + (' Honesty: %s.' % c.honesty_band(p) if p.checked else '')
+    rows = [(person_label(p), text, None)]
+    if c.can_hire(t.pick):
+        rows.append(('HIRE for %d a day' % p.wage, '', 'hire'))
+    else:
+        rows.append(('HIRE: one driver is enough', '', None))
+    rows.append((('HONESTY  %s' % c.honesty_band(p)) if p.checked else 'REFERENCE CHECK  %d caps' % cm.REF_CHECK,
+                 '', None if p.checked else 'check'))
+    return rows
+
+
+def contract_row(c):
+    k = c.contract
+    if k is None:
+        return 'CONTRACTS none running'
+    return 'CONTRACTS water %d/%d to PR' % (k.done, cm.CONTRACT_DAYS // k.every)
+
+
+def contract_rows(c):
+    k = c.contract
+    rows = ['PRIMM TRUST %d' % c.trust['PR']]
+    if k is None:
+        offer = any(m.kind == 'contract' for m in c.memos)
+        return rows + ['An offer is waiting in Memos.' if offer else 'No contract running.']
+    return rows + ['WATER %d crates every %dd at %d' % (k.crates, k.every, k.price),
+                   'NEXT day %d  ENDS day %d' % (k.next_due, k.start + cm.CONTRACT_DAYS),
+                   'DELIVERED %d  MISSED %d' % (k.done, k.missed)]
+
+
+def slot_label(c, i):
+    o = c.standing[i]
+    if o is None:
+        return 'SLOT %d  empty' % (i + 1)
+    if o.kind == 'keep':
+        return 'SLOT %d  keep %s %d %s' % (i + 1, o.town, o.value, o.good)
+    return 'SLOT %d  %s %s %d' % (i + 1, SO_LABEL[o.kind], o.good, o.value)
+
+
+def slot_rows(c, t):
+    o = c.standing[t.pick]
+    kind = o.kind if o else None
+    rows = ['KIND   %s' % SO_LABEL[kind]]
+    if o:
+        rows += ['TOWN   %s' % o.town if kind == 'keep' else 'TOWN   any',
+                 'GOOD   %s' % o.good,
+                 'MORE   %s %d' % ('crates' if kind == 'keep' else 'price', o.value),
+                 'LESS']
+    return rows
+
+
+def slot_click(c, t, row):
+    o = c.standing[t.pick]
+    if row == 0:
+        kind = SO_KIND_CYCLE[(SO_KIND_CYCLE.index(o.kind if o else None) + 1) % len(SO_KIND_CYCLE)]
+        c.set_order(t.pick, kind, o.town if o else 'PR', o.good if o else 'water')
+        return
+    if o is None:
+        return
+    step = 1 if o.kind == 'keep' else PRICE_STEP
+    if row == 1 and o.kind == 'keep':
+        o.town = 'GS' if o.town == 'PR' else 'PR'
+    elif row == 2:
+        o.good = GOODS[(GOODS.index(o.good) + 1) % len(GOODS)]
+        if o.kind != 'keep':
+            o.value = cm.ANCHOR[o.good]
+    elif row == 3:
+        o.value = min(o.value + step, cm.CRATES_PER_LEG if o.kind == 'keep' else 995)
+    elif row == 4:
+        o.value = max(o.value - step, 1 if o.kind == 'keep' else 5)
+
+
 def post_rows(c):
     """(label, result text) for each Post screen row before BACK: the report's pages, then letters newest first."""
     pages = pm.report_pages(c)
@@ -122,6 +218,8 @@ def results(c, t):
         return [row[1] for row in memo_rows(c)] + ['']
     if c.founded and not c.ended and t.screen == NOTICE:
         return [row[1] for row in notice_rows(c, t)] + ['']
+    if c.founded and not c.ended and t.screen == CANDIDATE:
+        return [row[1] for row in candidate_rows(c, t)] + ['']
     return [''] * len(labels(c, t))
 
 
@@ -141,8 +239,8 @@ def labels(c, t):
                 'ROUTES   wagon %s' % ('home' if c.wagon_ok else 'none'),
                 'PRICES   best GS>PR: %s %d' % (NAMES[g].strip(), m),
                 'CHAINS   none yet (tier 2)',
-                'STAFF    %d on the books' % (2 + c.hands),
-                'CONTRACTS none running',
+                'STAFF    %d on the books, cover %d' % (len(c.staff) + c.hands, c.cover()),
+                contract_row(c),
                 'LEDGER   loan %d, week sales %d' % (c.loan, c.week_sales),
                 'ORDERS   %d pending (apply at 06:00)' % len(c.queue_list),
                 'SETTINGS',
@@ -171,9 +269,11 @@ def labels(c, t):
                 'PR > GS  %d crates' % queued(c, 1),
                 'ACCEPT the plan (%d crates)' % len(c.plan()),
                 'CANCEL all pending orders',
+                'STANDING ORDERS  %d of %d set' % (sum(1 for o in c.standing if o), cm.SLOTS),
                 'BACK']
     if t.screen == ROUTES:
-        rows = ['WAGON 1  home  driver and guard' if c.wagon_ok else
+        rows = [('WAGON 1  home  cover %d' % c.cover() if c.has_driver() else 'WAGON 1  home  NO DRIVER')
+                if c.wagon_ok else
                 'WAGON 1  none: BUY one for %d' % (cm.WAGON + cm.BRAHMIN_PAIR)]
         for r in c.history[-3:][::-1]:
             ev = EVENTS[r.event] % r.event_loss if '%' in EVENTS[r.event] else EVENTS[r.event]
@@ -187,6 +287,18 @@ def labels(c, t):
         return [row[0] for row in memo_rows(c)] + ['BACK']
     if t.screen == NOTICE:
         return [row[0] for row in notice_rows(c, t)] + ['BACK']
+    if t.screen == STAFF:
+        return [row[0] for row in staff_rows(c, t)] + ['BACK']
+    if t.screen == HIRE:
+        return [person_label(p) for p in c.candidates] + ['BACK']
+    if t.screen == CANDIDATE:
+        return [row[0] for row in candidate_rows(c, t)] + ['BACK']
+    if t.screen == CONTRACTS:
+        return contract_rows(c) + ['BACK']
+    if t.screen == STANDING:
+        return [slot_label(c, i) for i in range(cm.SLOTS)] + ['BACK']
+    if t.screen == SLOT:
+        return slot_rows(c, t) + ['BACK']
     raise ValueError(t.screen)
 
 
@@ -200,11 +312,11 @@ def click(c, t, row):
         if row == 1:
             c.queue_list = c.plan()
         else:
-            t.screen = {2: POST, 3: MEMOS, 4: ROUTES, 5: PRICES, 9: LEDGER, 10: ORDERS, 11: SETTINGS,
-                        12: NOTICE}.get(row, FRONT)
+            t.screen = {2: POST, 3: MEMOS, 4: ROUTES, 5: PRICES, 7: STAFF, 8: CONTRACTS, 9: LEDGER,
+                        10: ORDERS, 11: SETTINGS, 12: NOTICE}.get(row, FRONT)
         return
     if row == len(rows) - 1:                    # BACK is always the last row
-        t.screen = FRONT
+        t.screen = PARENT.get(t.screen, FRONT)
         return
     if t.screen == PRICES:
         if row == 0:
@@ -216,6 +328,30 @@ def click(c, t, row):
             c.queue_list = c.plan()
         elif row == 3:
             c.queue_list = []
+        elif row == 4:
+            t.screen = STANDING
+    elif t.screen == STANDING:
+        t.pick, t.screen = row, SLOT
+    elif t.screen == SLOT:
+        slot_click(c, t, row)
+    elif t.screen == STAFF:
+        act = staff_rows(c, t)[row][1]
+        if act == 'hire':
+            t.screen = HIRE
+        elif act:
+            if confirm and t.pick == act[1]:
+                c.fire(act[1])
+            else:
+                t.pick, t.confirm = act[1], True
+    elif t.screen == HIRE:
+        t.pick, t.screen = row, CANDIDATE
+    elif t.screen == CANDIDATE:
+        act = candidate_rows(c, t)[row][2]
+        if act == 'hire':
+            c.hire(t.pick)
+            t.screen = HIRE
+        elif act == 'check':
+            c.reference_check(t.pick)
     elif t.screen == ROUTES and row == 0:
         c.buy_wagon()
     elif t.screen == NOTICE:

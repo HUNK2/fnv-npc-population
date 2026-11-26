@@ -1,0 +1,180 @@
+scn CCContractFn
+
+; The supply contract (tools/company_model.py Company._contract, _settle_memos, _post_memos), moved
+; out of CCCoreScript to keep it under the script size limit. Works on CCCore's variables by name.
+; iAct 1: today's delivery (CCCore iTripRuns: the wagon runs); returns the crates loaded on the
+;         Goodsprings leg. 4 crates of water from the warehouse, then bought at Goodsprings, sold at the
+;         contract price without moving Primm's stock; a delivery the wagon cannot make costs 10% of
+;         its value and Primm trust 3. The last one: trust +3 and the contract ends.
+; iAct 2: post an offer memo when due; returns 1 if posted.
+; iAct 3: settle the offer memo with answer iPick (0 accept, 1 counter at +7%: half the time they
+;         walk, 2 decline).
+
+int iAct
+int iPick
+int iOut
+int iDay
+int iCash
+int iCosts
+int iSales
+int iWeek
+int iPrice
+int iOwn
+int iCost
+int iPay
+int iK
+int iN
+int iValue
+int iNext
+int iSeed
+float fS
+array_var aWh
+array_var aStock
+array_var aAnchor
+array_var aUse
+array_var aTrust
+array_var aNormal
+array_var aMK
+array_var aMD
+array_var aMDue
+array_var aMP
+
+begin Function {iAct iPick}
+	set iOut to 0
+	let iDay := GetVariable "iDay" CCCore
+	let aTrust := GetArrayVariable "aTrust" CCCore
+	let aAnchor := GetArrayVariable "aAnchor" CCCore
+	let aUse := GetArrayVariable "aUse" CCCore
+
+	if iAct == 1
+		let iCash := GetVariable "iCash" CCCore
+		let iCosts := GetVariable "iDayCosts" CCCore
+		let iPrice := GetVariable "iConPrice" CCCore
+		let aWh := GetArrayVariable "aWh" CCCore
+		let aStock := GetArrayVariable "aStock" CCCore
+		let iN := GetVariable "iTripRuns" CCCore
+		if iN
+			let iOwn := aWh[0]
+			if iOwn > 4
+				set iOwn to 4
+			endif
+			set iCost to 0
+			let fS := aStock[0]
+			set iK to iOwn
+			while iK < 4
+				let iPay := call CCPriceFn aAnchor[0], fS, aUse[0], aTrust[0], 0
+				set iCost to iCost + iPay
+				let fS := fS - 1
+				set iK to iK + 1
+			loop
+			if iCost <= iCash
+				let aWh[0] -= iOwn
+				set iK to iOwn
+				while iK < 4
+					let iPay := call CCPriceFn aAnchor[0], aStock[0], aUse[0], aTrust[0], 0
+					set iCash to iCash - iPay
+					set iCosts to iCosts + iPay
+					let aStock[0] -= 1
+					set iK to iK + 1
+				loop
+				set iValue to 4 * iPrice
+				set iCash to iCash + iValue
+				let iSales := (GetVariable "iDaySales" CCCore) + iValue
+				let iWeek := (GetVariable "iWeekSales" CCCore) + iValue
+				SetVariable "iDaySales" iSales CCCore
+				SetVariable "iWeekSales" iWeek CCCore
+				let aTrust[1] += 1
+				if eval (aTrust[1] > 100)
+					let aTrust[1] := 100
+				endif
+				let iN := (GetVariable "iConDone" CCCore) + 1
+				SetVariable "iConDone" iN CCCore
+				SetVariable "iDayCon" 1 CCCore
+				set iOut to 4
+			endif
+		endif
+		if iOut == 0
+			let iPay := Floor (0.1 * 4 * iPrice + 0.5)
+			if iPay > iCash
+				set iPay to iCash
+			endif
+			set iCash to iCash - iPay
+			set iCosts to iCosts + iPay
+			let aTrust[1] -= 3
+			if eval (aTrust[1] < 0)
+				let aTrust[1] := 0
+			endif
+			let iN := (GetVariable "iConMissed" CCCore) + 1
+			SetVariable "iConMissed" iN CCCore
+			SetVariable "iDayCon" 2 CCCore
+		endif
+		SetVariable "iCash" iCash CCCore
+		SetVariable "iDayCosts" iCosts CCCore
+		let iNext := (GetVariable "iConNext" CCCore) + 3
+		SetVariable "iConNext" iNext CCCore
+		let iN := (GetVariable "iConStart" CCCore) + 28
+		if iNext >= iN
+			let aTrust[1] += 3
+			if eval (aTrust[1] > 100)
+				let aTrust[1] := 100
+			endif
+			SetVariable "iConOn" 0 CCCore
+			let iN := (GetVariable "iDayCon" CCCore) + 10
+			SetVariable "iDayCon" iN CCCore
+		endif
+
+	elseif iAct == 2
+		; on the third day of a week, to a company in good standing with a wagon and a driver, no
+		; contract running or offered, at most one offer a week, room for the memo
+		let aMK := GetArrayVariable "aMemoKind" CCCore
+		set iN to 0
+		set iK to 0
+		while iK < ar_Size aMK
+			if eval (aMK[iK] == 2)
+				set iN to 1
+			endif
+			set iK to iK + 1
+		loop
+		let iK := call CCCoverFn
+		if eval (iN == 0 && iK > 0 && (GetVariable "iConOn" CCCore) == 0 && (GetVariable "iStage" CCCore) == 0 && (GetVariable "iWagonOk" CCCore) && iDay % 7 == 3 && iDay - (GetVariable "iLastOffer" CCCore) >= 7 && (ar_Size aMK) < 3)
+			let aNormal := GetArrayVariable "aNormal" CCCore
+			let iK := call CCPriceFn aAnchor[0], aNormal[6], aUse[6], aTrust[1], 1
+			let iPrice := Floor ((1 + 0.09) * iK + 0.5)
+			SetVariable "iOfferPrice" iPrice CCCore
+			let aMD := GetArrayVariable "aMemoDay" CCCore
+			let aMDue := GetArrayVariable "aMemoDue" CCCore
+			let aMP := GetArrayVariable "aMemoPick" CCCore
+			ar_Append aMK 2
+			ar_Append aMD iDay
+			ar_Append aMDue (iDay + 1)
+			ar_Append aMP (0 - 1)
+			SetVariable "iLastOffer" iDay CCCore
+			set iOut to 1
+		endif
+
+	elseif iAct == 3
+		let iPrice := GetVariable "iOfferPrice" CCCore
+		set iN to 0
+		if iPick == 0
+			set iN to iPrice
+		elseif iPick == 1
+			let iSeed := GetVariable "iSeed" CCCore
+			if eval (((iDay % 100) * 19 + (iSeed % 100) * 29 + 124) % 100 < 50)
+				SetVariable "iDayCon" 3 CCCore
+			else
+				let iN := Floor (iPrice * (1 + 0.07) + 0.5)
+			endif
+		endif
+		if iN > 0
+			SetVariable "iConOn" 1 CCCore
+			SetVariable "iConPrice" iN CCCore
+			SetVariable "iConStart" iDay CCCore
+			SetVariable "iConNext" iDay CCCore
+			SetVariable "iConDone" 0 CCCore
+			SetVariable "iConMissed" 0 CCCore
+			SetVariable "iDaySigned" iN CCCore
+			set iOut to 1
+		endif
+	endif
+	SetFunctionValue iOut
+end

@@ -41,7 +41,16 @@ calls are mine and are marked "my call" here and in the plans.
   state match the model; Notice, Routes and closed screens read back; rescue, wagon sale from a
   letter and receivership; no script errors. Pictures: `docs/evidence/m1/m1_notice_letter.png`,
   `m1_notice_screen.png`, `m1_closed_terminal.png`.
-- Next: 1.8 supply contracts, standing orders, hiring.
+  1.8 contracts, standing orders and hiring (`tools/test_hiring.py`, 25 tests; 114 model tests
+  pass): paper staff (the founding driver and guard have names; cover = 15 for the driver + 30 a
+  guard + a fifth of skill over 50), 3 to 6 seeded candidates every week, reference checks, hire
+  and fire, dishonest staff skim; Primm's water contract offered as a memo (accept, counter,
+  decline), delivered on the Goodsprings leg, a miss costs 10% and trust; three standing order
+  slots that change the bookkeeper's plan. New terminal screens: Staff, Hire, Candidate,
+  Contracts, Standing orders, Slot. `tools/ingame_hiring.py`: 18 days and every screen after every
+  select match the model, no script errors. Pictures: `docs/evidence/m1/m1_staff_screen.png`,
+  `m1_candidate_screen.png`, `m1_standing_slot.png`, `m1_contracts_screen.png`.
+- Next: 1.9 tier 2 (purifier, apothecary, the office).
 
 ## Done
 
@@ -114,6 +123,24 @@ calls are mine and are marked "my call" here and in the plans.
   looked up with `GetFormFromMod`); it stops the clocks, holds field letters and caps a day's event
   losses at the previous day's margin. A test switch `CCCore.iShieldTest` forces it.
 - 1.7: letter order when several wait: closed, notice, forecast, away, road, loss.
+- 1.8: candidates are drivers (1 in 4) or guards; hands still come with raw sites (tier 2). One
+  wagon needs one driver, so a second driver cannot be hired; without a driver the wagon stays in
+  the yard and a contract delivery is missed.
+- 1.8: a contract offer is a memo only (no field letter); unanswered it is declined. Offers go
+  only to a company with no open notice, a wagon and a driver.
+- 1.8: FIRE needs two selects, like WALK AWAY. BACK on a screen reached from another screen goes
+  back there (Candidate > Hire > Staff, Slot > Standing orders > Orders).
+- 1.8: standing order values: keep 1 to 8 crates (step 1), prices 5 to 995 (step 5); changing a
+  price order's good resets it to that good's anchor price; an emptied slot starts again at Primm
+  and water. Contract crates ignore standing orders.
+- 1.8: the bandit odds now use the crew's cover (r = cover / 60, clean chance r^2 / (1 + r^2)).
+- 1.8: `CCCoreScript` must stay under about 16 KB compiled: the in-game compile failed at about
+  18 KB ("loop at N jumps to 0"). The contract and the morning report moved to `CCContractFn`
+  and `CCReportFn` (core now 12.7 KB). `CCTermDraw` is 15.8 KB, so new screens go in `CCTermDraw2`.
+- 1.8 fix: the game's seeded roll lost whole units: `day * 7919 + seed * 104729` is about 1.3e8 and
+  the script engine rounds it (single-float precision; the console gives 28 where the model gives
+  25). Every game roll is now `((day % 100) * 19 + (seed % 100) * 29 + key * 31) % 100`, the same
+  value as the model's formula. The bandit rolls had matched so far by luck.
 
 ## Open items for the final report
 

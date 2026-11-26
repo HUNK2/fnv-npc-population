@@ -1,8 +1,11 @@
 scn CCPlanFn
 
-; The bookkeeper's plan (tools/company_model.py Company.plan): for each leg the best crate by margin
-; while it pays at least 20, up to 8 a leg; own warehouse crates load free and go first when they pay.
-; Returns the order codes in pick order: origin * 10 + good (0 Goodsprings, 1 Primm).
+; The bookkeeper's plan (tools/company_model.py Company.plan) for a trip: during the tick (CCCore
+; iInTick 1) today's, else tomorrow's. For each leg, first the standing orders that keep the
+; destination stocked (a crate that does not lose money), then greedy: the best crate by margin while
+; it pays at least 20. Up to 8 crates a leg, 4 fewer on the Goodsprings leg on a contract delivery day.
+; Standing orders also bar a sale below a price and a purchase above one. Own warehouse crates load
+; free. Returns the order codes in pick order: origin * 10 + good (0 Goodsprings, 1 Primm).
 
 array_var aQ
 array_var aSo
@@ -26,6 +29,17 @@ int iBest
 int iBestG
 int iBestOwn
 int iBestCost
+array_var aSK
+array_var aST
+array_var aSG
+array_var aSV
+array_var aFloor
+array_var aCeil
+int iTrip
+int iCap
+int iS
+int iGo
+int iOk
 
 begin Function {}
 	let aQ := Ar_Construct "array"
@@ -36,6 +50,23 @@ begin Function {}
 	let aAnchor := GetArrayVariable "aAnchor" CCCore
 	let aUse := GetArrayVariable "aUse" CCCore
 	let aTrust := GetArrayVariable "aTrust" CCCore
+	let aSK := GetArrayVariable "aSOKind" CCCore
+	let aST := GetArrayVariable "aSOTown" CCCore
+	let aSG := GetArrayVariable "aSOGood" CCCore
+	let aSV := GetArrayVariable "aSOValue" CCCore
+	let iTrip := (GetVariable "iDay" CCCore) + 1 - (GetVariable "iInTick" CCCore)
+	; sell-above floors and pay-at-most ceilings (a later slot wins)
+	let aFloor := Ar_List 0, 0, 0, 0, 0, 0
+	let aCeil := Ar_List 999999, 999999, 999999, 999999, 999999, 999999
+	set iS to 0
+	while iS < 3
+		if eval (aSK[iS] == 2)
+			let aFloor[aSG[iS]] := aSV[iS]
+		elseif eval (aSK[iS] == 3)
+			let aCeil[aSG[iS]] := aSV[iS]
+		endif
+		set iS to iS + 1
+	loop
 	set iLeg to 0
 	while iLeg < 2
 		set iOrigin to iLeg
@@ -47,8 +78,51 @@ begin Function {}
 		else
 			let aWhPlan := Ar_List 0, 0, 0, 0, 0, 0
 		endif
+		set iCap to 8
+		let iOk := (GetVariable "iConOn" CCCore) && (GetVariable "iConNext" CCCore) == iTrip
+		if iOrigin == 0 && iOk
+			set iCap to 4
+		endif
 		set iK to 0
-		while iK < 8
+		; keep-stocked orders for this leg's destination
+		set iS to 0
+		while iS < 3
+			if eval (aSK[iS] == 1 && aST[iS] == iDest)
+				let iG := aSG[iS]
+				set iGo to 1
+				while iGo && iK < iCap && aSd[iDest * 6 + iG] < aSV[iS]
+					let iSale := call CCPriceFn aAnchor[iG], aSd[iDest * 6 + iG], aUse[iDest * 6 + iG], aTrust[iDest], 1
+					let iOwn := aWhPlan[iG] > 0
+					set iCost to 0
+					if iOwn == 0
+						let iCost := call CCPriceFn aAnchor[iG], aSo[iOrigin * 6 + iG], aUse[iOrigin * 6 + iG], aTrust[iOrigin], 0
+					endif
+					set iOk to 1
+					if eval (iOwn == 0 && (iCost > iPlanCash || iCost > aCeil[iG]))
+						set iOk to 0
+					endif
+					if eval (iSale < aFloor[iG] || iSale - iCost < 0)
+						set iOk to 0
+					endif
+					if iOk
+						if iOwn
+							let aWhPlan[iG] -= 1
+						else
+							let aSo[iOrigin * 6 + iG] -= 1
+							set iPlanCash to iPlanCash - iCost
+						endif
+						let aSd[iDest * 6 + iG] += 1
+						ar_Append aQ (iOrigin * 10 + iG)
+						set iK to iK + 1
+					else
+						set iGo to 0
+					endif
+				loop
+			endif
+			set iS to iS + 1
+		loop
+		; then the best crate by margin
+		while iK < iCap
 			set iBestG to -1
 			set iG to 0
 			while iG < 6
@@ -59,7 +133,14 @@ begin Function {}
 				else
 					let iCost := call CCPriceFn aAnchor[iG], aSo[iOrigin * 6 + iG], aUse[iOrigin * 6 + iG], aTrust[iOrigin], 0
 				endif
-				if iOwn || iCost <= iPlanCash
+				set iOk to 1
+				if eval (iOwn == 0 && (iCost > iPlanCash || iCost > aCeil[iG]))
+					set iOk to 0
+				endif
+				if eval (iSale < aFloor[iG])
+					set iOk to 0
+				endif
+				if iOk
 					if iBestG < 0 || iSale - iCost > iBest
 						set iBest to iSale - iCost
 						set iBestG to iG
@@ -70,7 +151,7 @@ begin Function {}
 				set iG to iG + 1
 			loop
 			if iBestG < 0 || iBest < 20
-				set iK to 8
+				set iK to iCap
 			else
 				if iBestOwn
 					let aWhPlan[iBestG] -= 1

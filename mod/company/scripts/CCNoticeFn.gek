@@ -100,7 +100,7 @@ begin Function {iWhat}
 	set iShort to 0
 	let iDtb := 7 - iDay % 7
 	if iStage == 0 || iStage == 5
-		set iWages to 22 + 14 * iHands
+		let iWages := call CCWagesFn
 		let iInt := Floor (0.04 * iLoan + 0.5)
 		set iPrin to 300
 		if iLoan < 300

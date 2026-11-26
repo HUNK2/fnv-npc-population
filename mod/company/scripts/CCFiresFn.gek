@@ -18,7 +18,7 @@ begin Function {iD iLast iSeed}
 		else
 			set iChance to 50
 		endif
-		if eval ((iD * 7919 + iSeed * 104729 + 31) % 100 < iChance)
+		if eval (((iD % 100) * 19 + (iSeed % 100) * 29 + 31) % 100 < iChance)
 			set iFires to 1
 		endif
 	endif
