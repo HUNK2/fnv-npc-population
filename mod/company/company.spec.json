@@ -284,6 +284,30 @@
         "value": 13
        }
       ]
+     },
+     {
+      "text": "Row 15",
+      "conditions": [
+       {
+        "function": "GetQuestVariable",
+        "param1": "@CCTerm",
+        "param2": 1,
+        "op": ">",
+        "value": 14
+       }
+      ]
+     },
+     {
+      "text": "Row 16",
+      "conditions": [
+       {
+        "function": "GetQuestVariable",
+        "param1": "@CCTerm",
+        "param2": 1,
+        "op": ">",
+        "value": 15
+       }
+      ]
      }
     ]
    }
@@ -927,6 +951,79 @@
      ]
     }
    ]
+  },
+  "CCLateFn": {
+   "type": "SCPT",
+   "source": "scripts/CCLateFn.gek",
+   "script_type": "object"
+  },
+  "CCLateUtilFn": {
+   "type": "SCPT",
+   "source": "scripts/CCLateUtilFn.gek",
+   "script_type": "object"
+  },
+  "CCLateTextFn": {
+   "type": "SCPT",
+   "source": "scripts/CCLateTextFn.gek",
+   "script_type": "object"
+  },
+  "CCEndingFn": {
+   "type": "SCPT",
+   "source": "scripts/CCEndingFn.gek",
+   "script_type": "object"
+  },
+  "CCEndLineFn": {
+   "type": "SCPT",
+   "source": "scripts/CCEndLineFn.gek",
+   "script_type": "object"
+  },
+  "CCLateScript": {
+   "type": "SCPT",
+   "source": "scripts/CCLateScript.gek",
+   "script_type": "quest"
+  },
+  "CCLate": {
+   "type": "QUST",
+   "fields": [
+    {
+     "tag": "SCRI",
+     "form": "@CCLateScript"
+    },
+    {
+     "tag": "FULL",
+     "text": "Mojave Caravan Company: the late game"
+    },
+    {
+     "tag": "DATA",
+     "pack": "<BBBBf",
+     "values": [
+      1,
+      50,
+      0,
+      0,
+      5.0
+     ]
+    }
+   ]
+  },
+  "CCStashScript": {
+   "type": "SCPT",
+   "source": "scripts/CCStashScript.gek",
+   "script_type": "object"
+  },
+  "CCStashChest": {
+   "type": "CONT",
+   "template": "@Footlocker01Empty",
+   "fields": [
+    {
+     "tag": "FULL",
+     "text": "Company strongroom chest"
+    },
+    {
+     "tag": "SCRI",
+     "form": "@CCStashScript"
+    }
+   ]
   }
  },
  "cells": {
@@ -1007,6 +1104,39 @@
      "position": [
       1200,
       0,
+      0
+     ]
+    },
+    {
+     "ref_id": "stashprimm",
+     "base": "@CCStashChest",
+     "editor_id": "CCPrimmStashRef",
+     "persistent": true,
+     "position": [
+      0,
+      400,
+      0
+     ]
+    },
+    {
+     "ref_id": "stashsloan",
+     "base": "@CCStashChest",
+     "editor_id": "CCSloanStashRef",
+     "persistent": true,
+     "position": [
+      0,
+      600,
+      0
+     ]
+    },
+    {
+     "ref_id": "stashoutpost",
+     "base": "@CCStashChest",
+     "editor_id": "CCOutpostStashRef",
+     "persistent": true,
+     "position": [
+      0,
+      800,
       0
      ]
     }
@@ -1119,7 +1249,7 @@
     },
     {
      "ref_id": "safe",
-     "base": "@Safe",
+     "base": "@LootSafeEmpty",
      "position": [
       140,
       -295,
@@ -1129,7 +1259,9 @@
       0,
       0,
       0
-     ]
+     ],
+     "editor_id": "CCOfficeSafeRef",
+     "persistent": true
     },
     {
      "ref_id": "kick",

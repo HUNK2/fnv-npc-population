@@ -1,0 +1,76 @@
+scn CCLateScript
+
+; M4: the late game (tools/late_model.py, tools/ending_model.py; docs/plans/2026-11-28-m4-ending.md). The
+; state lives here, in its own quest, like CCLaw's; CCLateFn changes it, CCLateTextFn writes its texts and
+; screens, CCEndingFn the "20 years on" pages. Variables are only ever appended.
+; Forward tickets in the aTk* arrays (town 0 to 3, good 0 to 6, price, due day, crates filled, the advance
+; not yet earned back); aTkRem is the bookkeeper's plan's scratch copy of the crates still wanted.
+; Outfits the company lent to in the aOf* arrays (name, town, amount, rate 0 gentle 1 fair 2 harsh,
+; principal left, weeks left, misses in a row). iLaws: how many of the laws are passed, in order
+; (1 Free trade act, 2 Carrier act, 3 Press audit). iSide: the side taken at the Dam (0 none read).
+; The day's news for the report (reset at each tick): iDFwd (1 signed, 2 filled, 3 missed), iDFwdAdv,
+; iDFwdPay, iDPatron (1 signed, 2 broken), iDLent, iDLendIn, iDOutfitMiss, iDOutfit (1 seized,
+; 2 forgiven), iDOutfitGot.
+
+int iInit
+int iLastFwd
+int iQm
+int iQmOffered
+int iQmLoan
+int iQmSince
+int iLentEver
+int iSeizedN
+int iForgivenN
+int iLastLend
+int iFavour
+int iLastLaw
+int iLaws
+int iBlocks
+int iLeadPrWeeks
+int iWonHer
+int iRivalOut
+int iSide
+int iQmBill
+int iQmInt
+int iDFwd
+int iDFwdAdv
+int iDFwdPay
+int iDPatron
+int iDLent
+int iDLendIn
+int iDOutfitMiss
+int iDOutfit
+int iDOutfitGot
+array_var aTkTown
+array_var aTkGood
+array_var aTkPrice
+array_var aTkDue
+array_var aTkFilled
+array_var aTkAdv
+array_var aTkRem
+array_var aOfName
+array_var aOfTown
+array_var aOfAmount
+array_var aOfRate
+array_var aOfLeft
+array_var aOfWeeks
+array_var aOfMiss
+string_var sPoached
+
+begin GameMode
+	if iInit == 0
+		call CCLateFn 0 0 0
+	endif
+	; the side taken at the Dam, for the ending's text only (1 NCR, 2 House, 3 Legion, 4 independent), from the
+	; vanilla battle state (vHDBattleController.iBattleState: 1 NCR, 2 Caesar, 3 House, 4 Yes Man, -1 over);
+	; the last side seen is kept once the battle is over
+	if vHDBattleController.iBattleState == 1
+		set iSide to 1
+	elseif vHDBattleController.iBattleState == 2
+		set iSide to 3
+	elseif vHDBattleController.iBattleState == 3
+		set iSide to 2
+	elseif vHDBattleController.iBattleState == 4
+		set iSide to 4
+	endif
+end

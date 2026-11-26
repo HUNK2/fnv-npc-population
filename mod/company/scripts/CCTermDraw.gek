@@ -78,7 +78,7 @@ begin Function {}
 	; and only used on the Post and Memos screens; other rows get one space (the compiler refuses an
 	; blank text), which types a blank line
 	set iK to 0
-	while iK < 14
+	while iK < 16
 		SetTerminalMenuItemText CCOfficeTerm 2 iK " "
 		set iK to iK + 1
 	loop
@@ -92,20 +92,11 @@ begin Function {}
 	let iCash := GetVariable "iCash" CCCore
 	let iDay := GetVariable "iDay" CCCore
 	let iLoan := GetVariable "iLoan" CCCore
-	; a closed company: two rows, nothing to select
+	; a closed company: the end, the numbers, the last letters (CCLateTextFn 10); its Post stays readable
+	let iScreen := GetVariable "iScreen" CCTerm
 	let iEnded := GetVariable "iEnded" CCCore
-	if iEnded
-		let iEndReason := GetVariable "iEndReason" CCCore
-		let iArrears := GetVariable "iArrears" CCCore
-		if iEndReason == 3
-			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qCLOSED: you wound it up%q"
-		elseif iEndReason == 4
-			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qCLOSED: the NCR revoked the licence%q"
-		else
-			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qCLOSED: the lender took the office%q"
-		endif
-		Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qDAY %.0f  CASH %.0f  OWED %.0f%q" iDay iCash iArrears
-		SetVariable "iRows" 2 CCTerm
+	if iEnded && iScreen != 6
+		call CCLateTextFn 10 0 0
 		return
 	endif
 	let iWeek := GetVariable "iWeekSales" CCCore
@@ -233,7 +224,10 @@ begin Function {}
 			let sN := aS[iK]
 			; M3: an NCR contract runs 14 days (4 deliveries)
 			let aS := GetArrayVariable "aConNcr" CCLaw
-			let iK := 9 - 5 * aS[0]
+			set iK to 9
+			if eval ((ar_Size aS) > 0)
+				let iK := 9 - 5 * aS[0]
+			endif
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 8 %qCONTRACTS %z %.0f/%.0f to %z%q" sT iA iK sN
 		else
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 8 %qCONTRACTS none running%q"
@@ -338,6 +332,7 @@ begin Function {}
 			let iNw += aAnchor[iG % 12] * aWh[iG]
 			set iG to iG + 1
 		loop
+		let iNw -= call CCLateFn 7 0 0
 		set iN to iNw - iOwnerPaidIn
 		Console "SetTerminalMenuItemText CCOfficeTerm 1 6 %qNET WORTH %.0f  EARNED %.0f%q" iNw iN
 		Console "SetTerminalMenuItemText CCOfficeTerm 1 7 %qBACK%q"
@@ -500,7 +495,7 @@ begin Function {}
 		else
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qPLAN EVERY DAY   OFF%q"
 		endif
-		Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qBACK%q"
-		SetVariable "iRows" 2 CCTerm
+		let iN := call CCLateTextFn 11 0 0
+		SetVariable "iRows" iN CCTerm
 	endif
 end

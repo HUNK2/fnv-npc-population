@@ -1,0 +1,302 @@
+scn CCLateTextFn
+
+; M4 texts and rows (tools/post_model.py late_line, memo_title, memo_text, answer_label; tools/terminal_model.py
+; forward_rows, late_rows, the closed front page, Settings). The state is CCLate's.
+; iAct 1: the report's late sentences for today, or "".
+; iAct 2: draw memo iA (kinds 6 to 9) from row iB on the Memos screen: its title (its text the row's result
+; text), then its answers; returns the row after its last answer.
+; iAct 5: the Towns screen's SHARES (tier 4) and LAWS (tier 5) rows from row iA; returns the next row.
+; iAct 6: the Contracts screen's forward ticket rows from row iA (at most up to row 14); returns the next row.
+; iAct 10: the closed front page (3 rows: the end, the numbers, the last letters).
+; iAct 11: the Settings rows after PLAN EVERY DAY (RETIRE at tier 5, then BACK); returns the row count.
+
+int iAct
+int iA
+int iB
+int iN
+int iK
+int iJ
+int iX
+int iT
+int iG
+int iDay
+int iDue
+int iPick
+int iDef
+int iRow
+string_var sOut
+string_var sS
+string_var sWho
+string_var sM
+string_var sD
+array_var aX
+array_var aY
+array_var aZ
+array_var aC
+array_var aD
+
+begin Function {iAct iA iB}
+	let sOut := " "
+	sv_Erase sOut 0 1
+	let iDay := GetVariable "iDay" CCCore
+	let aC := Ar_List "GS", "PR", "SL", "MO"
+	if iAct == 1
+		let iN := GetVariable "iDFwd" CCLate
+		if iN == 1
+			let iK := GetVariable "iDFwdAdv" CCLate
+			if iK > 0
+				let sS := sv_Construct " We signed a forward ticket and took an advance of %.0f." iK
+				let sOut += sS
+			else
+				let sOut += " We signed a forward ticket."
+			endif
+		elseif iN == 2
+			let sOut += " A forward ticket is filled."
+		elseif iN == 3
+			let iK := GetVariable "iDFwdPay" CCLate
+			let sS := sv_Construct " We missed a forward ticket and paid %.0f." iK
+			let sOut += sS
+		endif
+		let iN := GetVariable "iDPatron" CCLate
+		if iN == 1
+			let sOut += " The quartermaster lent us 10000: we are his preferred carrier."
+		elseif iN == 2
+			let sOut += " The quartermaster's deal is broken: the rest of his loan is owed now."
+		endif
+		let iN := GetVariable "iDLent" CCLate
+		if iN > 0
+			let sS := sv_Construct " We lent %.0f to an outfit." iN
+			let sOut += sS
+		endif
+		let iN := GetVariable "iDLendIn" CCLate
+		if iN > 0
+			let sS := sv_Construct " The outfits paid us %.0f." iN
+			let sOut += sS
+		endif
+		let iN := GetVariable "iDOutfitMiss" CCLate
+		if iN == 1
+			let sOut += " 1 outfit missed a payment."
+		elseif iN > 1
+			let sS := sv_Construct " %.0f outfits missed a payment." iN
+			let sOut += sS
+		endif
+		let iN := GetVariable "iDOutfit" CCLate
+		if iN == 1
+			let iK := GetVariable "iDOutfitGot" CCLate
+			let sS := sv_Construct " We seized a failed outfit's wagon: %.0f recovered." iK
+			let sOut += sS
+		elseif iN == 2
+			let sOut += " We forgave a failed outfit's debt."
+		endif
+		SetFunctionValue sOut
+		return
+
+	elseif iAct == 2
+		let aX := GetArrayVariable "aMemoKind" CCCore
+		let aY := GetArrayVariable "aMemoX" CCCore
+		let aZ := GetArrayVariable "aMemoDue" CCCore
+		let iN := aX[iA]
+		let iX := aY[iA]
+		let iDue := aZ[iA] - iDay
+		let aZ := GetArrayVariable "aMemoPick" CCCore
+		let iPick := aZ[iA]
+		let aZ := GetArrayVariable "aMemoWho" CCCore
+		let sWho := aZ[iA]
+		set iRow to iB
+		if iN == 6
+			; a forward ticket: price * 100 + town * 12 + good
+			let iK := Floor (iX / 100)
+			let iT := Floor ((iX % 100) / 12)
+			let iG := (iX % 100) % 12
+			let sM := call CCTextFn 4 iG
+			let sD := sv_Construct "%z" sM
+			let sD := sv_ToUpper sD
+			let sS := aC[iT]
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qFORWARD %z %z  due %.0fd%q" iRow sS sD iDue
+			let sS := call CCTextFn 3 iT
+			let iJ := 6 * iK
+			Console "SetTerminalMenuItemText CCOfficeTerm 2 %.0f %q%z wants 12 crates of %z within 10 days at %.0f a crate. Accept, or take %.0f now as an advance? A miss costs a quarter of the rest. If you say nothing, we decline.%q" iRow sS sM iK iJ
+			set iN to 3
+			set iDef to 2
+		elseif iN == 7
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qTHE NCR QUARTERMASTER  due %.0fd%q" iRow iDue
+			Console "SetTerminalMenuItemText CCOfficeTerm 2 %.0f %qThe NCR quartermaster offers 10000 caps at 2%% a week, repaid 500 a week. His string: heat under 20 and never outlaws, or the rest is due at once. If you say nothing, we refuse.%q" iRow
+			set iN to 2
+			set iDef to 1
+		elseif iN == 8
+			; an outfit asks for a loan: amount * 10 + town, aMemoWho its name
+			let iK := Floor (iX / 10)
+			let iT := iX % 10
+			let sD := sv_Construct "%z" sWho
+			let sD := sv_ToUpper sD
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q%z ASKS FOR %.0f  due %.0fd%q" iRow sD iK iDue
+			let sS := call CCTextFn 3 iT
+			Console "SetTerminalMenuItemText CCOfficeTerm 2 %.0f %q%z of %z asks to borrow %.0f over 8 weeks. Lend at 2%%, 4%% or 8%% a week (the higher, the likelier they miss), or refuse? If you say nothing, we refuse.%q" iRow sWho sS iK
+			set iN to 4
+			set iDef to 3
+		else
+			; a failed outfit: principal left * 10 + town
+			let iK := Floor (iX / 10)
+			let iT := iX % 10
+			let sD := sv_Construct "%z" sWho
+			let sD := sv_ToUpper sD
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q%z HAS FAILED  due %.0fd%q" iRow sD iDue
+			let sS := call CCTextFn 3 iT
+			Console "SetTerminalMenuItemText CCOfficeTerm 2 %.0f %q%z missed two payments in a row and owes %.0f. Seize the wagon (half its loan, at most what it owes, %z will not like it), or forgive it? If you say nothing, we seize it.%q" iRow sWho iK sS
+			set iN to 2
+			set iDef to 0
+		endif
+		set iJ to 0
+		while iJ < iN
+			set iRow to iRow + 1
+			if iPick == iJ
+				let sM := "[x]"
+			else
+				let sM := "[ ]"
+			endif
+			if iDef == iJ
+				let sD := " (default)"
+			else
+				let sD := " "
+				sv_Erase sD 0 1
+			endif
+			if iN == 3
+				if iJ == 0
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z accept%z%q" iRow sM sD
+				elseif iJ == 1
+					let iK := 6 * Floor (iX / 100)
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z accept with an advance of %.0f%z%q" iRow sM iK sD
+				else
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z decline%z%q" iRow sM sD
+				endif
+			elseif iN == 4
+				if iJ == 3
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z refuse%z%q" iRow sM sD
+				else
+					let iK := 2 + 2 * iJ + 2 * (iJ == 2)
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z lend at %.0f%%%z%q" iRow sM iK sD
+				endif
+			elseif iDef == 1
+				if iJ == 0
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z take the deal%z%q" iRow sM sD
+				else
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z refuse%z%q" iRow sM sD
+				endif
+			elseif iJ == 0
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z seize the wagon%z%q" iRow sM sD
+			else
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z forgive the debt%z%q" iRow sM sD
+			endif
+			set iJ to iJ + 1
+		loop
+		set iRow to iRow + 1
+		SetFunctionValue iRow
+		return
+
+	elseif iAct == 5
+		set iRow to iA
+		let iT := GetVariable "iTier" CCCore
+		if iT >= 4
+			let iN := GetVariable "iBlocks" CCLate
+			if (GetVariable "iRivalOut" CCLate)
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qSHARES   3 of 3: her board ousted her%q" iRow
+			else
+				; late_model.block_ready: the deed of the next block (lead Primm 2 bill days, beat her to an
+				; NCR bid, hold two blocks)
+				set iK to 0
+				if iN == 0
+					let iK := (GetVariable "iLeadPrWeeks" CCLate) >= 2
+				elseif iN == 1
+					let iK := GetVariable "iWonHer" CCLate
+				elseif iN == 2
+					set iK to 1
+				endif
+				if iK
+					let iJ := 5000 * (iN + 1)
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qSHARES   %.0f of 3: BUY a block for %.0f%q" iRow iN iJ
+				elseif iN == 0
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qSHARES   0 of 3: lead in Primm 14 days%q" iRow
+				elseif iN == 1
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qSHARES   1 of 3: beat her to an NCR bid%q" iRow
+				else
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qSHARES   %.0f of 3: hold two blocks%q" iRow iN
+				endif
+			endif
+			set iRow to iRow + 1
+		endif
+		if iT >= 5
+			let iN := GetVariable "iFavour" CCLate
+			let iK := GetVariable "iLaws" CCLate
+			if iK == 0
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qLAWS     favour %.0f: PASS Free trade act%q" iRow iN
+			elseif iK == 1
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qLAWS     favour %.0f: PASS Carrier act%q" iRow iN
+			elseif iK == 2
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qLAWS     favour %.0f: PASS Press audit%q" iRow iN
+			else
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qLAWS     favour %.0f: all passed%q" iRow iN
+			endif
+			set iRow to iRow + 1
+		endif
+		SetFunctionValue iRow
+		return
+
+	elseif iAct == 6
+		set iRow to iA
+		let aX := GetArrayVariable "aTkTown" CCLate
+		let aY := GetArrayVariable "aTkGood" CCLate
+		let aZ := GetArrayVariable "aTkFilled" CCLate
+		let aD := GetArrayVariable "aTkDue" CCLate
+		set iK to 0
+		while iK < ar_Size aX
+			if iRow < 15
+				let iT := aX[iK]
+				let iG := aY[iK]
+				let iN := aZ[iK]
+				let iJ := aD[iK]
+				let sM := call CCTextFn 4 iG
+				let sS := aC[iT]
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qFWD %z %z %.0f/12 by %.0f%q" iRow sS sM iN iJ
+				set iRow to iRow + 1
+			endif
+			set iK to iK + 1
+		loop
+		SetFunctionValue iRow
+		return
+
+	elseif iAct == 10
+		let iN := GetVariable "iEndReason" CCCore
+		if iN == 5
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qCLOSED: you retired%q"
+		elseif iN == 3
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qCLOSED: you wound it up%q"
+		elseif iN == 4
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qCLOSED: the NCR revoked the licence%q"
+		else
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qCLOSED: the lender took the office%q"
+		endif
+		let iK := GetVariable "iCash" CCCore
+		let iJ := GetVariable "iArrears" CCCore
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qDAY %.0f  CASH %.0f  OWED %.0f%q" iDay iK iJ
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qPOST     the last letters%q"
+		SetVariable "iRows" 3 CCTerm
+		SetFunctionValue 3
+		return
+
+	elseif iAct == 11
+		set iRow to 1
+		if (GetVariable "iTier" CCCore) >= 5
+			if (GetVariable "iConfirm" CCTerm)
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qRETIRE?  select again to hand it on%q"
+			else
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qRETIRE   hand the company on%q"
+			endif
+			set iRow to 2
+		endif
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qBACK%q" iRow
+		set iRow to iRow + 1
+		SetFunctionValue iRow
+		return
+	endif
+	SetFunctionValue sOut
+end

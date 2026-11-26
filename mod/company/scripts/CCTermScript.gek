@@ -51,7 +51,7 @@ begin MenuMode 1057
 	endif
 	set iClick to -1
 	set iK to 0
-	while iK < 14
+	while iK < 16
 		if GetTerminalMenuItemFlags CCOfficeTerm iK
 			SetTerminalMenuItemFlags CCOfficeTerm iK 0
 			if iClick < 0 && iK < iRows
@@ -63,8 +63,13 @@ begin MenuMode 1057
 	; the running game's compiler cannot resolve Quest.variable: CCCore is read by name
 	let iFounded := GetVariable "iFounded" CCCore
 	let iEnded := GetVariable "iEnded" CCCore
-	if iEnded
-		set iClick to -1
+	; a closed company: only the front page's POST row and the Post screen (M4: the last letters)
+	if iEnded && iScreen != 6
+		; the closed front page stands in for any other screen (RETIRE is selected on Settings)
+		set iScreen to 0
+		if iClick != 2
+			set iClick to -1
+		endif
 	endif
 	; a row that only shows its result text (a report page, a letter, a memo's title) must not redraw:
 	; redrawing the menu wipes the text the click just typed
@@ -173,8 +178,10 @@ begin MenuMode 1057
 			set iM to 0
 			while iM < ar_Size aMK
 				set iN to 2
-				if eval (aMK[iM] == 0 || aMK[iM] == 2 || aMK[iM] == 4)
+				if eval (aMK[iM] == 0 || aMK[iM] == 2 || aMK[iM] == 4 || aMK[iM] == 6)
 					set iN to 3
+				elseif eval (aMK[iM] == 8)
+					set iN to 4
 				endif
 				if iClick > iRow && iClick <= iRow + iN
 					let aMP[iM] := iClick - iRow - 1
@@ -225,6 +232,14 @@ begin MenuMode 1057
 			if iClick == 0
 				let iAuto := 1 - (GetVariable "iAuto" CCCore)
 				SetVariable "iAuto" iAuto CCCore
+			elseif iClick == 1
+				; M4: RETIRE needs a second select
+				if iWas
+					call CCLateFn 32 0 0
+					set iScreen to 0
+				else
+					set iConfirm to 1
+				endif
 			endif
 		endif
 	endif

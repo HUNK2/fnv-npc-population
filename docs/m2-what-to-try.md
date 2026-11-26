@@ -54,6 +54,23 @@ report then says how many wagons ran ("Boss. 2 wagons ran: ...").
 Worth 18,000 earned, trust 50 in two towns and a sheriff in Primm. Then the Outpost road, the
 smokehouse and the route manager open.
 
+## 6. Branches, relay desks and the strongroom
+
+Every company terminal opens the same company, so you never have to walk back to Goodsprings.
+
+| Where | What | Spot |
+| --- | --- | --- |
+| Primm | branch | the Vikki and Vance cashier counter |
+| Sloan | branch | Chomps Lewis's checkpoint table |
+| Mojave Outpost | branch | the end of the barracks bar |
+| 188 Trading Post | relay desk | the bar on the overpass |
+| Novac | relay desk | the Dino Dee-lite front desk |
+
+From tier 3 the footlocker beside each branch terminal (Primm, Sloan, the Outpost), "Company
+strongroom chest", opens the safe in the Goodsprings office: one stash you can reach from any
+branch. Below tier 3 it says when it opens. Worth trying: put something in at Primm, then take it
+out at the Outpost.
+
 ## Known gaps
 
 See `docs/PROGRESS.md`, "Open items for the final report".

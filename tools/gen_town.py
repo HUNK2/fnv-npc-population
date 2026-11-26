@@ -86,6 +86,7 @@ T_TRAVEL = '@EasyPeteChairPackage8x4'
 T_FOLLOW = '@DefaultFollowLinkedClose'
 T_FLEE = '@EasyPeteHideInSaloonPackage'
 F_GETQUESTVAR, F_GETDISABLED = 79, 35
+ALARM_FLAGS = 0x2 | 0x2000 | 0x100000                 # must reach location, always run, ignore combat
 ALARM_VAR = 1                                    # LIMGSAlarm's first variable (iAlarm)
 
 
@@ -174,7 +175,10 @@ def packages_for(r, records):
 
     if r.home in tm.HOME:     # the alarm: run home (not the defenders, not the travellers)
         if not r.defender:
-            add('Alarm', pack_record(T_FLEE, pldt(1, '@' + CELLS[tm.HOME[r.home]]), psdt(-1, 0),
+            # a travel package, not a flee one: the engine never picked the flee package (eligible, first on
+            # the list, still the sandbox after EvaluatePackage); must reach, always run, ignore combat
+            add('Alarm', pack_record(T_TRAVEL, pldt(1, '@' + CELLS[tm.HOME[r.home]]), psdt(-1, 0),
+                                     {'tag': 'PKDT', 'patch': [[0, '<I', ALARM_FLAGS]]},
                                      ctda(F_GETQUESTVAR, '@LIMGSAlarm', ALARM_VAR)))
     for start, hours, place, night in sleep_split(r, blocks(r)):
         if place == tm.GONE:

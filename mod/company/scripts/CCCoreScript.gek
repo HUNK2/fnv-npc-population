@@ -423,6 +423,8 @@ begin GameMode
 						set iK to 1
 					endif
 					call CCPeopleFn 2 iI iK
+				elseif eval (aMemoKind[iI] >= 6)
+					call CCLateFn 3 iI iK
 				elseif eval (aMemoKind[iI] >= 4)
 					; M3: an NCR bid or a warrant (CCLawFn)
 					call CCLawFn 3 iI iK
@@ -534,19 +536,21 @@ begin GameMode
 		; interest, principal
 		if eval (iDay % 7 == 0)
 			let aBill := call CCLawFn 1 0 0
-			let iBillTotal := aBill[0] + aBill[1] + aBill[2] + aBill[3] + aBill[4] + aBill[5] + aBill[6] + aBill[7]
+			let iBillTotal := aBill[0] + aBill[1] + aBill[2] + aBill[3] + aBill[4] + aBill[5] + aBill[6] + aBill[7] + aBill[8]
 			set iAccWages to 0
 			set iAccFeed to 0
 			set iWeekSales to 0
 			if iCash >= iBillTotal
 				set iCash to iCash - iBillTotal
 				let iLoan -= aBill[7]
+				let iTake := aBill[8]
+				call CCLateFn 2 iTake 0
 				set iBillsPaid to 1
 			else
 				set iBillsPaid to 0
 				set iPay to 0
 				set iK to 0
-				while iK < 8
+				while iK < 9
 					let iBill := aBill[iK]
 					if iCash < iBill
 						set iTake to iCash
@@ -560,6 +564,7 @@ begin GameMode
 					endif
 					set iK to iK + 1
 				loop
+				call CCLateFn 2 iTake 0
 				let iArrears += (iBillTotal - iPay) + Floor (0.1 * (iBillTotal - iPay) + 0.5)
 				if iStage == 0 || iStage == 5
 					set iFromProb to 0
@@ -683,10 +688,10 @@ begin GameMode
 				set iLastEventDay to iDay
 				call CCLawFn 7 0 0
 			endif
-		elseif iTier == 3
+		elseif iTier >= 3
 			let iK := call CCLawFn 6 iValue iN
 			if iK
-				set iTier to 4
+				set iTier to iK
 				set iTierUp to 1
 				set iLastEventDay to iDay
 			endif
@@ -761,17 +766,8 @@ begin GameMode
 		; bills as on the front page (a quiet week): for the forecast letter and page 2
 		let iDtb := 7 - iDay % 7
 		let iEst := 7 * iWages + 42 + 70 + Floor (0.04 * iLoan + 0.5) + (iLoan < 300) * iLoan + (iLoan >= 300) * 300
-		let fM := 0.02 * iWeekSales
-		if iWeekSales > 5000
-			let fM := 0.02 * 5000 + 0.035 * ((iWeekSales < 20000) * iWeekSales + (iWeekSales >= 20000) * 20000 - 5000)
-		endif
-		if iWeekSales > 20000
-			let fM := fM + 0.05 * (iWeekSales - 20000)
-		endif
-		let iEst += Floor (fM + 0.5)
-		if eval ((iDay + iDtb) % 28 == 0)
-			set iEst to iEst + 150
-		endif
+		; the duty on the declared share, the licence by tier, the cover, the quartermaster
+		let iEst += call CCLawFn 13 iDtb 0
 
 		; the day's letter texts go to the Post (last 3 kept), most urgent first: closed, notice,
 		; forecast, away, road, robbed; the first one waits for the field (Company._post_letters)
@@ -875,7 +871,7 @@ begin GameMode
 			ar_Append aPostTitle sS
 		endif
 		if iTierUp
-			if iTier == 4
+			if iTier >= 4
 				let sS := call CCLawTextFn 3
 			elseif iTier == 3
 				let sS := "Boss, we are a caravan company now. Sloan and the Outpost gave us branches, the route manager can be hired, and the smokehouse and stone yard are on the Build screen."
@@ -887,14 +883,18 @@ begin GameMode
 				set iNewKind to 7
 				let sNew := sS
 			endif
-			if iTier == 4
-				let sS := sv_Construct "LETTER day %.0f  a trading house" iDay
+			if iTier >= 4
+				let sS := call CCLawTextFn 7
 			elseif iTier == 3
 				let sS := sv_Construct "LETTER day %.0f  a caravan company" iDay
 			else
 				let sS := sv_Construct "LETTER day %.0f  an Outfit now" iDay
 			endif
 			ar_Append aPostTitle sS
+		endif
+		if iNewKind == 6
+			; the three "20 years on" pages come last, so the day's other letters never push them out
+			call CCEndingFn
 		endif
 		while (ar_Size aPostText) > 3
 			ar_Erase aPostText 0

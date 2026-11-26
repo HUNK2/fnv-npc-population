@@ -1126,7 +1126,7 @@
   },
   "LIMGSLenaAlarm": {
    "type": "PACK",
-   "template": "@EasyPeteHideInSaloonPackage",
+   "template": "@EasyPeteChairPackage8x4",
    "fields": [
     {
      "tag": "CTDA",
@@ -1150,6 +1150,16 @@
       0,
       -1,
       0
+     ]
+    },
+    {
+     "tag": "PKDT",
+     "patch": [
+      [
+       0,
+       "<I",
+       1056770
+      ]
      ]
     },
     {
@@ -1627,7 +1637,7 @@
   },
   "LIMGSCalAlarm": {
    "type": "PACK",
-   "template": "@EasyPeteHideInSaloonPackage",
+   "template": "@EasyPeteChairPackage8x4",
    "fields": [
     {
      "tag": "CTDA",
@@ -1651,6 +1661,16 @@
       0,
       -1,
       0
+     ]
+    },
+    {
+     "tag": "PKDT",
+     "patch": [
+      [
+       0,
+       "<I",
+       1056770
+      ]
      ]
     },
     {
@@ -2128,7 +2148,7 @@
   },
   "LIMGSJosephAlarm": {
    "type": "PACK",
-   "template": "@EasyPeteHideInSaloonPackage",
+   "template": "@EasyPeteChairPackage8x4",
    "fields": [
     {
      "tag": "CTDA",
@@ -2152,6 +2172,16 @@
       0,
       -1,
       0
+     ]
+    },
+    {
+     "tag": "PKDT",
+     "patch": [
+      [
+       0,
+       "<I",
+       1056770
+      ]
      ]
     },
     {
@@ -2497,7 +2527,7 @@
   },
   "LIMGSAdaAlarm": {
    "type": "PACK",
-   "template": "@EasyPeteHideInSaloonPackage",
+   "template": "@EasyPeteChairPackage8x4",
    "fields": [
     {
      "tag": "CTDA",
@@ -2521,6 +2551,16 @@
       0,
       -1,
       0
+     ]
+    },
+    {
+     "tag": "PKDT",
+     "patch": [
+      [
+       0,
+       "<I",
+       1056770
+      ]
      ]
     },
     {
@@ -2866,7 +2906,7 @@
   },
   "LIMGSRuthAlarm": {
    "type": "PACK",
-   "template": "@EasyPeteHideInSaloonPackage",
+   "template": "@EasyPeteChairPackage8x4",
    "fields": [
     {
      "tag": "CTDA",
@@ -2890,6 +2930,16 @@
       0,
       -1,
       0
+     ]
+    },
+    {
+     "tag": "PKDT",
+     "patch": [
+      [
+       0,
+       "<I",
+       1056770
+      ]
      ]
     },
     {
@@ -3269,7 +3319,7 @@
   },
   "LIMGSHarlanAlarm": {
    "type": "PACK",
-   "template": "@EasyPeteHideInSaloonPackage",
+   "template": "@EasyPeteChairPackage8x4",
    "fields": [
     {
      "tag": "CTDA",
@@ -3293,6 +3343,16 @@
       0,
       -1,
       0
+     ]
+    },
+    {
+     "tag": "PKDT",
+     "patch": [
+      [
+       0,
+       "<I",
+       1056770
+      ]
      ]
     },
     {
@@ -3967,7 +4027,7 @@
   },
   "LIMGSDutchyAlarm": {
    "type": "PACK",
-   "template": "@EasyPeteHideInSaloonPackage",
+   "template": "@EasyPeteChairPackage8x4",
    "fields": [
     {
      "tag": "CTDA",
@@ -3991,6 +4051,16 @@
       0,
       -1,
       0
+     ]
+    },
+    {
+     "tag": "PKDT",
+     "patch": [
+      [
+       0,
+       "<I",
+       1056770
+      ]
      ]
     },
     {
@@ -4733,7 +4803,7 @@
   },
   "LIMGSAbeAlarm": {
    "type": "PACK",
-   "template": "@EasyPeteHideInSaloonPackage",
+   "template": "@EasyPeteChairPackage8x4",
    "fields": [
     {
      "tag": "CTDA",
@@ -4757,6 +4827,16 @@
       0,
       -1,
       0
+     ]
+    },
+    {
+     "tag": "PKDT",
+     "patch": [
+      [
+       0,
+       "<I",
+       1056770
+      ]
      ]
     },
     {
@@ -5869,7 +5949,7 @@
   },
   "LIMGSTeaAlarm": {
    "type": "PACK",
-   "template": "@EasyPeteHideInSaloonPackage",
+   "template": "@EasyPeteChairPackage8x4",
    "fields": [
     {
      "tag": "CTDA",
@@ -5893,6 +5973,16 @@
       0,
       -1,
       0
+     ]
+    },
+    {
+     "tag": "PKDT",
+     "patch": [
+      [
+       0,
+       "<I",
+       1056770
+      ]
      ]
     },
     {

@@ -1,0 +1,690 @@
+scn CCLateFn
+
+; M4: the late game's rules (tools/late_model.py LateMixin; plan docs/plans/2026-11-28-m4-ending.md).
+; The state is CCLate's (CCLateScript). Most acts are called from CCLawFn's, so CCCoreScript gains only
+; the patron bill lines. Towns 0 Goodsprings, 1 Primm, 2 Sloan, 3 Mojave Outpost; goods 0 to 6.
+; Memo kinds: 6 a forward ticket (aMemoX price * 100 + town * 12 + good), 7 the NCR quartermaster,
+; 8 an outfit asks for a loan (aMemoX amount * 10 + town, aMemoWho its name), 9 a failed outfit (aMemoX
+; principal left * 10 + town).
+; iAct 0: set up once; the tick starts: clear the day's news.
+; iAct 1: bill day: returns the quartermaster's bill (interest + 500, 0 without his loan).
+; iAct 2: iA of the quartermaster's bill was paid: interest first, the rest repays his loan.
+; iAct 3: settle memo iA (kinds 6 to 9) with answer iB (-1: the default).
+; iAct 4: the week (Company._week_late). iAct 5: the day: a ticket missed on its due day (Company._day_fwd).
+; iAct 6: returns 1 when tier 5 is earned (worth iA, iB 1 when a strike is recent).
+; iAct 7: returns the late game's debts (the quartermaster's loan and the advances not yet earned back).
+; iAct 8: the post: the forward offer, the quartermaster's offer, an outfit's ask.
+; iAct 9: a crate of good iB carried into town iA: a ticket takes it (returns what it pays), else -1.
+; iAct 10: the bookkeeper's plan starts: copy each ticket's crates still wanted to aTkRem.
+; iAct 11: the plan's sale price of good iB in town iA: a ticket's price while it wants crates, else -1.
+; iAct 12: the plan loads good iB for town iA: returns 1 when a ticket takes the crate (not the market).
+; iAct 13: the plan's ticket slot iB for town iA: returns its good while it wants crates there, else -1.
+; iAct 20: an NCR delivery (favour +1). iAct 21: an NCR bid won with the low bid while her aggression is
+; 40 or more (the second share block's deed). iAct 22: returns 1 once her board voted her out.
+; iAct 30: buy the next share block. iAct 31: pass the next law. iAct 32: retire (tier 5).
+
+int iAct
+int iA
+int iB
+int iOut
+int iDay
+int iTier
+int iSeed
+int iCash
+int iCosts
+int iK
+int iN
+int iJ
+int iT
+int iG
+int iO
+int iR
+int iPay
+int iPrice
+int iAdv
+int iLeft
+int iRoll
+int iBuy
+int iP
+float fM
+array_var aX
+array_var aMK
+array_var aMX
+array_var aMW
+array_var aRun
+array_var aMkt
+array_var aNormal
+array_var aAnchor
+array_var aUse
+array_var aTrust
+array_var aRA
+array_var aRB
+array_var aTowns
+array_var aCand
+array_var aSh
+array_var aHer
+array_var aTkT
+array_var aTkG
+array_var aTkP
+array_var aTkD
+array_var aTkF
+array_var aTkA
+array_var aRem
+array_var aOfN
+array_var aOfT
+array_var aOfAm
+array_var aOfR
+array_var aOfL
+array_var aOfW
+array_var aOfM
+string_var sName
+string_var sS
+
+begin Function {iAct iA iB}
+	set iOut to 0
+	let iDay := GetVariable "iDay" CCCore
+	let iTier := GetVariable "iTier" CCCore
+	let iSeed := GetVariable "iSeed" CCCore
+	if eval ((GetVariable "iInit" CCLate) == 0)
+		SetVariable "iInit" 1 CCLate
+		set iN to 0 - 99
+		SetVariable "iLastFwd" iN CCLate
+		SetVariable "iLastLend" iN CCLate
+		SetVariable "iLastLaw" iN CCLate
+		let CCLate.aTkTown := Ar_Construct "array"
+		let CCLate.aTkGood := Ar_Construct "array"
+		let CCLate.aTkPrice := Ar_Construct "array"
+		let CCLate.aTkDue := Ar_Construct "array"
+		let CCLate.aTkFilled := Ar_Construct "array"
+		let CCLate.aTkAdv := Ar_Construct "array"
+		let CCLate.aTkRem := Ar_Construct "array"
+		let CCLate.aOfName := Ar_Construct "array"
+		let CCLate.aOfTown := Ar_Construct "array"
+		let CCLate.aOfAmount := Ar_Construct "array"
+		let CCLate.aOfRate := Ar_Construct "array"
+		let CCLate.aOfLeft := Ar_Construct "array"
+		let CCLate.aOfWeeks := Ar_Construct "array"
+		let CCLate.aOfMiss := Ar_Construct "array"
+		let CCLate.sPoached := " "
+	endif
+	let aTkT := GetArrayVariable "aTkTown" CCLate
+	let aTkG := GetArrayVariable "aTkGood" CCLate
+	let aTkP := GetArrayVariable "aTkPrice" CCLate
+	let aTkD := GetArrayVariable "aTkDue" CCLate
+	let aTkF := GetArrayVariable "aTkFilled" CCLate
+	let aTkA := GetArrayVariable "aTkAdv" CCLate
+	let aRem := GetArrayVariable "aTkRem" CCLate
+
+	if iAct == 0
+		SetVariable "iDFwd" 0 CCLate
+		SetVariable "iDFwdAdv" 0 CCLate
+		SetVariable "iDFwdPay" 0 CCLate
+		SetVariable "iDPatron" 0 CCLate
+		SetVariable "iDLent" 0 CCLate
+		SetVariable "iDLendIn" 0 CCLate
+		SetVariable "iDOutfitMiss" 0 CCLate
+		SetVariable "iDOutfit" 0 CCLate
+		SetVariable "iDOutfitGot" 0 CCLate
+
+	elseif iAct == 1
+		let iN := GetVariable "iQmLoan" CCLate
+		let iK := Floor (0.02 * iN + 0.5)
+		set iJ to 500
+		if iN < 500
+			set iJ to iN
+		endif
+		SetVariable "iQmInt" iK CCLate
+		set iOut to iK + iJ
+		if iN == 0
+			set iOut to 0
+		endif
+
+	elseif iAct == 2
+		let iN := (GetVariable "iQmLoan" CCLate) - iA + (GetVariable "iQmInt" CCLate)
+		if iA > (GetVariable "iQmInt" CCLate) && (GetVariable "iQmLoan" CCLate) > 0
+			SetVariable "iQmLoan" iN CCLate
+		endif
+
+	elseif iAct == 3
+		let aMK := GetArrayVariable "aMemoKind" CCCore
+		let aMX := GetArrayVariable "aMemoX" CCCore
+		let aMW := GetArrayVariable "aMemoWho" CCCore
+		let iK := aMK[iA]
+		let iN := aMX[iA]
+		let iCash := GetVariable "iCash" CCCore
+		if iK == 6
+			; a forward ticket: 0 accept, 1 accept with half its value now, 2 decline (the default)
+			if iB < 0
+				set iB to 2
+			endif
+			if iB < 2
+				let iPrice := Floor (iN / 100)
+				set iAdv to 0
+				if iB == 1
+					let iAdv := Floor (0.5 * 12 * iPrice + 0.5)
+				endif
+				let iJ := iN % 100
+				ar_Append aTkT (Floor (iJ / 12))
+				ar_Append aTkG (iJ % 12)
+				ar_Append aTkP iPrice
+				ar_Append aTkD (iDay + 10)
+				ar_Append aTkF 0
+				ar_Append aTkA iAdv
+				set iCash to iCash + iAdv
+				SetVariable "iDFwd" 1 CCLate
+				SetVariable "iDFwdAdv" iAdv CCLate
+			endif
+		elseif iK == 7
+			; the quartermaster: 0 take the deal, 1 refuse (the default)
+			if iB == 0
+				SetVariable "iQm" 1 CCLate
+				SetVariable "iQmLoan" 10000 CCLate
+				SetVariable "iQmSince" iDay CCLate
+				set iCash to iCash + 10000
+				SetVariable "iDPatron" 1 CCLate
+			endif
+		elseif iK == 8
+			; a loan to an outfit: 0 gentle 2%, 1 fair 4%, 2 harsh 8%, 3 refuse (the default)
+			if iB < 0
+				set iB to 3
+			endif
+			let iPay := Floor (iN / 10)
+			if iB < 3 && iCash >= iPay
+				set iCash to iCash - iPay
+				let aX := GetArrayVariable "aOfName" CCLate
+				let sName := aMW[iA]
+				ar_Append aX sName
+				let aX := GetArrayVariable "aOfTown" CCLate
+				ar_Append aX (iN % 10)
+				let aX := GetArrayVariable "aOfAmount" CCLate
+				ar_Append aX iPay
+				let aX := GetArrayVariable "aOfRate" CCLate
+				ar_Append aX iB
+				let aX := GetArrayVariable "aOfLeft" CCLate
+				ar_Append aX iPay
+				let aX := GetArrayVariable "aOfWeeks" CCLate
+				ar_Append aX 8
+				let aX := GetArrayVariable "aOfMiss" CCLate
+				ar_Append aX 0
+				if (GetVariable "iLentEver" CCLate) == 0
+					SetVariable "iLentEver" 1 CCLate
+					let iJ := (GetVariable "iAggr" CCLaw) + 5
+					if iJ > 100
+						set iJ to 100
+					endif
+					SetVariable "iAggr" iJ CCLaw
+				endif
+				SetVariable "iDLent" iPay CCLate
+			endif
+		elseif iK == 9
+			; a failed outfit: 0 seize its wagon (the default), 1 forgive the debt
+			if iB < 0
+				set iB to 0
+			endif
+			let sName := aMW[iA]
+			let aOfN := GetArrayVariable "aOfName" CCLate
+			set iO to 0 - 1
+			set iJ to 0
+			while iJ < ar_Size aOfN
+				if eval (aOfN[iJ] == sName)
+					set iO to iJ
+					set iJ to 99
+				endif
+				set iJ to iJ + 1
+			loop
+			if iO >= 0
+				let aOfT := GetArrayVariable "aOfTown" CCLate
+				let aOfAm := GetArrayVariable "aOfAmount" CCLate
+				let aOfL := GetArrayVariable "aOfLeft" CCLate
+				let aTrust := GetArrayVariable "aTrust" CCCore
+				let iT := aOfT[iO]
+				if iB == 0
+					let iPay := Floor (0.5 * aOfAm[iO] + 0.5)
+					if eval (aOfL[iO] < iPay)
+						let iPay := aOfL[iO]
+					endif
+					set iCash to iCash + iPay
+					let aTrust[iT] := aTrust[iT] - 10
+					if eval (aTrust[iT] < 0)
+						let aTrust[iT] := 0
+					endif
+					SetVariable "iDOutfit" 1 CCLate
+					SetVariable "iDOutfitGot" iPay CCLate
+					let iJ := (GetVariable "iSeizedN" CCLate) + 1
+					SetVariable "iSeizedN" iJ CCLate
+				else
+					let aTrust[iT] := aTrust[iT] + 10
+					if eval (aTrust[iT] > 100)
+						let aTrust[iT] := 100
+					endif
+					SetVariable "iDOutfit" 2 CCLate
+					let iJ := (GetVariable "iForgivenN" CCLate) + 1
+					SetVariable "iForgivenN" iJ CCLate
+				endif
+				call CCLateUtilFn 1 iO 0
+			endif
+		endif
+		SetVariable "iCash" iCash CCCore
+
+	elseif iAct == 4
+		; the outfits' instalments: a miss by the rate's chance (10, 20, 35 in 100); two in a row and it fails
+		let aOfN := GetArrayVariable "aOfName" CCLate
+		let aOfT := GetArrayVariable "aOfTown" CCLate
+		let aOfAm := GetArrayVariable "aOfAmount" CCLate
+		let aOfR := GetArrayVariable "aOfRate" CCLate
+		let aOfL := GetArrayVariable "aOfLeft" CCLate
+		let aOfW := GetArrayVariable "aOfWeeks" CCLate
+		let aOfM := GetArrayVariable "aOfMiss" CCLate
+		let iCash := GetVariable "iCash" CCCore
+		let iN := ar_Size aOfN
+		set iP to 0
+		set iJ to 0
+		while iJ < iN
+			let iRoll := ((iDay % 100) * 19 + (iSeed % 100) * 29 + (10 + iJ) * 31) % 100
+			let iK := aOfR[iP]
+			let iR := 10 + (iK == 1) * 10 + (iK == 2) * 25
+			if iRoll < iR
+				let aOfM[iP] := aOfM[iP] + 1
+				let iK := (GetVariable "iDOutfitMiss" CCLate) + 1
+				SetVariable "iDOutfitMiss" iK CCLate
+				if eval (aOfM[iP] >= 2)
+					let sName := aOfN[iP]
+					let aMK := GetArrayVariable "aMemoKind" CCCore
+					let aMW := GetArrayVariable "aMemoWho" CCCore
+					set iO to 0
+					set iK to 0
+					while iK < ar_Size aMK
+						if eval (aMK[iK] == 9)
+							if eval (aMW[iK] == sName)
+								set iO to 1
+							endif
+						endif
+						set iK to iK + 1
+					loop
+					if eval (iO == 0 && (ar_Size aMK) < 3)
+						let iK := aOfL[iP] * 10 + aOfT[iP]
+						call CCLateUtilFn 3 9 iK
+						let aMW := GetArrayVariable "aMemoWho" CCCore
+						let aMW[(ar_Size aMW) - 1] := sName
+						let aMK := GetArrayVariable "aMemoDue" CCCore
+						let aMK[(ar_Size aMK) - 1] := iDay + 3
+					endif
+				endif
+				set iP to iP + 1
+			else
+				let aOfM[iP] := 0
+				let iPay := Floor (aOfAm[iP] / 8 + 0.5)
+				if eval (aOfL[iP] < iPay)
+					let iPay := aOfL[iP]
+				endif
+				let iK := Floor (0.02 * (1 + (aOfR[iP] >= 1) + 2 * (aOfR[iP] >= 2)) * aOfL[iP] + 0.5)
+				let aOfL[iP] := aOfL[iP] - iPay
+				let aOfW[iP] := aOfW[iP] - 1
+				set iCash to iCash + iPay + iK
+				let iO := (GetVariable "iDaySales" CCCore) + iK
+				SetVariable "iDaySales" iO CCCore
+				let iO := (GetVariable "iDLendIn" CCLate) + iPay + iK
+				SetVariable "iDLendIn" iO CCLate
+				if eval (aOfL[iP] <= 0 || aOfW[iP] <= 0)
+					call CCLateUtilFn 1 iP 0
+				else
+					set iP to iP + 1
+				endif
+			endif
+			set iJ to iJ + 1
+		loop
+		SetVariable "iCash" iCash CCCore
+		if iTier >= 4
+			; the quartermaster's string: heat under 20 and never outlaws, checked each week
+			if eval ((GetVariable "iQm" CCLate) && ((GetVariable "iHeat" CCLaw) >= 20 || (GetVariable "iOutlaw" CCLaw)))
+				SetVariable "iQm" 0 CCLate
+				let iK := (GetVariable "iArrears" CCCore) + (GetVariable "iQmLoan" CCLate)
+				SetVariable "iArrears" iK CCCore
+				SetVariable "iQmLoan" 0 CCLate
+				let iK := (GetVariable "iStanding" CCLaw) - 30
+				if iK < 0
+					set iK to 0
+				endif
+				SetVariable "iStanding" iK CCLaw
+				SetVariable "iDPatron" 2 CCLate
+			endif
+			; leading her in Primm: this week's share over her 12%
+			let aSh := GetArrayVariable "aLastShare" CCLaw
+			if eval (aSh[1] > 0.12)
+				let iK := (GetVariable "iLeadPrWeeks" CCLate) + 1
+				SetVariable "iLeadPrWeeks" iK CCLate
+			else
+				SetVariable "iLeadPrWeeks" 0 CCLate
+			endif
+		endif
+
+	elseif iAct == 5
+		; a ticket missed on its due day: a quarter of what is not delivered, the advance not yet earned back
+		; owed as arrears, trust -5 in its town
+		let aTrust := GetArrayVariable "aTrust" CCCore
+		set iJ to 0
+		while iJ < ar_Size aTkT
+			if eval (iDay >= aTkD[iJ])
+				let iCash := GetVariable "iCash" CCCore
+				let iPay := Floor (0.25 * (12 - aTkF[iJ]) * aTkP[iJ] + 0.5)
+				if iPay > iCash
+					set iPay to iCash
+				endif
+				set iCash to iCash - iPay
+				SetVariable "iCash" iCash CCCore
+				let iK := (GetVariable "iDayCosts" CCCore) + iPay
+				SetVariable "iDayCosts" iK CCCore
+				let iK := (GetVariable "iArrears" CCCore) + aTkA[iJ]
+				SetVariable "iArrears" iK CCCore
+				let iT := aTkT[iJ]
+				let aTrust[iT] := aTrust[iT] - 5
+				if eval (aTrust[iT] < 0)
+					let aTrust[iT] := 0
+				endif
+				SetVariable "iDFwd" 3 CCLate
+				SetVariable "iDFwdPay" iPay CCLate
+				call CCLateUtilFn 2 iJ 0
+			else
+				set iJ to iJ + 1
+			endif
+		loop
+
+	elseif iAct == 6
+		; tier 5 (Company.tier_five_ready): worth 80,000; ahead of her share in 3 towns (her fixed shares:
+		; Goodsprings 10%, Primm 12%, Sloan 10%, the Outpost 15%); all three share blocks or the
+		; quartermaster's patronage kept 28 days; not outlaws, no recent strike
+		if iTier == 4 && iA >= 80000 && iB == 0 && (GetVariable "iOutlaw" CCLaw) == 0
+			let aSh := GetArrayVariable "aLastShare" CCLaw
+			let iN := (aSh[0] > 0.1) + (aSh[1] > 0.12) + (aSh[2] > 0.1) + (aSh[3] > 0.15)
+			let iK := (GetVariable "iBlocks" CCLate) == 3
+			if eval ((GetVariable "iQm" CCLate) && iDay - (GetVariable "iQmSince" CCLate) >= 28)
+				set iK to 1
+			endif
+			if iN >= 3 && iK
+				set iOut to 1
+			endif
+		endif
+
+	elseif iAct == 7
+		let iOut := GetVariable "iQmLoan" CCLate
+		set iJ to 0
+		while iJ < ar_Size aTkA
+			let iOut += aTkA[iJ]
+			set iJ to iJ + 1
+		loop
+
+	elseif iAct == 8
+		let aMK := GetArrayVariable "aMemoKind" CCCore
+		let aRun := call CCRoadsFn 0 iDay
+		let aRA := Ar_List 0, 0, 0, 1
+		let aRB := Ar_List 0, 1, 2, 3
+		; the forward offer (Company._post_fwd): tier 3, good standing, under 3 tickets, day 2 of a week, a
+		; week since the last, none waiting
+		set iN to 0
+		set iK to 0
+		while iK < ar_Size aMK
+			if eval (aMK[iK] == 6)
+				set iN to 1
+			endif
+			set iK to iK + 1
+		loop
+		if eval (iTier >= 3 && (GetVariable "iStage" CCCore) == 0 && (ar_Size aTkT) < 3 && iDay % 7 == 2 && iDay - (GetVariable "iLastFwd" CCLate) >= 7 && iN == 0)
+			let aMkt := GetArrayVariable "aMkt" CCCore
+			let aNormal := GetArrayVariable "aNormal" CCCore
+			let aAnchor := GetArrayVariable "aAnchor" CCCore
+			let aUse := GetArrayVariable "aUse" CCCore
+			let aTrust := GetArrayVariable "aTrust" CCCore
+			; the towns on the running roads
+			let aTowns := Ar_List 0, 0, 0, 0
+			set iR to 1
+			while iR <= 3
+				if eval (aRun[iR] > 0)
+					let aTowns[aRA[iR]] := 1
+					let aTowns[aRB[iR]] := 1
+				endif
+				set iR to iR + 1
+			loop
+			; the candidates in town then good order: a market good there that a running road's other end
+			; sells for less than the ticket pays, not under a ticket (cell codes town * 12 + good)
+			let aCand := Ar_Construct "array"
+			set iT to 0
+			while iT < 4
+				set iG to 0
+				while iG < 7
+					if eval (aTowns[iT] && aMkt[iT * 12 + iG])
+						let iPrice := call CCPriceFn aAnchor[iG], aNormal[iT * 12 + iG], aUse[iT * 12 + iG], aTrust[iT], (11 + 10 * iT)
+						let iPrice := Floor (1.1 * iPrice + 0.5)
+						set iO to 0
+						set iR to 1
+						while iR <= 3
+							if eval (aRun[iR] > 0 && (aRA[iR] == iT || aRB[iR] == iT))
+								let iK := aRA[iR] + aRB[iR] - iT
+								if eval (aMkt[iK * 12 + iG])
+									let iBuy := call CCPriceFn aAnchor[iG], aNormal[iK * 12 + iG], aUse[iK * 12 + iG], aTrust[iK], 0
+									if iBuy < iPrice
+										set iO to 1
+									endif
+								endif
+							endif
+							set iR to iR + 1
+						loop
+						set iK to 0
+						while iK < ar_Size aTkT
+							if eval (aTkT[iK] == iT && aTkG[iK] == iG)
+								set iO to 0
+							endif
+							set iK to iK + 1
+						loop
+						if iO
+							ar_Append aCand (iPrice * 100 + iT * 12 + iG)
+						endif
+					endif
+					set iG to iG + 1
+				loop
+				set iT to iT + 1
+			loop
+			if eval ((ar_Size aCand) > 0 && (ar_Size aMK) < 3)
+				let iRoll := ((iDay % 100) * 19 + (iSeed % 100) * 29 + 8 * 31) % 100
+				let iK := aCand[iRoll % (ar_Size aCand)]
+				call CCLateUtilFn 3 6 iK
+				SetVariable "iLastFwd" iDay CCLate
+			endif
+		endif
+		; the quartermaster's offer (Company._post_qm): tier 4, NCR standing 60, not outlaws, once
+		let aMK := GetArrayVariable "aMemoKind" CCCore
+		set iN to 0
+		set iK to 0
+		while iK < ar_Size aMK
+			if eval (aMK[iK] == 7)
+				set iN to 1
+			endif
+			set iK to iK + 1
+		loop
+		if eval (iTier >= 4 && (GetVariable "iQmOffered" CCLate) == 0 && (GetVariable "iStanding" CCLaw) >= 60 && (GetVariable "iOutlaw" CCLaw) == 0 && iN == 0 && (ar_Size aMK) < 3)
+			call CCLateUtilFn 3 7 10000
+			let aX := GetArrayVariable "aMemoDue" CCCore
+			let aX[(ar_Size aX) - 1] := iDay + 3
+			SetVariable "iQmOffered" 1 CCLate
+		endif
+		; an outfit's ask (Company._post_lend): tier 4, under 2 loans out, day 4 of a week, 14 days since
+		; the last ask, none waiting
+		let aOfN := GetArrayVariable "aOfName" CCLate
+		set iN to 0
+		set iK to 0
+		while iK < ar_Size aMK
+			if eval (aMK[iK] == 8)
+				set iN to 1
+			endif
+			set iK to iK + 1
+		loop
+		if eval (iTier >= 4 && (ar_Size aOfN) < 2 && iDay % 7 == 4 && iDay - (GetVariable "iLastLend" CCLate) >= 14 && iN == 0 && (ar_Size aMK) < 3)
+			let aX := Ar_List "Harlan Freight", "Primm Haulers", "Sloan Stone Co.", "Outpost Supply"
+			; the outfits not lent to yet (their town is their index)
+			let aCand := Ar_Construct "array"
+			set iT to 0
+			while iT < 4
+				set iO to 1
+				let sName := aX[iT]
+				set iK to 0
+				while iK < ar_Size aOfN
+					if eval (aOfN[iK] == sName)
+						set iO to 0
+					endif
+					set iK to iK + 1
+				loop
+				if iO
+					ar_Append aCand iT
+				endif
+				set iT to iT + 1
+			loop
+			let iRoll := ((iDay % 100) * 19 + (iSeed % 100) * 29 + 9 * 31) % 100
+			let iT := aCand[iRoll % (ar_Size aCand)]
+			let iK := (1000 + 1000 * (iRoll % 3)) * 10 + iT
+			call CCLateUtilFn 3 8 iK
+			let sName := aX[iT]
+			let aX := GetArrayVariable "aMemoWho" CCCore
+			let aX[(ar_Size aX) - 1] := sName
+			let aX := GetArrayVariable "aMemoDue" CCCore
+			let aX[(ar_Size aX) - 1] := iDay + 2
+			SetVariable "iLastLend" iDay CCLate
+		endif
+
+	elseif iAct == 9
+		set iOut to 0 - 1
+		set iJ to 0
+		while iJ < ar_Size aTkT
+			if eval (aTkT[iJ] == iA && aTkG[iJ] == iB)
+				let aTkF[iJ] := aTkF[iJ] + 1
+				let iPrice := aTkP[iJ]
+				let iK := aTkA[iJ]
+				if iK > iPrice
+					set iK to iPrice
+				endif
+				let aTkA[iJ] := aTkA[iJ] - iK
+				set iOut to iPrice - iK
+				if eval (aTkF[iJ] >= 12)
+					let aTrust := GetArrayVariable "aTrust" CCCore
+					let aTrust[iA] := aTrust[iA] + 3
+					if eval (aTrust[iA] > 100)
+						let aTrust[iA] := 100
+					endif
+					SetVariable "iDFwd" 2 CCLate
+					call CCLateUtilFn 2 iJ 0
+				endif
+				set iJ to 99
+			endif
+			set iJ to iJ + 1
+		loop
+
+	elseif iAct == 10
+		ar_Resize aRem 0
+		set iJ to 0
+		while iJ < ar_Size aTkT
+			ar_Append aRem (12 - aTkF[iJ])
+			set iJ to iJ + 1
+		loop
+
+	elseif iAct >= 11 && iAct <= 13
+		set iOut to 0 - 1
+		if iAct == 12
+			set iOut to 0
+		endif
+		set iJ to 0
+		while iJ < ar_Size aTkT
+			if iAct == 13
+				if iJ == iB
+					if eval (aTkT[iJ] == iA && aRem[iJ] > 0)
+						let iOut := aTkG[iJ]
+					endif
+				endif
+			elseif eval (aTkT[iJ] == iA && aTkG[iJ] == iB)
+				if eval (aRem[iJ] > 0)
+					if iAct == 11
+						let iOut := aTkP[iJ]
+					else
+						let aRem[iJ] := aRem[iJ] - 1
+						set iOut to 1
+					endif
+				endif
+				set iJ to 99
+			endif
+			set iJ to iJ + 1
+		loop
+
+	elseif iAct == 20
+		let iK := (GetVariable "iFavour" CCLate) + 1
+		SetVariable "iFavour" iK CCLate
+	elseif iAct == 21
+		SetVariable "iWonHer" 1 CCLate
+	elseif iAct == 22
+		let iOut := GetVariable "iRivalOut" CCLate
+
+	elseif iAct >= 30 && (GetVariable "iEnded" CCCore) == 0
+		let iCash := GetVariable "iCash" CCCore
+		if iAct == 30
+			; a share block: its deed done (lead her in Primm 14 days, beat her to an NCR bid, hold two),
+			; 5,000, 10,000 or 15,000
+			let iN := GetVariable "iBlocks" CCLate
+			if iTier >= 4 && iN < 3 && (GetVariable "iRivalOut" CCLate) == 0
+				set iO to 0
+				if iN == 0 && (GetVariable "iLeadPrWeeks" CCLate) >= 2
+					set iO to 1
+				elseif iN == 1 && (GetVariable "iWonHer" CCLate)
+					set iO to 1
+				elseif iN == 2
+					set iO to 1
+				endif
+				let iPay := 5000 + 5000 * iN
+				if iO && iCash >= iPay
+					set iCash to iCash - iPay
+					SetVariable "iCash" iCash CCCore
+					let iK := (GetVariable "iAssets" CCCore) + iPay
+					SetVariable "iAssets" iK CCCore
+					set iN to iN + 1
+					SetVariable "iBlocks" iN CCLate
+					if iN == 3
+						SetVariable "iRivalOut" 1 CCLate
+						SetVariable "iAggr" 0 CCLaw
+					endif
+					set iOut to 1
+				endif
+			endif
+		elseif iAct == 31
+			; a law: 5 favour, once a season, in order
+			let iN := GetVariable "iLaws" CCLate
+			if eval (iTier >= 5 && iN < 3 && (GetVariable "iFavour" CCLate) >= 5 && iDay - (GetVariable "iLastLaw" CCLate) >= 28)
+				let iK := (GetVariable "iFavour" CCLate) - 5
+				SetVariable "iFavour" iK CCLate
+				SetVariable "iLastLaw" iDay CCLate
+				set iN to iN + 1
+				SetVariable "iLaws" iN CCLate
+				if iN == 3
+					let iK := (GetVariable "iAggr" CCLaw) - 20
+					if iK < 0
+						set iK to 0
+					endif
+					SetVariable "iAggr" iK CCLaw
+				endif
+				set iOut to 1
+			endif
+		elseif iAct == 32 && iTier >= 5
+			; retire: the company is closed, the closed letter and the three pages go to the Post
+			SetVariable "iEnded" 1 CCCore
+			SetVariable "iEndReason" 5 CCCore
+			let aX := GetArrayVariable "aPostText" CCCore
+			ar_Append aX "You handed the company on, boss. The books are closed, and the last letters tell the rest."
+			let sS := sv_Construct "LETTER day %.0f  company closed" iDay
+			let aX := GetArrayVariable "aPostTitle" CCCore
+			ar_Append aX sS
+			call CCEndingFn
+			let aX := GetArrayVariable "aPostText" CCCore
+			let aMK := GetArrayVariable "aPostTitle" CCCore
+			while (ar_Size aX) > 3
+				ar_Erase aX 0
+				ar_Erase aMK 0
+			loop
+			set iOut to 1
+		endif
+	endif
+	SetFunctionValue iOut
+end

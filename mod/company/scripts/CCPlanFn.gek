@@ -105,6 +105,8 @@ begin Function {}
 		endif
 		set iS to iS + 1
 	loop
+	; M4: each forward ticket's crates still wanted
+	call CCLateFn 10 0 0
 	; running roads in wagon order
 	let aRun := call CCRoadsFn 0 iTrip
 	let aOrder := Ar_List 1
@@ -164,16 +166,35 @@ begin Function {}
 				loop
 				set iG to iG + 1
 			loop
-			; keep-stocked orders for this leg's destination
+			; keep-stocked orders for this leg's destination; M4: then each forward ticket's crates (slots
+			; 3 to 5)
 			set iS to 0
-			while iS < 3
-				if eval (aSK[iS] == 1 && aST[iS] == iDest)
-					let iG := aSG[iS]
+			while iS < 6
+				set iG to 0 - 1
+				if iS < 3
+					if eval (aSK[iS] == 1 && aST[iS] == iDest)
+						let iG := aSG[iS]
+					endif
+				else
+					let iG := call CCLateFn 13 iDest (iS - 3)
+				endif
+				if iG >= 0
 					set iGo to 1
-					while iGo && iK < iCap && aStock[iDest * 12 + iG] < aSV[iS]
+					while iGo && iK < iCap
+						if iS < 3
+							if eval (aStock[iDest * 12 + iG] >= aSV[iS])
+								set iGo to 0
+							endif
+						elseif eval ((call CCLateFn 13 iDest (iS - 3)) < 0)
+							set iGo to 0
+						endif
 						set iOk to 0
-						if eval (aMkt[iDest * 12 + iG])
+						if eval (iGo && aMkt[iDest * 12 + iG])
 							let iSale := call CCPriceFn aAnchor[iG], aStock[iDest * 12 + iG], aUse[iDest * 12 + iG], aTrust[iDest], (11 + 10 * iDest)
+							let iJ := call CCLateFn 11 iDest iG
+							if iJ >= 0
+								set iSale to iJ
+							endif
 							let iOwn := aWhPlan[iOrigin * 12 + iG] > 0
 							set iCost to 0
 							set iOk to 1
@@ -198,7 +219,10 @@ begin Function {}
 								let aStock[iOrigin * 12 + iG] -= 1
 								set iPlanCash to iPlanCash - iCost
 							endif
-							let aStock[iDest * 12 + iG] += 1
+							let iJ := call CCLateFn 12 iDest iG
+							if iJ == 0
+								let aStock[iDest * 12 + iG] += 1
+							endif
 							ar_Append aQ (iW * 1000 + iOrigin * 100 + iG)
 							set iK to iK + 1
 						else
@@ -226,6 +250,10 @@ begin Function {}
 						endif
 						if iOk
 							let iSale := call CCPriceFn aAnchor[iG], aStock[iDest * 12 + iG], aUse[iDest * 12 + iG], aTrust[iDest], (11 + 10 * iDest)
+							let iJ := call CCLateFn 11 iDest iG
+							if iJ >= 0
+								set iSale to iJ
+							endif
 							if eval (iOwn == 0 && (iCost > iPlanCash || iCost > aCeil[iG]))
 								set iOk to 0
 							endif
@@ -253,7 +281,10 @@ begin Function {}
 						let aStock[iOrigin * 12 + iBestG] -= 1
 						set iPlanCash to iPlanCash - iBestCost
 					endif
-					let aStock[iDest * 12 + iBestG] += 1
+					let iJ := call CCLateFn 12 iDest iBestG
+					if iJ == 0
+						let aStock[iDest * 12 + iBestG] += 1
+					endif
 					ar_Append aQ (iW * 1000 + iOrigin * 100 + iBestG)
 					set iK to iK + 1
 				endif

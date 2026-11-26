@@ -97,7 +97,8 @@ begin Function {iAct iA}
 		; M3 (tier 3): the rival, the back room, Crimson Cover and the NCR in rows 8 to 12
 		if iTier >= 3
 			call CCLawTextFn 5
-			set iOut to 13
+			; M4: SHARES (tier 4) and LAWS (tier 5) in rows 13 and 14
+			let iOut := call CCLateTextFn 5 13 0
 		endif
 	elseif iAct == 2 && (GetVariable "iEnded" CCCore) == 0
 		if iA == 4
@@ -152,6 +153,10 @@ begin Function {iAct iA}
 			; M3: the declared share, sealed crates, Crimson Cover
 			let iN := iA + 11
 			call CCLawFn iN 0 0
+		elseif iA == 13 || iA == 14
+			; M4: buy the next share block, pass the next law
+			let iN := iA + 17
+			call CCLateFn iN 0 0
 		endif
 		set iOut to 1
 	endif

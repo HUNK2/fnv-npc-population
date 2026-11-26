@@ -88,8 +88,8 @@ TAGS = (
         'The NCR taxed you and left you alone.',
         'To the NCR you were one licence among many.')),
     ('ncr_laws', (
-        'You had %s laws passed in New Vegas.',
-        'Your favour in the capital passed %s laws.')),
+        'You had %s of the three laws passed in New Vegas.',
+        'Your favour in the capital bought %s of the three laws.')),
     # 22-24: the patron
     ('patron_kept', (
         'The quartermaster\'s deal held to the end.',

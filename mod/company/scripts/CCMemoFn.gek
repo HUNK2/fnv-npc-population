@@ -59,6 +59,12 @@ begin Function {}
 	endif
 	set iMemo to 0
 	while iMemo < ar_Size aMK
+		if eval (aMK[iMemo] >= 6)
+			; M4: a forward ticket, the quartermaster, an outfit's ask, a failed outfit
+			let iRow := call CCLateTextFn 2 iMemo iRow
+			set iMemo to iMemo + 1
+			continue
+		endif
 		let iDue := aMDue[iMemo] - iDay
 		let iPick := aMP[iMemo]
 		set iDef to 2

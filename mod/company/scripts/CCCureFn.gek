@@ -127,6 +127,15 @@ begin Function {iAct}
 		if iServed && iEnded == 0
 			SetVariable "iEnded" 1 CCCore
 			SetVariable "iEndReason" 3 CCCore
+			; M4: the "20 years on" pages go to the Post (the last 3 kept)
+			call CCEndingFn
+			let aS := GetArrayVariable "aPostText" CCCore
+			while (ar_Size aS) > 3
+				ar_Erase aS 0
+				let aS := GetArrayVariable "aPostTitle" CCCore
+				ar_Erase aS 0
+				let aS := GetArrayVariable "aPostText" CCCore
+			loop
 			set iOut to 1
 		endif
 	elseif iAct == 4

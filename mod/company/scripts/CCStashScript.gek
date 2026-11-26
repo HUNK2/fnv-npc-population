@@ -1,0 +1,15 @@
+scn CCStashScript
+
+; M2 tier 3 perk: the company strongroom chest at a branch opens the office safe, wherever the player
+; is (one container: a remote stash; the wagons are said to carry the goods). Below tier 3 it says so.
+
+begin OnActivate
+	if IsActionRef player == 0
+		return
+	endif
+	if eval ((GetVariable "iTier" CCCore) >= 3)
+		CCOfficeSafeRef.Activate player
+	else
+		MessageEx "The company strongroom chest opens at tier 3 (Caravan company)."
+	endif
+end

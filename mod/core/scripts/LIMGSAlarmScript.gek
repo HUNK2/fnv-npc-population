@@ -30,7 +30,8 @@ begin GameMode
 	if iFight
 		set iAlarm to 1
 		set fQuiet to GameDaysPassed
-	elseif iAlarm && GameDaysPassed - fQuiet >= (1 / 24)
+	elseif eval (iAlarm && ((GameDaysPassed - fQuiet) >= (1 / 24)))
+		; (eval, parenthesised: the plain form cleared the alarm the moment the fight stopped)
 		set iAlarm to 0
 	endif
 	if iAlarm != iWas

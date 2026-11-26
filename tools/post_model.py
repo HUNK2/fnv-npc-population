@@ -67,8 +67,10 @@ def bill_estimate(c):
     """The next weekly bill if the rest of the week goes like a quiet day (design: the front page)."""
     due = c.day + days_to_bills(c)
     est = (7 * c.daily_wages() + 7 * cm.FEED + cm.RENT_WEEK + cm.half_up(cm.INTEREST * c.loan)
-           + min(cm.MIN_PRINCIPAL, c.loan) + cm.duty(c.week_sales))
-    return est + (cm.LICENCE if due % 28 == 0 else 0)
+           + min(cm.MIN_PRINCIPAL, c.loan))
+    # M3/M4 (review fix): the duty on the declared share, the licence by tier, the cover, the quartermaster
+    est += c.law_duty(cm.duty(c.declared(c.week_sales)[0])) + c.premium() + sum(c.qm_bill())
+    return est + (c.licence_fee() if due % 28 == 0 and 'licence' not in c.laws else 0)
 
 
 CONTRACT_TEXT = {'delivered': ' %s got its %s.', 'missed': ' We missed the %s %s delivery.',
@@ -261,7 +263,7 @@ def memo_text(c, m):
                 'they miss), or refuse? If you say nothing, we refuse.' % (m.who, cm.TOWN_NAME[m.town], m.price))
     if m.kind == 'outfit':
         return ('%s missed two payments in a row and owes %d. Seize the wagon (half its loan, at most what it '
-                'owes; %s will not like it), or forgive it? If you say nothing, we seize it.'
+                'owes, %s will not like it), or forgive it? If you say nothing, we seize it.'
                 % (m.who, m.price, cm.TOWN_NAME[m.town]))
     if m.kind == 'raise':
         p = next((x for x in c.staff if x.name == m.who), None)

@@ -195,8 +195,15 @@ async def fight(s, check):
     for r in away:
         check('%s runs home within 60 s' % r.name, r.ref in home, await where_is(s, r))
     await asyncio.sleep(60)                            # the defenders finish the geckos
+    # the target (docs/towns-design.md T1.6): none of the non-defenders killed; defenders are counted
+    lost = []
     for r in tm.CAST:
-        check('%s is alive' % r.name, not await s.value('%s.GetDead' % r.ref))
+        dead = bool(await s.value('%s.GetDead' % r.ref))
+        if r.defender:
+            lost += [r.name] if dead else []
+        else:
+            check('%s is alive' % r.name, not dead)
+    print('defenders killed: %d %s' % (len(lost), ', '.join(lost)))
     await s.console('tgm')
 
 

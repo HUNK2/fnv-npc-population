@@ -235,14 +235,18 @@ begin Function {}
 				set iI to 0
 				while iI < ar_Size aLeg
 					let iG := aLeg[iI]
-					let iSale := call CCPriceFn aAnchor[iG], aStock[iDest * 12 + iG], aUse[iDest * 12 + iG], aTrust[iDest], (11 + 10 * iDest)
+					; M4: a forward ticket takes it first, at its price
+					let iSale := call CCLateFn 9 iDest iG
+					if iSale < 0
+						let iSale := call CCPriceFn aAnchor[iG], aStock[iDest * 12 + iG], aUse[iDest * 12 + iG], aTrust[iDest], (11 + 10 * iDest)
+						let aStock[iDest * 12 + iG] += 1
+						if iG == 5
+							let aMatIn[iDest] += 1
+						endif
+					endif
 					set iCash to iCash + iSale
 					set iA to iA + iSale
 					set iB to iB + iSale
-					let aStock[iDest * 12 + iG] += 1
-					if iG == 5
-						let aMatIn[iDest] += 1
-					endif
 					set iSold to iSold + 1
 					set iI to iI + 1
 				loop

@@ -234,7 +234,10 @@ begin Function {}
 				endif
 				let iA := aCN[iK]
 				let aCM := GetArrayVariable "aConNcr" CCLaw
-				let iN := 28 - 14 * aCM[iK] + aCS[iK]
+				let iN := 28 + aCS[iK]
+				if eval ((ar_Size aCM) > iK)
+					let iN -= 14 * aCM[iK]
+				endif
 				let aCM := GetArrayVariable "aConMissed" CCCore
 				set iRow to iRow + 1
 				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qNEXT day %.0f  ENDS day %.0f%q" iRow iA iN
@@ -262,6 +265,8 @@ begin Function {}
 			endif
 			set iRow to 2
 		endif
+		; M4: a row for each forward ticket
+		let iRow := call CCLateTextFn 6 iRow 0
 
 	elseif iScreen == 13
 		; Standing orders: the three slots

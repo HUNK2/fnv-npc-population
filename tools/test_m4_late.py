@@ -312,6 +312,17 @@ class Ending(unittest.TestCase):
             texts.add(str(c.ending))
         self.assertGreater(len(texts), 1)
 
+    def test_ending_pages_survive_the_days_other_letters(self):
+        # a receivership on a day the player has been away (and a robbery): the three pages stay
+        c = tier(3)
+        c.day = 20
+        r = cm.DayReport(c.day)
+        c._end(r, 'receivership')
+        c.last_visit, c.away_posted = c.day - 5, False
+        r.event, r.event_loss, r.ev_road = 'bandits_took_cargo', 50, 0
+        c._post_letters(r, road=False)
+        self.assertEqual([x.kind for x in c.post], ['ending'] * 3)
+
     def test_about_sixty_lines(self):
         self.assertGreaterEqual(em.line_count(), 55)
 

@@ -1422,7 +1422,6 @@ class Company(LawMixin, LateMixin):
         new = []
         if self.ended:
             new.append(Letter(self.day, 'closed', (self.end_reason,)))
-            new += self.ending_letters()                                       # M4: 20 years on
         elif (self.stage == 'deferred' and r.bills_paid is False) or any(
                 n == 'final notice' or n.startswith('seized') for n in r.notes):
             new.append(Letter(self.day, 'notice', self.notice_values()))
@@ -1450,6 +1449,8 @@ class Company(LawMixin, LateMixin):
 
         if r.tier_up:
             new.append(Letter(self.day, 'tier', (self.tier,)))
+        if self.ended:
+            new += self.ending_letters()       # M4: 20 years on, last so no other letter pushes it out
         self.post = (self.post + new)[-POST_KEEP:]
         waiting = list(new)
         if self.stage == 'deferred' and not any(x.kind == 'notice' for x in new):

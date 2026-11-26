@@ -1,0 +1,58 @@
+scn CCLateUtilFn
+
+; M4 helpers for CCLateFn (a function script does not call itself here).
+; iAct 1: erase outfit iA from CCLate's aOf* arrays. iAct 2: erase ticket iA from the aTk* arrays.
+; iAct 3: post a memo of kind iA with aMemoX iB, due tomorrow (the caller changes the due day and name).
+
+int iAct
+int iA
+int iB
+int iDay
+array_var aX
+
+begin Function {iAct iA iB}
+	if iAct == 1
+		let aX := GetArrayVariable "aOfName" CCLate
+		ar_Erase aX iA
+		let aX := GetArrayVariable "aOfTown" CCLate
+		ar_Erase aX iA
+		let aX := GetArrayVariable "aOfAmount" CCLate
+		ar_Erase aX iA
+		let aX := GetArrayVariable "aOfRate" CCLate
+		ar_Erase aX iA
+		let aX := GetArrayVariable "aOfLeft" CCLate
+		ar_Erase aX iA
+		let aX := GetArrayVariable "aOfWeeks" CCLate
+		ar_Erase aX iA
+		let aX := GetArrayVariable "aOfMiss" CCLate
+		ar_Erase aX iA
+	elseif iAct == 2
+		let aX := GetArrayVariable "aTkTown" CCLate
+		ar_Erase aX iA
+		let aX := GetArrayVariable "aTkGood" CCLate
+		ar_Erase aX iA
+		let aX := GetArrayVariable "aTkPrice" CCLate
+		ar_Erase aX iA
+		let aX := GetArrayVariable "aTkDue" CCLate
+		ar_Erase aX iA
+		let aX := GetArrayVariable "aTkFilled" CCLate
+		ar_Erase aX iA
+		let aX := GetArrayVariable "aTkAdv" CCLate
+		ar_Erase aX iA
+	elseif iAct == 3
+		let iDay := GetVariable "iDay" CCCore
+		let aX := GetArrayVariable "aMemoKind" CCCore
+		ar_Append aX iA
+		let aX := GetArrayVariable "aMemoDay" CCCore
+		ar_Append aX iDay
+		let aX := GetArrayVariable "aMemoDue" CCCore
+		ar_Append aX (iDay + 1)
+		let aX := GetArrayVariable "aMemoPick" CCCore
+		ar_Append aX (0 - 1)
+		let aX := GetArrayVariable "aMemoX" CCCore
+		ar_Append aX iB
+		let aX := GetArrayVariable "aMemoWho" CCCore
+		ar_Append aX " "
+	endif
+	SetFunctionValue 1
+end

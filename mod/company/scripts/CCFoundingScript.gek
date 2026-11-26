@@ -12,6 +12,7 @@ int iGangLandlord
 int iYardOn
 int iK
 int iPrimmPlaced
+int iBranchPlaced
 
 begin GameMode
 	if iPlaced == 0
@@ -25,6 +26,35 @@ begin GameMode
 		set iPrimmPlaced to 1
 		CCPrimmTermRef.MoveToCell VikkiAndVance 1010 4027 7370
 		CCPrimmTermRef.SetAngle Z 0
+	endif
+	if iBranchPlaced == 0
+		; M2 2.6: branch terminals at Sloan (Chomps Lewis's checkpoint table) and the Mojave Outpost (the
+		; barracks bar), relay desks at the 188 (the bar) and Novac (the motel front desk); a terminal's
+		; screen faces its Z angle + 90 degrees. Beside each branch terminal, the tier 3 strongroom chest.
+		set iBranchPlaced to 1
+		CCSloanTermRef.MoveTo SloanMapMarker
+		CCSloanTermRef.SetPos X -27805
+		CCSloanTermRef.SetPos Y 6815
+		CCSloanTermRef.SetPos Z 6437
+		CCSloanTermRef.SetAngle Z 90
+		CCSloanStashRef.MoveTo SloanMapMarker
+		CCSloanStashRef.SetPos X -27870
+		CCSloanStashRef.SetPos Y 6770
+		CCSloanStashRef.SetPos Z 6380
+		CCSloanStashRef.SetAngle Z 90
+		CC188TermRef.MoveTo 188MapMarker
+		CC188TermRef.SetPos X 31205
+		CC188TermRef.SetPos Y 31915
+		CC188TermRef.SetPos Z 5572
+		CC188TermRef.SetAngle Z 180
+		CCOutpostTermRef.MoveToCell MojaveOutpostBarracks01 2162 2060 9405
+		CCOutpostTermRef.SetAngle Z 0
+		CCOutpostStashRef.MoveToCell MojaveOutpostBarracks01 2235 2010 9330
+		CCOutpostStashRef.SetAngle Z 0
+		CCNovacTermRef.MoveToCell NovacMotelLobby 2525 1366 9036
+		CCNovacTermRef.SetAngle Z 90
+		CCPrimmStashRef.MoveToCell VikkiAndVance 1080 4110 7296
+		CCPrimmStashRef.SetAngle Z 0
 	endif
 	set iAliceDead to AliceMcLaffertyREF.GetDead
 	set iGangLandlord to GetStageDone VMS16b 100

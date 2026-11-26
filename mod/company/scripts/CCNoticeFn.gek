@@ -106,17 +106,8 @@ begin Function {iWhat}
 		if iLoan < 300
 			set iPrin to iLoan
 		endif
-		let fM := 0.02 * iWeek
-		if iWeek > 5000
-			let fM := 0.02 * 5000 + 0.035 * ((iWeek < 20000) * iWeek + (iWeek >= 20000) * 20000 - 5000)
-		endif
-		if iWeek > 20000
-			let fM := fM + 0.05 * (iWeek - 20000)
-		endif
-		let iEst := 7 * iWages + 42 + 70 + iInt + iPrin + Floor (fM + 0.5)
-		if eval ((iDay + iDtb) % 28 == 0)
-			set iEst to iEst + 150
-		endif
+		let iEst := 7 * iWages + 42 + 70 + iInt + iPrin
+		let iEst += call CCLawFn 13 iDtb 0
 		let iBurn := Floor (iWages + 6 + (70 + iInt + iPrin) / 7 + 0.5)
 		if iBurn < 1
 			set iBurn to 1

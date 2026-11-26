@@ -10,6 +10,7 @@ scn CCLawFn
 ; iAct 2: the post (Company._post_ncr): the NCR's weekly ammo bid as a memo (kind 4, aMemoX the market price).
 ; iAct 3: settle memo iA (kind 4 NCR bid, 5 warrant) with answer iB (-1: the default).
 ; iAct 4: the week (Company._week_law). iAct 5: the day (Company._day_law).
+; iAct 13: the bill estimate's law part with bills due in iA days (post_model.bill_estimate).
 ; iAct 6: returns 1 when tier 4 is earned (worth iA, iB 1 when a strike is recent). iAct 7: the tier 3 day.
 ; iAct 10: road iA's wagon runs: the Outpost toll and a sealed-crate run (Company._toll, _sealed_run).
 ; iAct 11: a road loss of iA caps: returns what Crimson Cover pays back (Company._claim).
@@ -40,6 +41,7 @@ float fM
 float fBest
 float fUse
 array_var aBill
+int iLaws
 array_var aRun
 array_var aSold
 array_var aLast
@@ -93,6 +95,8 @@ begin Function {iAct iA iB}
 		SetVariable "iDRaid" 0 CCLaw
 		SetVariable "iDRaidLoss" 0 CCLaw
 		SetVariable "iDNcr" 0 CCLaw
+		; M4: the late game's day news (and its setup, once)
+		call CCLateFn 0 0 0
 
 	elseif iAct == 1
 		let iN := GetVariable "iWeekSales" CCCore
@@ -112,11 +116,17 @@ begin Function {iAct iA iB}
 		if iN > 20000
 			let fM := fM + 0.05 * (iN - 20000)
 		endif
-		let aBill := Ar_List 0, 0, 70, 0, 0, 0, 0, 0
+		let aBill := Ar_List 0, 0, 70, 0, 0, 0, 0, 0, 0
 		let aBill[0] := GetVariable "iAccWages" CCCore
 		let aBill[1] := Floor (fM + 0.5)
+		; M4: the Free trade act halves the duty; the Carrier act ends the licence; [8] the quartermaster
+		let iLaws := GetVariable "iLaws" CCLate
+		if iLaws >= 1
+			let aBill[1] := Floor (aBill[1] / 2 + 0.5)
+		endif
+		let aBill[8] := call CCLateFn 1 0 0
 		let aBill[3] := GetVariable "iAccFeed" CCCore
-		if eval (iDay % 28 == 0)
+		if eval (iDay % 28 == 0 && iLaws < 2)
 			let aBill[4] := 150 + (iTier == 3) * 250 + (iTier >= 4) * 750
 		endif
 		if eval (GetVariable "iInsured" CCLaw)
@@ -131,6 +141,36 @@ begin Function {iAct iA iB}
 			let aBill[7] := 300
 		endif
 		SetFunctionValue aBill
+		return
+
+	elseif iAct == 13
+		; the bill estimate's law part (post_model.bill_estimate), bills due in iA days: the duty on the
+		; declared share of the week's sales, the licence by tier, the cover premium, the quartermaster
+		let iN := GetVariable "iWeekSales" CCCore
+		let iK := GetVariable "iHide" CCLaw
+		let fM := (iK == 1) * 0.1 + (iK == 2) * 0.2
+		let iN := iN - Floor (fM * iN + 0.5)
+		let fM := 0.02 * iN
+		if iN > 5000
+			let fM := 0.02 * 5000 + 0.035 * ((iN < 20000) * iN + (iN >= 20000) * 20000 - 5000)
+		endif
+		if iN > 20000
+			let fM := fM + 0.05 * (iN - 20000)
+		endif
+		let iT := Floor (fM + 0.5)
+		let iLaws := GetVariable "iLaws" CCLate
+		if iLaws >= 1
+			let iT := Floor (iT / 2 + 0.5)
+		endif
+		if eval ((iDay + iA) % 28 == 0 && iLaws < 2)
+			let iT += 150 + (iTier == 3) * 250 + (iTier >= 4) * 750
+		endif
+		if eval (GetVariable "iInsured" CCLaw)
+			let aRun := call CCRoadsFn 0 iDay
+			let iT += 40 * ((aRun[1] > 0) + (aRun[2] > 0) + (aRun[3] > 0))
+		endif
+		let iT += call CCLateFn 1 0 0
+		SetFunctionValue iT
 		return
 
 	elseif iAct == 2
@@ -178,6 +218,8 @@ begin Function {iAct iA iB}
 			SetVariable "iLastNcr" iDay CCLaw
 			set iOut to 1
 		endif
+		; M4: the forward offer, the quartermaster, an outfit's ask
+		call CCLateFn 8 0 0
 
 	elseif iAct == 3
 		let aMK := GetArrayVariable "aMemoKind" CCCore
@@ -200,6 +242,10 @@ begin Function {iAct iA iB}
 				set iPay to iLo
 				if iB == 0
 					set iPay to iHi
+				endif
+				; M4: beating her with the low bid while she bids is the second share block's deed
+				if iB == 1 && iAggr >= 40
+					call CCLateFn 21 0 0
 				endif
 				; an Outpost ammo contract from Primm on the Outpost road: 4 crates every 3 days for 14 days
 				let aX := GetArrayVariable "aConTown" CCCore
@@ -311,7 +357,10 @@ begin Function {iAct iA iB}
 				set iT to iT + 1
 			loop
 			let iAggr := GetVariable "iAggr" CCLaw
-			if eval (aSh[iTop] > 0.25 && aSh[iTop] > aLast[iTop])
+			if eval (GetVariable "iRivalOut" CCLate)
+				; M4: her board voted her out: her anger stays as it is and she makes no moves
+				set iN to 0
+			elseif eval (aSh[iTop] > 0.25 && aSh[iTop] > aLast[iTop])
 				set iAggr to iAggr + 10
 				if iAggr > 100
 					set iAggr to 100
@@ -323,7 +372,7 @@ begin Function {iAct iA iB}
 				endif
 			endif
 			SetVariable "iAggr" iAggr CCLaw
-			if iAggr >= 30
+			if eval (iAggr >= 30 && (GetVariable "iRivalOut" CCLate) == 0)
 				if eval (aSh[iTop] > 0.25 && iDay > (GetVariable "iWarUntil" CCLaw))
 					; a price war: her caravans undercut the company's sales in that town for 5 days
 					set iN to iTop + 1
@@ -367,6 +416,8 @@ begin Function {iAct iA iB}
 			let aSold[iK] := 0
 			set iK to iK + 1
 		loop
+		; M4: the week's late game (lending, the quartermaster's string, the Primm lead)
+		call CCLateFn 4 0 0
 
 	elseif iAct == 5
 		; a warned poach happens unless the person's loyalty reached 40
@@ -379,6 +430,7 @@ begin Function {iAct iA iB}
 				if eval (aSN[iK] == sName)
 					if eval (aSL[iK] < 40)
 						call CCStaffFn 2 iK
+						let CCLate.sPoached := sName
 						let CCLaw.sDWho := sName
 						SetVariable "iDRival" 3 CCLaw
 					endif
@@ -476,12 +528,20 @@ begin Function {iAct iA iB}
 			endif
 		endif
 
+		; M4: a forward ticket missed on its due day
+		call CCLateFn 5 0 0
+
 	elseif iAct == 6
+		; M4: returns the new tier (4 or 5), else 0; worth is net of the late game's debts
+		let iA := iA - (call CCLateFn 7 0 0)
+		if iTier == 4
+			let iOut := 5 * (call CCLateFn 6 iA iB)
+		endif
 		; tier 4 (Company.tier_four_ready): worth 40,000, the loan repaid, no arrears, NCR standing 50, an
 		; NCR delivery made, not outlaws, no recent strike
 		if iTier == 3 && iA >= 40000 && iB == 0
 			if eval ((GetVariable "iLoan" CCCore) == 0 && (GetVariable "iArrears" CCCore) == 0 && (GetVariable "iStanding" CCLaw) >= 50 && (GetVariable "iNcrDone" CCLaw) >= 1 && (GetVariable "iOutlaw" CCLaw) == 0)
-				set iOut to 1
+				set iOut to 4
 			endif
 		endif
 
@@ -547,6 +607,8 @@ begin Function {iAct iA iB}
 			SetVariable "iStanding" iN CCLaw
 			let iN := (GetVariable "iNcrDone" CCLaw) + 1
 			SetVariable "iNcrDone" iN CCLaw
+			; M4: favour for the laws
+			call CCLateFn 20 0 0
 		endif
 
 	elseif iAct >= 20 && iTier >= 3 && (GetVariable "iEnded" CCCore) == 0

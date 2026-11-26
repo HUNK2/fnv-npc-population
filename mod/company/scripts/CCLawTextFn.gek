@@ -69,6 +69,9 @@ begin Function {iAct}
 			let sS := sv_Construct " Crimson Cover paid back %.0f." iK
 			let sOut += sS
 		endif
+		; M4: tickets, the quartermaster, the outfits
+		let sS := call CCLateTextFn 1 0 0
+		let sOut += sS
 	elseif iAct == 2
 		if (GetVariable "iDWarrant" CCLaw)
 			let iN := GetVariable "iHeat" CCLaw
@@ -79,6 +82,15 @@ begin Function {iAct}
 			let sS := sv_Construct "LETTER day %.0f  warrant served" iDay
 			let aX := GetArrayVariable "aPostTitle" CCCore
 			ar_Append aX sS
+		endif
+	elseif iAct == 3 && (GetVariable "iTier" CCCore) >= 5
+		let sOut := "Boss, we are the Mojave concern now. New Vegas listens: favour from NCR deliveries can pass a law on the Towns screen, and the Settings screen has a RETIRE row when you are ready."
+	elseif iAct == 7
+		; M4: the tier 4 and 5 letters' titles
+		if (GetVariable "iTier" CCCore) >= 5
+			let sOut := sv_Construct "LETTER day %.0f  the Mojave concern" iDay
+		else
+			let sOut := sv_Construct "LETTER day %.0f  a trading house" iDay
 		endif
 	elseif iAct == 3
 		let sOut := "Boss, we are a trading house now. The NCR clerk calls us a preferred carrier: no toll at the Outpost. The licence is 900 a season from here."

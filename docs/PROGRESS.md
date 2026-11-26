@@ -73,8 +73,17 @@ calls are mine and are marked "my call" here and in the plans.
   Goodsprings (`docs/plans/2026-11-27-t1-goodsprings.md`, proofs in `docs/t1-results.md`).
 - **T1 and M2** (commits 35c36ec, bf6302f): Goodsprings residents on schedules; four towns, three
   roads, site goods, staff and managers; the M2 checks pass in game. What to try:
-  `docs/t1-what-to-try.md`, `docs/m2-what-to-try.md`. Still open from M2: the world branch
-  terminals and the tier 3 stash perk.
+  `docs/t1-what-to-try.md`, `docs/m2-what-to-try.md`. The world branch terminals and the tier 3
+  stash, still open after M2, are done with M4 (below). T1.6 fights, rechecked with M4: the alarm
+  never sent anyone home, for two reasons, both fixed. The engine never picked the flee package
+  (eligible and first on the list, the sandbox still running after `EvaluatePackage`), so the alarm
+  package is now a travel package (must reach, always run, ignore combat). And the plain
+  `iAlarm && GameDaysPassed - fQuiet >= (1 / 24)` cleared the alarm the moment the fight stopped (now
+  `eval` with parentheses: it holds for a game hour). `tools/ingame_town.py fight` then passes (the
+  alarm in 1 s, every non-defender home within 60 s and alive), on the second fight in a game. The
+  first fight in a fresh game failed 4 of 8: residents still walking to their morning places were
+  home only after 60 s. Defenders killed are counted, as the design says: 1 or 2 of the 4 died to
+  three geckos in each of the last three runs.
 - **M3 The rival and the law** (plan `docs/plans/2026-11-28-m3-rival-law.md`): the Crimson Caravan
   as a rival (anger, price wars, poaching, NCR bids), heat, the licence and the duty, outlaw marks
   (`CCLawFn`, `CCLawScript`, `CCLawTextFn`; models `tools/law_model.py`, `tools/company_model.py`).
@@ -85,7 +94,25 @@ calls are mine and are marked "my call" here and in the plans.
   (now recomputed; the model now writes its report at the tick, as the game does). The last run had
   0 script errors and 3 estimate mismatches, the ones fixed after it; `tools/ingame_m4.py` covers
   them again. What to try: `docs/m3-what-to-try.md`.
-- **M4 The late game and the ending** (plan `docs/plans/2026-11-28-m4-ending.md`): in progress.
+- **M4 The late game and the ending** (plan `docs/plans/2026-11-28-m4-ending.md`): done. Tier 4
+  (the NCR quartermaster, forward tickets, lending to outfits) and tier 5 (favour in New Vegas, the
+  three laws, share blocks, the race for Primm against the Crimson Caravan), then RETIRE and the
+  three "20 years on" pages (`CCLateFn`, `CCLateUtilFn`, `CCLateTextFn`, `CCLateScript`,
+  `CCEndingFn`, `CCEndLineFn` from `tools/gen_ending.py`; models `tools/late_model.py`,
+  `tools/ending_model.py`; 273 model tests pass). `tools/ingame_m4.py 50` (game against the model
+  every day for 50 days, tier 5 on day 36, a law passed and a share block bought, then retire) found
+  four game bugs, all fixed: a `;` inside a string literal (it starts a comment), the bill estimate
+  without the M3/M4 bills (now one shared act, `CCLawFn 13`), the forward memo's good read from the
+  wrong digits, and a closed company's Post that never drew (the closed-page test read the screen
+  before it was loaded). The last two runs passed all 326 checks with 0 script errors (tier 5 on day
+  36; the closed Post and its three "20 years on" pages read back after RETIRE). A review pass then fixed: a closed company's "20 years on"
+  pages could be pushed out of the Post by a same-day away, road or robbed letter (now written last,
+  game and model, with a model test); result text cleared on all 16 rows; and the side taken at the
+  Dam is now read for the ending's text, from the vanilla battle state (`vHDBattleController.iBattleState`;
+  the battle quests themselves run from the game's start, so they can't be used). Checked in game:
+  0 with no battle, House (2) with the state set to 3. Also in this step, from M2: branch terminals at Sloan and the Mojave Outpost,
+  relay desks at the 188 and Novac, and the tier 3 strongroom chests (one stash, the office safe,
+  from any branch). What to try: `docs/m4-what-to-try.md`, `docs/m2-what-to-try.md` section 6.
 
 ## Done
 
@@ -102,6 +129,19 @@ calls are mine and are marked "my call" here and in the plans.
     0.12 busy shield by source plugin; 0.13 old saves; 0.14 crowd: 30 extra settlers, still 60 fps.
 
 ## My calls (to review)
+
+- (M2 2.6) Branch terminals stand at Sloan on Chomps Lewis's checkpoint table and in the Mojave Outpost
+  barracks bar; relay desks on the 188's bar and the Novac motel's front desk; all placed once by
+  `CCFoundingScript`, old saves too. The tier 3 remote stash is a footlocker beside each branch
+  terminal that opens the Goodsprings office safe (now a real container, the vanilla empty safe).
+- (M2) Any company terminal buys the tier 2 perk's crates, relay desks included (the model has no
+  terminal location).
+- (M3 review) The bill estimate (front page, page 2, the short-on-bills letter) now counts the duty on
+  the declared share, the licence by tier, the cover premium and the quartermaster's bill, in the model
+  and the game (`CCLawFn` act 13).
+- (M4) The ending's laws line reads "N of the three laws" (no plural to get wrong).
+- (M4) The ending names the side taken at the Dam from the vanilla battle state (1 NCR, 2 Caesar,
+  3 House, 4 Yes Man); the last side seen is kept after the battle.
 
 - The core plugin is `LivedInMojave.esp` with the master flag set after each build
   (`tools/set_esm_flag.py`): fnv-mcp's builder writes .esp files only.
@@ -226,3 +266,19 @@ calls are mine and are marked "my call" here and in the plans.
   the DLC quest IDs used by the busy shield; `nVPrimmDeputyConv`.
 - fnv-mcp (uncommitted in fnv-mcp-code): `fnv_spec build` now lets records name the plugin's own
   placed references by editor id (an AI package's location).
+- (M3 review, low) The cover premium counts running roads in the game and running wagons in the model;
+  they differ only if two wagons could share a road, which `buy_road` does not allow.
+- A plain `set x to arr[i]` or a plain `if` on an array element aborts a script silently at run time,
+  and a `;` inside a string literal starts a comment: both found by the in-game checks, worth a
+  linter rule in fnv-mcp (`fnv_script_lint`).
+- Not checked by eye: the "opens at tier 3" notice of a strongroom chest below tier 3 (a corner
+  message); the Outpost and Sloan chests' spots (placed by coordinates; the Primm one was checked by
+  ray, and every terminal by photo).
+- (M4) Not checked in the game: a real Battle of Hoover Dam (the side read was checked by setting the
+  battle state by console), and a closed company's ending pages on a day with an away, road or robbed
+  letter (the order is fixed in the game and the model,
+  and a model test covers it; the 50-day check retires with the player at the terminal).
+- (T1.6) Defenders die too easily: 1 or 2 of the 4 (Amos, Marisol) were killed by three leveled geckos
+  in each recent fight check. Worth more health or better arms for the defenders, or a check against
+  raiders, as the design table has it. Also open: the first fight in a fresh game misses the 60 s
+  target for residents still walking to their morning places.
