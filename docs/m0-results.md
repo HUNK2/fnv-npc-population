@@ -25,8 +25,15 @@ runs (plan: `docs/plans/2026-11-27-m0-proofs.md`). Evidence screenshots stay on 
 
 - The MCP server did not reload its project spec after the project file changed. Workaround:
   `tools/fnvmcp_call.py` runs fnv-mcp's tools in-process with our spec.
-- In-game compile: statements after a `while ... loop` block never ran (the jump after the loop
-  seems off by 4 bytes). Workaround: no `while` in our scripts.
+- In-game compile: statements after a `while ... loop` block never ran in plugin scripts. Cause
+  (read from the bytecode): xNVSE writes a 4-byte scriptname statement before compiling and stores
+  the `while` exit jump as an absolute offset into that buffer (58 in a probe script); fnv-mcp's
+  `compile_spec_scripts` dropped those 4 bytes, so the exit landed 4 bytes inside the next
+  statement. Fixed in fnv-mcp's working tree (`fnv_data.py`: the header is kept; not committed
+  there). Proven live: a loop in `CCProofsQuestScript` set `iLoopI` 3 and the line after it set
+  `iLoopOut` 103. Snippets run by `fnv_run_script` never had the bug.
+- `return` in any block ends the whole script for that frame, so a later block of the same type
+  never runs after an early `return`.
 - `fnv_ui_do click` cannot pick one terminal row: every row has the same tile path and id -1, so
   it clicks the first child (the last row). Keyboard arrows do not move the terminal highlight.
 - The builder refuses a change that renumbers script variables, even new variables added at the
@@ -36,6 +43,7 @@ runs (plan: `docs/plans/2026-11-27-m0-proofs.md`). Evidence screenshots stay on 
   parameter string"). Workaround: JIP `Console "Cmd ... %q%.0f%q" fVar` builds the line (`%q` is a
   quote mark).
 - `fnv_run_script`: statements after a `while ... loop` do not run (same compile bug as above).
-- MO2 refused to launch right after a quit; `tools/cycle.sh` waits 8 s.
+- MO2 cannot launch the game from the Bash tool (its job object refuses it). `tools/cycle.sh`
+  quits and installs; the launch goes through the MCP server's `fnv_game launch`.
 - `set GameDaysPassed` from the console has no effect (`Calendar::Update` 0x00867A40 rebuilds it
   from the hour). Tests jump `GameHour` instead: `set GameHour to GameHour + 120` is 5 days.

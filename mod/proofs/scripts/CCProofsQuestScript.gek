@@ -2,8 +2,7 @@ scn CCProofsQuestScript
 
 ; M0 proofs: the day tick with catch-up and seeded rolls (design: How it is built in FNV, The day tick).
 ; Days only move forward; at most 14 missed days run one by one, anything older folds into one summary step.
-; One day is processed per script run (no while/loop: the fnv-mcp in-game compile breaks jumps after a loop),
-; which also spreads a long catch-up over several frames.
+; One day is processed per script run, which spreads a long catch-up over several frames.
 ; Note: GameDaysPassed cannot be set from the console; tests jump GameHour (Calendar::Update 0x00867A40 resyncs).
 
 int iInit
@@ -47,6 +46,9 @@ end
 int iPicked
 int iClicks
 float fPrice
+; loop fix check (fnv-mcp kept xNVSE's 4-byte header so loop exits land right): expect iLoopOut 103
+int iLoopI
+int iLoopOut
 
 begin MenuMode 1057
 	if GetTerminalMenuItemFlags CCProofsTerm 29 != 0
@@ -58,5 +60,12 @@ begin MenuMode 1057
 		; JIP Console (format string; %q is a quote mark)
 		Console "SetTerminalMenuItemText CCProofsTerm 1 0 %qWATER  GS %.0f > PR 236   clicks %.0f%q" fPrice iClicks
 		RefreshTerminalMenu
+	endif
+	if iLoopOut == 0
+		set iLoopI to 0
+		while iLoopI < 3
+			let iLoopI += 1
+		loop
+		set iLoopOut to iLoopI + 100
 	endif
 end
