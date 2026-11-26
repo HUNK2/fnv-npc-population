@@ -10,3 +10,5 @@ SPEC="$1"; WHAT="${2:-both}"
 summ() { python -c "import json,sys; d=json.load(sys.stdin); print('ok' if d.get('ok') else 'FAILED', json.dumps(d.get('error') or {k: d.get('data', {}).get(k) for k in ('scripts', 'path', 'written', 'recordCounts')})[:3000])"; }
 if [ "$WHAT" != build ]; then "$PY" tools/fnvmcp_call.py "$SPEC" fnv_scripts_compile '{}' | summ; fi
 if [ "$WHAT" != compile ]; then "$PY" tools/fnvmcp_call.py "$SPEC" fnv_spec '{"action":"build"}' | summ; fi
+# The core is the company's master: the builder writes .esp only, so set the master flag after it.
+case "$SPEC" in *mod/core/*) python tools/set_esm_flag.py "$BRIDGE/build/LivedInMojave.esp" ;; esac

@@ -1,0 +1,18 @@
+{
+ "schema": 1,
+ "project_id": "mojavecaravanco",
+ "plugin": "MojaveCaravanCompany.esp",
+ "author": "fnv-npc-population",
+ "description": "Mojave Caravan Company: run a trading company from a terminal. Needs xNVSE, JIP LN NVSE, JohnnyGuitar NVSE and LivedInMojave.esp.",
+ "masters": ["FalloutNV.esm", "LivedInMojave.esp"],
+ "records": {
+  "CCVersion": {"type": "GLOB", "fields": [
+   {"tag": "FNAM", "pack": "<B", "values": [115]},
+   {"tag": "FLTV", "pack": "<f", "values": [0.0]}]},
+  "CCCoreScript": {"type": "SCPT", "source": "scripts/CCCoreScript.gek", "script_type": "quest"},
+  "CCCore": {"type": "QUST", "fields": [
+   {"tag": "SCRI", "form": "@CCCoreScript"},
+   {"tag": "FULL", "text": "Mojave Caravan Company"},
+   {"tag": "DATA", "pack": "<BBBBf", "values": [1, 50, 0, 0, 1.0]}]}
+ }
+}

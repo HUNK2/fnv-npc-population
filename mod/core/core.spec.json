@@ -1,0 +1,15 @@
+{
+ "schema": 1,
+ "project_id": "livedinmojave",
+ "plugin": "LivedInMojave.esp",
+ "author": "fnv-npc-population",
+ "description": "Lived-in Mojave core: shared factions, globals and the roles kit. Master of the Mojave Caravan Company.",
+ "masters": ["FalloutNV.esm"],
+ "records": {
+  "LIMVersion": {"type": "GLOB", "fields": [
+   {"tag": "FNAM", "pack": "<B", "values": [115]},
+   {"tag": "FLTV", "pack": "<f", "values": [1.0]}]},
+  "LIMTownsfolkFaction": {"type": "FACT", "template": "@GoodspringsFaction", "fields": [
+   {"tag": "FULL", "text": "Mojave townsfolk"}]}
+ }
+}

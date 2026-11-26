@@ -7,6 +7,9 @@ calls are mine and are marked "my call" here and in the plans.
 ## Now
 
 - Milestone: **M1 One road** (plan: `docs/plans/2026-11-27-m1-one-road.md`)
+- Done: 1.1 company model (21 tests), 1.2 two plugins (`LivedInMojave.esp` with the master flag,
+  `MojaveCaravanCompany.esp`; in game `CCVersion` = 101 read from the core's `LIMVersion`).
+- Next: 1.3 the day tick and the ledger in game, checked day by day against the model.
 
 ## Done
 
@@ -23,6 +26,10 @@ calls are mine and are marked "my call" here and in the plans.
     0.12 busy shield by source plugin; 0.13 old saves; 0.14 crowd: 30 extra settlers, still 60 fps.
 
 ## My calls (to review)
+
+- The core plugin is `LivedInMojave.esp` with the master flag set after each build
+  (`tools/set_esm_flag.py`): fnv-mcp's builder writes .esp files only.
+- One terminal form with a 14-row pool shows every screen (M1 plan, "My calls").
 
 - Plugins are built in-process with fnv-mcp's tools (`tools/fnvmcp_call.py`), not by editing the
   MCP server's project file, because the server did not pick up the change.

@@ -1,0 +1,11 @@
+scn CCCoreScript
+
+; M1.2 bootstrap: proves the company plugin reads the core master. Grows in M1.3.
+int iInit
+
+begin GameMode
+	if iInit == 0
+		set iInit to 1
+		set CCVersion to LIMVersion + 100
+	endif
+end
