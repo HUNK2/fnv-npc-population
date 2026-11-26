@@ -13,9 +13,13 @@ def fresh(seed=1234, sheriff=False, **kw):
     return c
 
 
-def play(c, days, accept=True):
+def play(c, days, accept=True, road=cm.SEND):
+    """Run days; every road memo is answered `road` (send by default, so the bandit rolls bite)."""
     reports = []
     for _ in range(days):
+        for m in c.memos:
+            if m.kind == 'road':
+                c.answer(m, road)
         if accept:
             for o in c.plan():
                 c.queue(o)
@@ -89,7 +93,8 @@ class Balance(unittest.TestCase):
     def test_worst_event_at_tier_1_is_capped_at_three_days_of_runway(self):
         for seed in range(1, 60):
             c = fresh(seed=seed)
-            for r in play(c, 21):
+            for _ in range(21):
+                r = play(c, 1)[0]           # the cap is 3 days of running costs on the day of the event
                 if r.event_loss:
                     self.assertLessEqual(r.event_loss, 3 * c.daily_burn() + 1, 'seed %d day %d' % (seed, r.day))
 

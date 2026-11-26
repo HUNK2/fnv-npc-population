@@ -1,0 +1,60 @@
+scn CCLetterScript
+
+; Field post (plan task 1.6, tools/company_model.py Company.field_letter). CCCore leaves at most one
+; letter waiting (iLetterKind 1 robbed, 2 road, 3 away; its text in aLetter[0]). It is shown here with
+; MessageBoxEx, only in GameMode (this block does not run in menus or dialogue), out of combat, and at
+; most once a company day. A road letter's buttons answer the road memo: 0 keep it home, 1 send as
+; planned, 2 hire a gun, 3 later. If the box was closed without a button, nothing is answered.
+
+int iShown
+int iKind
+int iBtn
+int iDay
+int iShownDay
+int iK
+array_var aL
+array_var aMK
+array_var aMP
+string_var sT
+
+begin GameMode
+	if iShown
+		set iShown to 0
+		let iBtn := GetButtonPressed
+		if iKind == 2 && iBtn >= 0 && iBtn < 3
+			let aMK := GetArrayVariable "aMemoKind" CCCore
+			let aMP := GetArrayVariable "aMemoPick" CCCore
+			set iK to 0
+			while iK < ar_Size aMK
+				if eval (aMK[iK] == 0)
+					if iBtn == 0
+						let aMP[iK] := 2
+					elseif iBtn == 1
+						let aMP[iK] := 0
+					else
+						let aMP[iK] := 1
+					endif
+				endif
+				set iK to iK + 1
+			loop
+		endif
+	else
+		let iKind := GetVariable "iLetterKind" CCCore
+		if iKind > 0
+			let iDay := GetVariable "iDay" CCCore
+			let iShownDay := GetVariable "iLetterShownDay" CCCore
+			if iShownDay != iDay && player.IsInCombat == 0
+				let aL := GetArrayVariable "aLetter" CCCore
+				let sT := aL[0]
+				if iKind == 2
+					MessageBoxEx "%z|Keep it home|Send as planned|Hire a gun (25)|Later" sT
+				else
+					MessageBoxEx "%z|Ok" sT
+				endif
+				set iShown to 1
+				SetVariable "iLetterKind" 0 CCCore
+				SetVariable "iLetterShownDay" iDay CCCore
+			endif
+		endif
+	endif
+end

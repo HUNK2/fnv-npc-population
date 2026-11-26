@@ -1,0 +1,26 @@
+scn CCFiresFn
+
+; Does the director place a bandit event on day iD's return leg? (tools/company_model.py
+; Company.event_fires) Known a day ahead, so it is also tomorrow's forecast: at most one event every
+; 3 days, none on bill day or the day before, none on the first trip, 25 in 100 up to day 10, then 50.
+
+int iD
+int iLast
+int iSeed
+int iChance
+int iFires
+
+begin Function {iD iLast iSeed}
+	set iFires to 0
+	if eval (iD >= 2 && iD - iLast >= 3 && iD % 7 != 0 && iD % 7 != 6)
+		if iD <= 10
+			set iChance to 25
+		else
+			set iChance to 50
+		endif
+		if eval ((iD * 7919 + iSeed * 104729 + 31) % 100 < iChance)
+			set iFires to 1
+		endif
+	endif
+	SetFunctionValue iFires
+end

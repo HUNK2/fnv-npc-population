@@ -78,6 +78,11 @@ class Session:
         await self.wait_for('CCCore.iFounded')
 
     async def next_day(self):
+        """Jump one day. A field letter left open is pressed with its first button first ("Keep it home" for
+        a road letter, the same as the memo's default): quest scripts stop while a message box is up."""
+        if (await self.menus()).get('messageBox'):
+            await self.tool('fnv_ui_do', {'action': 'message', 'button': '0'})
+            await asyncio.sleep(0.5)
         day = int(await self.value('ar_Size CCCore.aHistCash'))
         await self.console('set GameHour to GameHour + 24')
         await self.wait_for('(ar_Size CCCore.aHistCash) > %d' % day)

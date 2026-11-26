@@ -16,6 +16,11 @@ array_var aQ
 array_var aP
 int iFounded
 int iAuto
+int iRow
+int iM
+int iKeep
+array_var aMK
+array_var aMP
 
 begin GameMode
 	; dev and test switch: place a terminal at the player (once) and open it
@@ -50,6 +55,12 @@ begin MenuMode 1057
 	loop
 	; the running game's compiler cannot resolve Quest.variable: CCCore is read by name
 	let iFounded := GetVariable "iFounded" CCCore
+	; a row that only shows its result text (a report page, a letter, a memo's title) must not redraw:
+	; redrawing the menu wipes the text the click just typed
+	set iKeep to 0
+	if iClick >= 0 && iClick < iRows - 1 && (iScreen == 6 || iScreen == 7)
+		set iKeep to 1
+	endif
 	if iClick >= 0 && iFounded
 		let aQ := GetArrayVariable "aQueue" CCCore
 		if iScreen == 0
@@ -61,6 +72,10 @@ begin MenuMode 1057
 					ar_Append aQ aP[iK]
 					set iK to iK + 1
 				loop
+			elseif iClick == 2
+				set iScreen to 6
+			elseif iClick == 3
+				set iScreen to 7
 			elseif iClick == 4
 				set iScreen to 4
 			elseif iClick == 5
@@ -102,6 +117,24 @@ begin MenuMode 1057
 			elseif iClick == 3
 				ar_Resize aQ 0
 			endif
+		elseif iScreen == 7
+			; an answer row picks that answer; a memo's title row only shows its text
+			let aMK := GetArrayVariable "aMemoKind" CCCore
+			let aMP := GetArrayVariable "aMemoPick" CCCore
+			set iRow to 0
+			set iM to 0
+			while iM < ar_Size aMK
+				set iN to 2
+				if eval (aMK[iM] == 0)
+					set iN to 3
+				endif
+				if iClick > iRow && iClick <= iRow + iN
+					let aMP[iM] := iClick - iRow - 1
+					set iKeep to 0
+				endif
+				set iRow to iRow + 1 + iN
+				set iM to iM + 1
+			loop
 		elseif iScreen == 5
 			if iClick == 0
 				let iAuto := 1 - (GetVariable "iAuto" CCCore)
@@ -109,7 +142,7 @@ begin MenuMode 1057
 			endif
 		endif
 	endif
-	if iClick >= 0
+	if iClick >= 0 && iKeep == 0
 		call CCTermDraw
 		RefreshTerminalMenu
 	endif

@@ -718,6 +718,40 @@
      ]
     }
    ]
+  },
+  "CCFiresFn": {
+   "type": "SCPT",
+   "source": "scripts/CCFiresFn.gek",
+   "script_type": "object"
+  },
+  "CCLetterScript": {
+   "type": "SCPT",
+   "source": "scripts/CCLetterScript.gek",
+   "script_type": "quest"
+  },
+  "CCLetter": {
+   "type": "QUST",
+   "fields": [
+    {
+     "tag": "SCRI",
+     "form": "@CCLetterScript"
+    },
+    {
+     "tag": "FULL",
+     "text": "Company letters"
+    },
+    {
+     "tag": "DATA",
+     "pack": "<BBBBf",
+     "values": [
+      1,
+      50,
+      0,
+      0,
+      1.0
+     ]
+    }
+   ]
   }
  },
  "cells": {

@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import company_model as cm                  # noqa: E402
 import live                                 # noqa: E402
 
-EVENTS = {'': 0, 'bandits_driven_off': 1, 'bandits_took_cargo': 2, 'bandits_wreck': 3}
+EVENTS = {'': 0, 'bandits_driven_off': 1, 'bandits_took_cargo': 2, 'bandits_wreck': 3, 'bandits_empty': 4}
 FIELDS = ('aHistCash', 'aHistSales', 'aHistCosts', 'aHistEvent', 'aHistLoss')
 
 

@@ -5,11 +5,15 @@ import company_model as cm
 import terminal_model as tm
 
 
-def founded(days=0, auto=True):
+def founded(days=0, auto=True, road=cm.SEND):
+    """A company run for some days; every road memo is answered `road` (send: bandits can hit)."""
     c = cm.Company(1234)
     c.found()
     c.auto = auto
     for _ in range(days):
+        for m in c.memos:
+            if m.kind == 'road':
+                c.answer(m, road)
         c.tick()
     return c
 
@@ -40,7 +44,7 @@ class Labels(unittest.TestCase):
         c = founded()
         t = tm.Terminal()
         for _ in range(29):
-            for screen in range(6):
+            for screen in range(8):
                 for direction in (0, 1):
                     t.screen, t.direction = screen, direction
                     rows = tm.labels(c, t)
@@ -53,7 +57,7 @@ class Labels(unittest.TestCase):
         c = founded(9)
         c.cash, c.loan, c.week_sales, c.arrears, c.owner_funds = 123456, 3000, 99999, 12345, 99999
         t = tm.Terminal()
-        for screen in range(6):
+        for screen in range(8):
             t.screen = screen
             for row in tm.labels(c, t):
                 self.assertLessEqual(len(row), tm.ROW_WIDTH, row)
@@ -83,7 +87,8 @@ class Labels(unittest.TestCase):
 class Clicks(unittest.TestCase):
     def test_front_rows_open_their_screens_and_back_returns(self):
         c, t = founded(), tm.Terminal()
-        for row, screen in ((4, tm.ROUTES), (5, tm.PRICES), (9, tm.LEDGER), (10, tm.ORDERS), (11, tm.SETTINGS)):
+        for row, screen in ((2, tm.POST), (3, tm.MEMOS), (4, tm.ROUTES), (5, tm.PRICES), (9, tm.LEDGER),
+                            (10, tm.ORDERS), (11, tm.SETTINGS)):
             tm.click(c, t, row)
             self.assertEqual(t.screen, screen)
             tm.click(c, t, len(tm.labels(c, t)) - 1)
@@ -91,7 +96,7 @@ class Clicks(unittest.TestCase):
 
     def test_info_rows_and_hidden_rows_do_nothing(self):
         c, t = founded(), tm.Terminal()
-        for row in (0, 2, 3, 6, 7, 8, 12, 13):
+        for row in (0, 6, 7, 8, 12, 13):
             tm.click(c, t, row)
             self.assertEqual(t.screen, tm.FRONT)
         self.assertEqual(c.queue_list, [])

@@ -23,7 +23,15 @@ calls are mine and are marked "my call" here and in the plans.
   and a chalkboard on his porch are enabled at founding. `tools/ingame_founding.py`: 13 checks pass
   (day 0 cash 2,500, loan 3,000, owner funds 0), no script errors. Pictures:
   `docs/evidence/m1/m1_founding_*.png`.
-- Next: 1.6 post, morning report, memos and field letters.
+  1.6 the post (`tools/post_model.py`, 18 tests; company and terminal models updated, 62 model
+  tests pass): the morning report (two pages of at most 200 characters), memos (at most 3 a day,
+  a default applied at the deadline: road memo and prepay memo) and field letters (a message box,
+  GameMode only, out of combat, at most one a company day; a while-you-were-away letter after 3
+  days without a terminal visit). `tools/ingame_post.py`: 33 checks pass over 10 days (numbers,
+  letters, the Post and Memos screens read back, answers applied at the next tick), no script
+  errors. Pictures: `docs/evidence/m1/m1_post_*.png`, `m1_memos_*.png`, `m1_field_letter.png`.
+  Not checked by eye: a real click on a Post row typing its text (read back by command instead).
+- Next: 1.7 debt ladder, strikes, cures, busy shield, forecast banner.
 
 ## Done
 
@@ -71,3 +79,23 @@ calls are mine and are marked "my call" here and in the plans.
   near-player cap (20 actors) only stops face animation.
 - The ledger opens at desks (runner's desk, relay desks); the Pip-Boy item is a bonus if the ALCH
   retry works.
+- Bandits now rob the strongbox (the day's Primm takings) on the return leg, not the crates: a
+  robbery takes 30%, a wreck all of it, capped at 3 days' burn; no event on day 1 (it could not be
+  forecast). The road memo answers: send, hire a gun for 25 (cover 75), keep the wagon home
+  (default). Over 56 days home is the best plain answer (a tired market recovers overnight), so a
+  player who ignores memos barely meets bandits. Revisit in the 1.10 balance run.
+- The prepay memo shows after paid bills when the loan is above 0 and cash - 300 still covers 14
+  days of burn; default keep the cash.
+- Opening any company terminal counts as a visit: it clears the waiting letter.
+- Field letters are `MessageBoxEx` boxes from a GameMode quest script (`CCLetterScript`); a road
+  letter's buttons answer the road memo.
+- The ALCH ledger retry (Pip-Boy item) is not done in 1.6; the desks stay the way in.
+
+## Open items for the final report
+
+- fnv-mcp: when an in-game compile fails, the tool retries with editor IDs swapped for hex form
+  IDs and reports the retry's error, which hides the real one (`call CCPlanFn` becomes
+  `call 14000804`: "Expected user function").
+- fnv-mcp `fnv_ui_do button` cannot pick a terminal row by its label (all rows share one tile name).
+- Terminal typing speed, vanilla interior references, `Quest.var` in compile, console echo lines.
+- The weekly statement (doc) is not built yet.

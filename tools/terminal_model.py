@@ -6,9 +6,11 @@ of labels (rows past the list are hidden by the row condition CCTerm.iRows > n) 
 (screen, row). A row shows at most 39 characters on screen (the rest is cut, seen live), so labels stay within 39.
 """
 import company_model as cm
-from company_model import GOODS, half_up
+import post_model as pm
+from company_model import GOODS
+from post_model import bill_estimate, days_to_bills   # noqa: F401 (used by the tests and the game check)
 
-FRONT, PRICES, LEDGER, ORDERS, ROUTES, SETTINGS = range(6)
+FRONT, PRICES, LEDGER, ORDERS, ROUTES, SETTINGS, POST, MEMOS = range(8)
 MAX_ROWS = 14
 ROW_WIDTH = 39
 # Good names padded to one width, as the game writes them (fixed text in each Console line).
@@ -18,7 +20,7 @@ TOWNS = ('GS', 'PR')
 STAGES = {'ok': 'none', 'deferred': 'deferred', 'grace': 'SERVED', 'final': 'FINAL', 'seized': 'SEIZED',
           'probation': 'probation'}
 EVENTS = {'': '', 'bandits_driven_off': '  driven off', 'bandits_took_cargo': '  bandits -%d',
-          'bandits_wreck': '  WRECKED -%d'}
+          'bandits_wreck': '  WRECKED -%d', 'bandits_empty': '  nothing taken'}
 
 
 class Terminal:
@@ -27,18 +29,6 @@ class Terminal:
     def __init__(self):
         self.screen = FRONT
         self.direction = 0          # 0: Goodsprings > Primm, 1: Primm > Goodsprings
-
-
-def days_to_bills(c):
-    return 7 - c.day % 7
-
-
-def bill_estimate(c):
-    """The next weekly bill if the rest of the week goes like a quiet day (design: the front page)."""
-    due = c.day + days_to_bills(c)
-    est = (7 * c.daily_wages() + 7 * cm.FEED + cm.RENT_WEEK + half_up(cm.INTEREST * c.loan)
-           + min(cm.MIN_PRINCIPAL, c.loan) + cm.duty(c.week_sales))
-    return est + (cm.LICENCE if due % 28 == 0 else 0)
 
 
 def best_margin(c, origin=0):
@@ -60,6 +50,42 @@ def last_report(c):
     return c.history[-1] if c.history else None
 
 
+def memos_row(c):
+    if not c.memos:
+        return 'MEMOS    none waiting'
+    return 'MEMOS    %d waiting, %d due tomorrow' % (len(c.memos), sum(1 for m in c.memos if m.due - c.day <= 1))
+
+
+def memo_rows(c):
+    """(label, result text, memo, answer index or None) for each Memos screen row before BACK."""
+    if not c.memos:
+        return [('No memos waiting.', '', None, None)]
+    rows = []
+    for m in c.memos:
+        rows.append((pm.memo_title(c, m), pm.memo_text(c, m), m, None))
+        rows += [(pm.answer_label(m, i), '', m, i) for i in range(len(m.answers))]
+    return rows
+
+
+def post_rows(c):
+    """(label, result text) for each Post screen row before BACK: the report's pages, then letters newest first."""
+    pages = pm.report_pages(c)
+    if not pages:
+        return [('No post yet.', '')]
+    d = c.history[-1].day
+    rows = [('REPORT day %d  page 1' % d, pages[0]), ('REPORT day %d  page 2' % d, pages[1])]
+    return rows + [(pm.letter_title(x), pm.letter_text(x)) for x in c.post[::-1]]
+
+
+def results(c, t):
+    """The result text of each row of the screen that is up (shown when the row is selected)."""
+    if c.founded and t.screen == POST:
+        return [text for _, text in post_rows(c)] + ['']
+    if c.founded and t.screen == MEMOS:
+        return [row[1] for row in memo_rows(c)] + ['']
+    return [''] * len(labels(c, t))
+
+
 def labels(c, t):
     """Row labels of the screen that is up."""
     if not c.founded:
@@ -70,7 +96,7 @@ def labels(c, t):
         rows = ['CASH %d BILLS %dd:%d RUNWAY %dd' % (c.cash, days_to_bills(c), bill_estimate(c), c.runway()),
                 'PLAN     accept the plan (%d crates)' % len(c.plan()),
                 ('POST     day %d: net %d' % (r.day, r.margin)) if r else 'POST     nothing yet',
-                'MEMOS    none waiting',
+                memos_row(c),
                 'ROUTES   wagon %s' % ('home' if c.wagon_ok else 'seized'),
                 'PRICES   best GS>PR: %s %d' % (NAMES[g].strip(), m),
                 'CHAINS   none yet (tier 2)',
@@ -112,6 +138,10 @@ def labels(c, t):
         return rows + ['BACK']
     if t.screen == SETTINGS:
         return ['PLAN EVERY DAY   %s' % ('ON' if c.auto else 'OFF'), 'BACK']
+    if t.screen == POST:
+        return [label for label, _ in post_rows(c)] + ['BACK']
+    if t.screen == MEMOS:
+        return [row[0] for row in memo_rows(c)] + ['BACK']
     raise ValueError(t.screen)
 
 
@@ -124,7 +154,7 @@ def click(c, t, row):
         if row == 1:
             c.queue_list = c.plan()
         else:
-            t.screen = {4: ROUTES, 5: PRICES, 9: LEDGER, 10: ORDERS, 11: SETTINGS}.get(row, FRONT)
+            t.screen = {2: POST, 3: MEMOS, 4: ROUTES, 5: PRICES, 9: LEDGER, 10: ORDERS, 11: SETTINGS}.get(row, FRONT)
         return
     if row == len(rows) - 1:                    # BACK is always the last row
         t.screen = FRONT
@@ -141,3 +171,7 @@ def click(c, t, row):
             c.queue_list = []
     elif t.screen == SETTINGS and row == 0:
         c.auto = not c.auto
+    elif t.screen == MEMOS:
+        _, _, m, i = memo_rows(c)[row]
+        if i is not None:
+            c.answer(m, i)

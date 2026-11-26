@@ -4,9 +4,11 @@ Rules from docs/design.md. Everything the game must reproduce is kept simple eno
 xNVSE script: whole caps rounded half up at the moment they are booked, stocks as doubles, seeded
 rolls with the same integer formula, one round trip Goodsprings -> Primm -> Goodsprings a day.
 
-Day d's tick (06:00) runs, in order: pay arrears from cash, apply the queued orders (the trip:
-out leg, back leg, each with a possible event), workshops, accrue running costs, overnight
-restock, bills on every 7th day, the debt ladder, tier check, then the bookkeeper plans tomorrow.
+Day d's tick (06:00) runs, in order: settle memos (answered or due), the bookkeeper's plan when
+the player set it, pay arrears from cash, apply the queued orders (the trip: out leg, back leg,
+the back leg with a possible event), workshops, accrue running costs, overnight restock, bills on
+every 7th day, the debt ladder, tier check, then the post: tomorrow's forecast, new memos, letters
+(plan task 1.6; texts in tools/post_model.py).
 """
 from dataclasses import dataclass, field
 
@@ -38,6 +40,19 @@ LATE_FEE = 0.10
 DANGER, COVER = 60, 45           # Powder Gangers on the Primm road; a driver and a guard
 EVENT_EVERY = 3                  # a Peddler meets at most one event every 3 days
 EVENT_CHANCE, EVENT_CHANCE_EARLY = 50, 25
+
+MEMO_CAP = 3                     # at most 3 memos wait at once (design: Memos)
+PREPAY = 300                     # the prepay memo offers this much off the loan
+PREPAY_RUNWAY = 14               # ... when the cash left after it still covers 14 days
+GUN_COST, GUN_COVER = 25, 30     # a hired gun for one trip: 25 caps, cover 45 -> 75
+ROB_SHARE = 0.3                  # a robbery takes 30% of the strongbox, a wreck all of it (capped)
+AWAY_DAYS = 3                    # the while-you-were-away letter after 3 days without a terminal visit
+POST_KEEP = 3                    # the Post screen keeps the last 3 letters
+# Memo answers in order; the default is the cautious one (design: Memos).
+MEMO_ANSWERS = {'road': ('send as planned', 'hire a gun for 25', 'keep the wagon home'),
+                'prepay': ('pay 300 off the loan', 'keep the cash')}
+MEMO_DEFAULT = {'road': 2, 'prepay': 1}
+SEND, GUN, HOLD = 0, 1, 2        # road memo answers
 
 TIER2_WORTH, TIER2_TRUST = 1500, 50
 WORKSHOP_COST, SITE_COST, HAND_WAGE = 300, 200, 14
@@ -84,6 +99,25 @@ class Order:
 
 
 @dataclass
+class Memo:
+    kind: str           # 'road' or 'prepay'
+    day: int            # the day it was posted
+    due: int            # the tick that settles it with the default if nobody answers
+    pick: int = None    # the answer chosen at a terminal or in a field letter
+
+    @property
+    def answers(self):
+        return MEMO_ANSWERS[self.kind]
+
+
+@dataclass
+class Letter:
+    day: int
+    kind: str           # 'away', 'road' or 'loss'
+    values: tuple       # the numbers the text needs (tools/post_model.py letter_text)
+
+
+@dataclass
 class DayReport:
     day: int
     sales: int = 0
@@ -95,6 +129,9 @@ class DayReport:
     bills_paid: bool = None
     cash: int = 0
     notes: list = field(default_factory=list)
+    wagon: bool = True          # the wagon ran today
+    road_mode: int = 0          # SEND, GUN or HOLD (the wagon stayed home)
+    prepaid: int = 0            # paid off the loan by a prepay memo
 
     @property
     def margin(self):
@@ -125,6 +162,9 @@ class Company:
         self.ghost_town_done = False
         self.warehouse = {g: 0 for g in GOODS}
         self.workshops, self.sites, self.hands = [], [], 0
+        self.memos, self.road_mode = [], SEND
+        self.last_visit, self.away_posted = 0, False
+        self.letter, self.letter_shown_day, self.post = None, -1, []
 
     # --- founding -------------------------------------------------------------------------------
     def found(self):
@@ -197,13 +237,25 @@ class Company:
         r = DayReport(d)
         if self.ended:
             return r
+        self._settle_memos(r)
         if self.auto:
             self.queue_list = self.plan()
         self._pay_arrears(r)
-        if self.wagon_ok:
+        r.wagon, r.road_mode = self.wagon_ok, self.road_mode
+        if self.wagon_ok and self.road_mode == HOLD:
+            if self.event_fires(d):
+                self.last_event_day = d             # the bandits waited for a wagon that stayed home
+        elif self.wagon_ok:
+            if self.road_mode == GUN:
+                pay = min(GUN_COST, self.cash)
+                self.cash -= pay
+                r.costs += pay
             for origin, dest in (ROUTE, ROUTE[::-1]):
+                if origin == 'PR':
+                    self._event(r)
                 self._leg(r, origin, dest, [o for o in self.queue_list if o.town == origin])
         self.queue_list = []
+        self.road_mode = SEND
         self.run_workshops()
         self.accrued_wages += self.daily_wages()
         self.accrued_feed += FEED
@@ -217,6 +269,8 @@ class Company:
         self._tier_check(r)
         r.cash = self.cash
         self.history.append(r)
+        road = self._post_memos(r)
+        self._post_letters(r, road)
         return r
 
     def _leg(self, r, origin, dest, orders):
@@ -234,12 +288,7 @@ class Company:
                 r.costs += cost
                 self.stock[origin][o.good] -= 1
                 crates.append((o.good, cost))
-        if not crates:
-            return
-        lost = self._event(r, crates) if origin == 'PR' else 0
-        for i, (g, _) in enumerate(crates):
-            if i >= len(crates) - lost:
-                break
+        for g, _ in crates:
             sale = self.price(dest, g, 'sell')
             self.cash += sale
             r.sales += sale
@@ -247,32 +296,48 @@ class Company:
             self.stock[dest][g] += 1
             r.loads[(origin, g)] = r.loads.get((origin, g), 0) + 1
 
-    def _event(self, r, crates):
-        """The director may place a bandit event on the return leg. Returns crates lost (from the end)."""
-        d = self.day
-        if d - self.last_event_day < EVENT_EVERY or d % 7 in (0, 6):
-            return 0
+    def event_fires(self, d):
+        """Does the director place a bandit event on day d's return leg? Known a day ahead (the forecast):
+        at most one every 3 days, none on bill day or the day before, none on the first trip (day 1 has
+        no forecast before it)."""
+        if d < 2 or d - self.last_event_day < EVENT_EVERY or d % 7 in (0, 6):
+            return False
         chance = EVENT_CHANCE_EARLY if d <= 10 else EVENT_CHANCE
-        if roll(self.seed, d, 1) >= chance:
-            return 0
+        return roll(self.seed, d, 1) < chance
+
+    def forecast(self):
+        """Tomorrow's likeliest trouble: 'bandits' (an event meets the return leg), 'quiet' or 'no_wagon'."""
+        if not self.wagon_ok:
+            return 'no_wagon'
+        return 'bandits' if self.event_fires(self.day + 1) else 'quiet'
+
+    def clean_chance(self, cover):
+        """Percent chance the crew drives the bandits off: r^2 / (1 + r^2), r = cover / danger."""
+        ratio = cover / DANGER
+        return half_up(100 * ratio * ratio / (1 + ratio * ratio))
+
+    def _event(self, r):
+        """Before the return leg: the director may send bandits at the wagon. They rob the strongbox, the
+        cash from the day's Primm sales: 30% of it, or all of it in a wreck, never more than 3 days of
+        running costs at tier 1. The loss is booked as a cost of the day."""
+        d = self.day
+        if not self.event_fires(d):
+            return
         self.last_event_day = d
-        ratio = COVER / DANGER
-        p_clean = ratio * ratio / (1 + ratio * ratio)
-        if roll(self.seed, d, 2) < half_up(100 * p_clean):
+        cover = COVER + (GUN_COVER if r.road_mode == GUN else 0)
+        if roll(self.seed, d, 2) < self.clean_chance(cover):
             r.event = 'bandits_driven_off'
-            return 0
+            return
+        takings = r.sales
+        if takings <= 0:
+            r.event = 'bandits_empty'
+            return
         wreck = roll(self.seed, d, 3) < 33
-        lost = len(crates) if wreck else max(1, half_up(0.3 * len(crates)))
-        cap = 3 * self.daily_burn()               # tier 1: never more than 3 days of runway
-        value, n = 0, 0
-        for g, cost in reversed(crates):
-            if n == lost or value + cost > cap:
-                break
-            value += cost
-            n += 1
+        loss = min(takings if wreck else half_up(ROB_SHARE * takings), 3 * self.daily_burn())
+        self.cash -= loss
+        r.costs += loss
         r.event = 'bandits_wreck' if wreck else 'bandits_took_cargo'
-        r.event_loss = value                       # the lost crates were bought (in costs) and never sold
-        return n
+        r.event_loss = loss
 
     def run_workshops(self):
         for site in self.sites:
@@ -385,6 +450,84 @@ class Company:
 
     def history_text(self):
         return ' '.join(n for r in self.history for n in r.notes)
+
+    # --- the post: memos and letters (plan task 1.6) -----------------------------------------------
+    def post_memo(self, memo):
+        """A new memo waits at the office unless 3 already wait; then it is not posted and its default stands."""
+        if len(self.memos) >= MEMO_CAP:
+            return False
+        self.memos.append(memo)
+        return True
+
+    def answer(self, memo, pick):
+        """The player picks an answer at a terminal or in a field letter; it applies at the next tick."""
+        if 0 <= pick < len(memo.answers):
+            memo.pick = pick
+
+    def _settle_memos(self, r):
+        """At the tick, every answered memo and every memo due today is settled (unanswered: the default)."""
+        keep = []
+        for m in self.memos:
+            if m.pick is None and m.due > self.day:
+                keep.append(m)
+                continue
+            a = MEMO_DEFAULT[m.kind] if m.pick is None else m.pick
+            if m.kind == 'road':
+                self.road_mode = a
+            elif m.kind == 'prepay' and a == 0:
+                pay = min(PREPAY, self.loan, self.cash)
+                self.cash -= pay
+                self.loan -= pay
+                r.prepaid = pay
+        self.memos = keep
+
+    def _post_memos(self, r):
+        """After the day: the road memo when bandits meet tomorrow's return leg, the prepay memo after
+        paid bills when the cash allows. Returns whether a road memo was posted."""
+        road = False
+        if self.forecast() == 'bandits':
+            road = self.post_memo(Memo('road', self.day, self.day + 1))
+        if (r.bills_paid and self.loan > 0 and not any(m.kind == 'prepay' for m in self.memos)
+                and self.cash - PREPAY >= PREPAY_RUNWAY * self.daily_burn()):
+            self.post_memo(Memo('prepay', self.day, self.day + 3))
+        return road
+
+    def _post_letters(self, r, road):
+        """Letters of the day go to the Post; the first one waits to be shown in the field. A waiting
+        while-you-were-away letter is kept; any other waiting letter is stale after a tick."""
+        new = []
+        if self.day - self.last_visit >= AWAY_DAYS and not self.away_posted:
+            self.away_posted = True
+            days = [h for h in self.history if h.day > self.last_visit]
+            new.append(Letter(self.day, 'away', (self.day - self.last_visit, self.last_visit + 1,
+                                                 sum(h.sales for h in days), sum(h.costs for h in days),
+                                                 self.cash, self.runway(), len(self.memos))))
+        if road:
+            new.append(Letter(self.day, 'road', (DANGER, COVER)))
+        if r.event in ('bandits_took_cargo', 'bandits_wreck'):
+            new.append(Letter(self.day, 'loss', (r.event, r.event_loss)))
+        self.post = (self.post + new)[-POST_KEEP:]
+        if not (self.letter and self.letter.kind == 'away'):
+            self.letter = new[0] if new else None
+
+    def terminal_visit(self):
+        """The player opens a company terminal: the post is read there, so no field letter waits."""
+        self.last_visit, self.away_posted, self.letter = self.day, False, None
+
+    def field_letter(self, in_combat=False, in_menu=False):
+        """The letter shown in the field now, if any: out of combat and menus, at most one a game day."""
+        if self.letter is None or in_combat or in_menu or self.letter_shown_day == self.day:
+            return None
+        letter, self.letter, self.letter_shown_day = self.letter, None, self.day
+        return letter
+
+    def answer_letter(self, letter, button):
+        """A road letter's buttons: 0 keep it home, 1 send as planned, 2 hire a gun, 3 later."""
+        if letter.kind != 'road' or button == 3:
+            return
+        memo = next((m for m in self.memos if m.kind == 'road'), None)
+        if memo:
+            self.answer(memo, (HOLD, SEND, GUN)[button])
 
     # --- worth and tiers --------------------------------------------------------------------------
     def net_worth(self):

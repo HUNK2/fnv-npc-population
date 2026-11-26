@@ -53,8 +53,28 @@ array_var aHistSales
 array_var aHistCosts
 array_var aHistEvent
 array_var aHistLoss
+array_var aMK
+array_var aMDue
+array_var aMP
+array_var aPg
+array_var aPT
+array_var aPX
+string_var sT
+string_var sM
+int iMemo
+int iA
+int iPick
+int iDue
 
 begin Function {}
+	; result text is typed above the menu when a row is selected (ComputersMenu::DoClick 0x00757F70)
+	; and only used on the Post and Memos screens; other rows get one space (the compiler refuses an
+	; blank text), which types a blank line
+	set iK to 0
+	while iK < 14
+		SetTerminalMenuItemText CCOfficeTerm 2 iK " "
+		set iK to iK + 1
+	loop
 	; the running game's compiler cannot resolve Quest.variable: read and write the quests by name
 	let iFounded := GetVariable "iFounded" CCCore
 	if iFounded == 0
@@ -126,7 +146,22 @@ begin Function {}
 		else
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qPOST     nothing yet%q"
 		endif
-		Console "SetTerminalMenuItemText CCOfficeTerm 1 3 %qMEMOS    none waiting%q"
+		let aMK := GetArrayVariable "aMemoKind" CCCore
+		let aMDue := GetArrayVariable "aMemoDue" CCCore
+		let iN := ar_Size aMK
+		if iN == 0
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 3 %qMEMOS    none waiting%q"
+		else
+			set iQ0 to 0
+			set iK to 0
+			while iK < iN
+				if eval (aMDue[iK] - iDay <= 1)
+					set iQ0 to iQ0 + 1
+				endif
+				set iK to iK + 1
+			loop
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 3 %qMEMOS    %.0f waiting, %.0f due tomorrow%q" iN iQ0
+		endif
 		if iWagonOk
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 4 %qROUTES   wagon home%q"
 		else
@@ -301,11 +336,96 @@ begin Function {}
 				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qDAY %.0f  net %.0f  bandits -%.0f%q" iRow iN iB iD
 			elseif iEv == 3
 				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qDAY %.0f  net %.0f  WRECKED -%.0f%q" iRow iN iB iD
+			elseif iEv == 4
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qDAY %.0f  net %.0f  nothing taken%q" iRow iN iB
 			else
 				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qDAY %.0f  net %.0f%q" iRow iN iB
 			endif
 			set iRow to iRow + 1
 			set iK to iK - 1
+		loop
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qBACK%q" iRow
+		set iN to iRow + 1
+		SetVariable "iRows" iN CCTerm
+
+	elseif iScreen == 6
+		; the Post: the morning report's two pages, then the last 3 letter texts, newest first
+		if iDay == 0
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qNo post yet.%q"
+			set iRow to 1
+		else
+			let aPg := GetArrayVariable "aPage" CCCore
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qREPORT day %.0f  page 1%q" iDay
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qREPORT day %.0f  page 2%q" iDay
+			let sT := aPg[0]
+			Console "SetTerminalMenuItemText CCOfficeTerm 2 0 %q%z%q" sT
+			let sT := aPg[1]
+			Console "SetTerminalMenuItemText CCOfficeTerm 2 1 %q%z%q" sT
+			let aPT := GetArrayVariable "aPostTitle" CCCore
+			let aPX := GetArrayVariable "aPostText" CCCore
+			set iRow to 2
+			let iK := (ar_Size aPT) - 1
+			while iK >= 0
+				let sT := aPT[iK]
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q%z%q" iRow sT
+				let sT := aPX[iK]
+				Console "SetTerminalMenuItemText CCOfficeTerm 2 %.0f %q%z%q" iRow sT
+				set iRow to iRow + 1
+				set iK to iK - 1
+			loop
+		endif
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qBACK%q" iRow
+		set iN to iRow + 1
+		SetVariable "iRows" iN CCTerm
+
+	elseif iScreen == 7
+		; Memos: each memo's title (its text is the result text), then its answers; [x] is the pick
+		let aMK := GetArrayVariable "aMemoKind" CCCore
+		let aMDue := GetArrayVariable "aMemoDue" CCCore
+		let aMP := GetArrayVariable "aMemoPick" CCCore
+		set iRow to 0
+		if eval ((ar_Size aMK) == 0)
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qNo memos waiting.%q"
+			set iRow to 1
+		endif
+		set iMemo to 0
+		while iMemo < ar_Size aMK
+			let iDue := aMDue[iMemo] - iDay
+			let iPick := aMP[iMemo]
+			if eval (aMK[iMemo] == 0)
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qBANDIT SIGN, PRIMM ROAD  due %.0fd%q" iRow iDue
+				Console "SetTerminalMenuItemText CCOfficeTerm 2 %.0f %qBandit sign on the Primm road tomorrow: about 60 strong, our cover is 45. Send the wagon, hire a gun for 25, or keep it home? If you say nothing, it stays home.%q" iRow
+				set iN to 3
+			else
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qPAY DOWN THE LOAN?  due %.0fd%q" iRow iDue
+				Console "SetTerminalMenuItemText CCOfficeTerm 2 %.0f %qThe bills are paid and we hold %.0f caps. Pay 300 off the loan now and save 12 a week in interest? If you say nothing, we keep the cash.%q" iRow iCash
+				set iN to 2
+			endif
+			set iA to 0
+			while iA < iN
+				set iRow to iRow + 1
+				if iPick == iA
+					let sM := "[x]"
+				else
+					let sM := "[ ]"
+				endif
+				if eval (aMK[iMemo] == 0)
+					if iA == 0
+						Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z send as planned%q" iRow sM
+					elseif iA == 1
+						Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z hire a gun for 25%q" iRow sM
+					else
+						Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z keep the wagon home (default)%q" iRow sM
+					endif
+				elseif iA == 0
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z pay 300 off the loan%q" iRow sM
+				else
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z keep the cash (default)%q" iRow sM
+				endif
+				set iA to iA + 1
+			loop
+			set iRow to iRow + 1
+			set iMemo to iMemo + 1
 		loop
 		Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qBACK%q" iRow
 		set iN to iRow + 1

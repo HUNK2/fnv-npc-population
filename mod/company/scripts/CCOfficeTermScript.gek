@@ -1,11 +1,19 @@
 scn CCOfficeTermScript
 
 ; Every company terminal is a reference of CCOfficeTerm. Opening one starts at the front page; the
-; rows are written before Activate opens the menu, so the first draw shows them (M0 0.7).
+; rows are written before Activate opens the menu, so the first draw shows them (M0 0.7). Opening it
+; is a visit (Company.terminal_visit): the post is read here, so no field letter waits and the
+; while-you-were-away count starts again.
+
+int iD
 
 begin OnActivate
 	if IsActionRef player
 		SetVariable "iScreen" 0 CCTerm
+		let iD := GetVariable "iDay" CCCore
+		SetVariable "iLastVisit" iD CCCore
+		SetVariable "iAwayPosted" 0 CCCore
+		SetVariable "iLetterKind" 0 CCCore
 		call CCTermDraw
 	endif
 	Activate
