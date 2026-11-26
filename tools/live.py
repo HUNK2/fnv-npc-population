@@ -78,6 +78,10 @@ class Session:
             if data.get('messageBox'):
                 await self.tool('fnv_ui_do', {'action': 'message', 'button': '0'})
                 await asyncio.sleep(1)
+            elif any(m.get('name') == 'DialogMenu' for m in data.get('menuStack') or []):
+                # a vanilla NPC who greets the player on sight (Sunny Smiles in the saloon) opens a talk
+                await self.tool('fnv_ui_do', {'action': 'close_all'})
+                await asyncio.sleep(1)
             elif data.get('inMenuMode'):
                 await self.tool('fnv_window', {'action': 'unpause'})
                 await asyncio.sleep(1)
@@ -90,9 +94,10 @@ class Session:
         if await self.value('CCCore.iFounded'):
             raise RuntimeError('the company is already running: start a fresh game')
         await self.console('set CCCore.iSeed to %d' % SEED)
-        await self.console('set CCCore.iAuto to %d' % auto)
         await self.console('set CCCore.iFoundNow to 1')
         await self.wait_for('CCCore.iFounded')
+        # founding turns the daily plan on (M1 1.10); a check that wants it off sets it after
+        await self.console('set CCCore.iAuto to %d' % auto)
 
     async def next_day(self):
         """Jump one day. A field letter left open is pressed with its first button first ("Keep it home" for

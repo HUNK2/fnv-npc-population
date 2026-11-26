@@ -263,6 +263,8 @@ begin GameMode
 		set iFoundNow to 0
 		set iFounded to 1
 		set iTier to 1
+		; the daily plan starts on: the company works while you are away
+		set iAuto to 1
 		set iLoan to 3000
 		set iCash to 3000
 		set iOwner to 500
@@ -311,6 +313,9 @@ begin GameMode
 				if eval (aMemoKind[iI] == 0)
 					if iK < 0
 						set iK to 2
+						if eval (iConOn && iConNext == aMemoDue[iI])
+							set iK to 0
+						endif
 					endif
 					set iRoadMode to iK
 				elseif eval (aMemoKind[iI] == 2)
@@ -696,6 +701,7 @@ begin GameMode
 		if eval (iTier == 1 && iValue >= 1500 && iN == 0 && aTrust[0] >= 50 && iGhostTown)
 			set iTier to 2
 			set iTierUp to 1
+			set iLastEventDay to iDay
 			call CCBuildFn 6
 		endif
 
@@ -821,7 +827,13 @@ begin GameMode
 			ar_Append aPostTitle sS
 		endif
 		if iRoadPosted
-			let sS := sv_Construct "Bandit sign on the Primm road tomorrow: about 60 strong, our cover is %.0f. Keep the wagon home tomorrow?" iCover
+			let fM := iCover / 60
+			let iN := Floor (100 * fM * fM / (1 + fM * fM) + 0.5)
+			if iConOn && iConNext == (iDay + 1)
+				let sS := sv_Construct "Bandit sign on the Primm road tomorrow: about 60 strong, our cover %.0f: %.0f in 100 to get through clean. Keep the wagon home tomorrow? Primm's water is due tomorrow." iCover iN
+			else
+				let sS := sv_Construct "Bandit sign on the Primm road tomorrow: about 60 strong, our cover %.0f: %.0f in 100 to get through clean. Keep the wagon home tomorrow?" iCover iN
+			endif
 			ar_Append aPostText sS
 			if iNewKind == 0
 				set iNewKind to 2

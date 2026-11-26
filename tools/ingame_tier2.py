@@ -123,6 +123,8 @@ async def run():
                            if m and m.kind == 'contract' and a == 0)
                 await click(row, 'ACCEPT the contract')
                 await back()
+                await click(6, 'CHAINS at tier 1: what tier 2 needs')
+                await back()
                 await close()
             if r.tier_up:
                 tier_day = d

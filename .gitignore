@@ -4,3 +4,4 @@ release/*.zip
 *.bak*
 docs/evidence/**/*.dds
 tools/local.json
+tools/.*.log

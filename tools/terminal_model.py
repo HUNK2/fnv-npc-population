@@ -76,7 +76,7 @@ def memo_rows(c):
     rows = []
     for m in c.memos:
         rows.append((pm.memo_title(c, m), pm.memo_text(c, m), m, None))
-        rows += [(pm.answer_label(m, i), '', m, i) for i in range(len(m.answers))]
+        rows += [(pm.answer_label(m, i, c), '', m, i) for i in range(len(m.answers))]
     return rows
 
 
@@ -136,6 +136,8 @@ def candidate_rows(c, t):
     rows = [(person_label(p), text, None)]
     if c.can_hire(t.pick):
         rows.append(('HIRE for %d a day' % p.wage, '', 'hire'))
+    elif len(c.staff) >= cm.STAFF_MAX:
+        rows.append(('HIRE: the books are full (%d)' % cm.STAFF_MAX, '', None))
     else:
         rows.append(('HIRE: one driver is enough', '', None))
     rows.append((('HONESTY  %s' % c.honesty_band(p)) if p.checked else 'REFERENCE CHECK  %d caps' % cm.REF_CHECK,
@@ -210,7 +212,16 @@ def chains_row(c):
 
 
 def build_rows(c):
-    """The Build screen: money first, then a row per building (its cost, or BUILT), then BACK."""
+    """The Build screen: money first, then a row per building (its cost, or BUILT), then BACK. Before
+    tier 2 it shows what tier 2 needs instead."""
+    if c.tier < 2:
+        strikes = len(c.recent_strikes())
+        return ['TIER 2 (Outfit) NEEDS ALL OF THESE:',
+                'WORTH    %d of %d earned' % (c.earned_worth(), cm.TIER2_WORTH),
+                'TRUST    Goodsprings %d of %d' % (c.trust['GS'], cm.TIER2_TRUST),
+                'DEED     Ghost Town Gunfight: %s' % ('done' if c.ghost_town_done else 'not yet'),
+                'STRIKES  %d in 56 days (needs 0)' % strikes,
+                'BACK']
     rows = ['MONEY  cash %d, own money %d' % (c.cash, c.owner_funds)]
     for b in cm.BUILD_ORDER:
         rows.append('%s %s' % (BUILD_TEXT[b], 'BUILT' if c.built(b) else '%d' % c.build_cost(b)))
@@ -333,7 +344,7 @@ def click(c, t, row):
         else:
             t.screen = {2: POST, 3: MEMOS, 4: ROUTES, 5: PRICES, 7: STAFF, 8: CONTRACTS, 9: LEDGER,
                         10: ORDERS, 11: SETTINGS, 12: NOTICE}.get(row, FRONT)
-            if row == 6 and c.tier >= 2:
+            if row == 6:
                 t.screen = BUILD
         return
     if row == len(rows) - 1:                    # BACK is always the last row

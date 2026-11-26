@@ -105,9 +105,7 @@ begin MenuMode 1057
 			elseif iClick == 5
 				set iScreen to 1
 			elseif iClick == 6
-				if eval ((GetVariable "iTier" CCCore) >= 2)
-					set iScreen to 15
-				endif
+				set iScreen to 15
 			elseif iClick == 7
 				set iScreen to 9
 			elseif iClick == 8

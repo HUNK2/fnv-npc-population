@@ -78,6 +78,7 @@ DRIVER_COVER, GUARD_COVER = 15, 30
 SKIM_HONESTY, SKIM_SHARE = 30, 0.02
 REF_CHECK = 10
 FOUNDERS = (('Ruth Coyle', 'driver'), ('Dutch Haley', 'guard'))
+STAFF_MAX = 10                   # the Staff screen's 14 rows: cover, 10 people, HIRE, BACK (and one spare)
 NAMES = ('Abe Tolliver', 'Bess Marlowe', 'Cal Dunning', 'Dora Pike', 'Eli Varga', 'Fay Hollins',
          'Gus Merritt', 'Hank Ostrow', 'Ida Kesey', 'Jody Ramos', 'Kit Albrecht', 'Lou Danner',
          'Mae Corliss', 'Ned Ashby', 'Opal Reyes', 'Pete Lusk', 'Quinn Bodie', 'Rosa Tamez',
@@ -268,6 +269,7 @@ class Company:
         self.cash -= (assets - from_owner) + HIRING_FEES + LICENCE
         self.assets = assets
         self.staff = [Person(n, role, 50, 60, ROLE_WAGE[role]) for n, role in FOUNDERS]
+        self.auto = True             # the daily plan starts on: the company works while you are away
 
     # --- prices ---------------------------------------------------------------------------------
     def mult(self, town, good, stock=None):
@@ -533,6 +535,8 @@ class Company:
 
     def can_hire(self, i):
         c = self.candidates[i]
+        if len(self.staff) >= STAFF_MAX:
+            return False
         return not (c.role == 'driver' and self.has_driver())     # one wagon needs one driver
 
     def hire(self, i):
@@ -865,6 +869,13 @@ class Company:
         if 0 <= pick < len(memo.answers):
             memo.pick = pick
 
+    def memo_default(self, m):
+        """The answer an unanswered memo takes. A road memo on a contract delivery day sends the wagon:
+        keeping it home would miss the delivery."""
+        if m.kind == 'road' and self.contract_due(m.due):
+            return SEND
+        return MEMO_DEFAULT[m.kind]
+
     def _settle_memos(self, r):
         """At the tick, every answered memo and every memo due today is settled (unanswered: the default)."""
         keep = []
@@ -872,7 +883,7 @@ class Company:
             if m.pick is None and m.due > self.day:
                 keep.append(m)
                 continue
-            a = MEMO_DEFAULT[m.kind] if m.pick is None else m.pick
+            a = self.memo_default(m) if m.pick is None else m.pick
             if m.kind == 'road':
                 self.road_mode = a
             elif m.kind == 'contract':
@@ -942,7 +953,9 @@ class Company:
                                                  sum(h.sales for h in days), sum(h.costs for h in days),
                                                  self.cash, self.runway(), len(self.memos))))
         if road:
-            new.append(Letter(self.day, 'road', (DANGER, self.cover())))
+            cover = self.cover()
+            new.append(Letter(self.day, 'road', (DANGER, cover, self.clean_chance(cover),
+                                                 int(self.contract_due(self.day + 1)))))
         if r.event in ('bandits_took_cargo', 'bandits_wreck'):
             new.append(Letter(self.day, 'loss', (r.event, r.event_loss)))
         if r.tier_up:
@@ -1015,6 +1028,7 @@ class Company:
             self.tier = 2
             r.notes.append('tier 2: Outfit')
             r.tier_up = True
+            self.last_event_day = self.day      # no bad event for the 2 days after a new tier (design)
 
     def build_cost(self, name):
         return WORKSHOP_COST if name in WORKSHOPS else SITE_COST

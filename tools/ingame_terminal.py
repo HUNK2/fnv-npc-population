@@ -73,6 +73,10 @@ async def run():
         c.auto = True
         for _ in range(days):
             c.tick()
+            letter = c.field_letter()     # the game presses a letter's first button (live.next_day)
+            if letter:
+                c.answer_letter(letter, 0, c.letter_buttons(letter))
+        await s.to_game_mode()            # the last day's letter, if any, the same way
         t = tm.Terminal()
         print('day %d: opening the terminal' % days)
 

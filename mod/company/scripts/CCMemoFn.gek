@@ -1,0 +1,121 @@
+scn CCMemoFn
+
+; The Memos screen (terminal screen 7; tools/terminal_model.py memo_rows, tools/post_model.py memo_text and
+; answer_label): each memo's title (its text is the row's result text), then its answers; [x] is the
+; pick. A road memo gives the odds of a clean run; on a contract delivery day its default is to send the
+; wagon (Company.memo_default). Returns the number of rows drawn, BACK included.
+
+int iDay
+int iCash
+int iCover
+int iGun
+int iB
+int iS
+int iRow
+int iMemo
+int iDue
+int iPick
+int iN
+int iA
+int iDef
+int iConOn
+int iConNext
+float fM
+array_var aMK
+array_var aMDue
+array_var aMP
+string_var sM
+string_var sD
+string_var sT
+int iClean
+
+begin Function {}
+	let iDay := GetVariable "iDay" CCCore
+	let iCash := GetVariable "iCash" CCCore
+	let iConOn := GetVariable "iConOn" CCCore
+	let iConNext := GetVariable "iConNext" CCCore
+	let aMK := GetArrayVariable "aMemoKind" CCCore
+	let aMDue := GetArrayVariable "aMemoDue" CCCore
+	let aMP := GetArrayVariable "aMemoPick" CCCore
+	let iCover := call CCCoverFn
+	let fM := iCover / 60
+	let iClean := Floor (100 * fM * fM / (1 + fM * fM) + 0.5)
+	let fM := (iCover + 30) / 60
+	let iGun := Floor (100 * fM * fM / (1 + fM * fM) + 0.5)
+	let iB := GetVariable "iOfferPrice" CCCore
+	let iS := Floor (iB * (1 + 0.07) + 0.5)
+	set iRow to 0
+	if eval ((ar_Size aMK) == 0)
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qNo memos waiting.%q"
+		set iRow to 1
+	endif
+	set iMemo to 0
+	while iMemo < ar_Size aMK
+		let iDue := aMDue[iMemo] - iDay
+		let iPick := aMP[iMemo]
+		set iDef to 2
+		if eval (aMK[iMemo] == 0)
+			if eval (iConOn && iConNext == aMDue[iMemo])
+				set iDef to 0
+				let sT := "Unanswered, it goes: Primm's water is due."
+			else
+				let sT := "Unanswered, it stays home."
+			endif
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qBANDIT SIGN, PRIMM ROAD  due %.0fd%q" iRow iDue
+			Console "SetTerminalMenuItemText CCOfficeTerm 2 %.0f %qBandit sign on the Primm road tomorrow: about 60 strong, our cover %.0f: %.0f in 100 to get through clean, %.0f with a gun (25). Send, hire a gun, or keep it home? %z%q" iRow iCover iClean iGun sT
+			set iA to 3
+		elseif eval (aMK[iMemo] == 2)
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qPRIMM WANTS WATER  due %.0fd%q" iRow iDue
+			Console "SetTerminalMenuItemText CCOfficeTerm 2 %.0f %qPrimm's store wants 4 crates of water every 3 days for 28 days, at %.0f a crate. Accept, or counter at %.0f (they may walk)? If you say nothing, we decline.%q" iRow iB iS
+			set iA to 3
+		else
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qPAY DOWN THE LOAN?  due %.0fd%q" iRow iDue
+			Console "SetTerminalMenuItemText CCOfficeTerm 2 %.0f %qThe bills are paid and we hold %.0f caps. Pay 300 off the loan now and save 12 a week in interest? If you say nothing, we keep the cash.%q" iRow iCash
+			set iA to 2
+			set iDef to 1
+		endif
+		set iN to 0
+		while iN < iA
+			set iRow to iRow + 1
+			if iPick == iN
+				let sM := "[x]"
+			else
+				let sM := "[ ]"
+			endif
+			if iDef == iN
+				let sD := " (default)"
+			else
+				; the compiler refuses an empty string: erase the one space
+				let sD := " "
+				sv_Erase sD 0 1
+			endif
+			if eval (aMK[iMemo] == 0)
+				if iN == 0
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z send as planned%z%q" iRow sM sD
+				elseif iN == 1
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z hire a gun for 25%z%q" iRow sM sD
+				else
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z keep the wagon home%z%q" iRow sM sD
+				endif
+			elseif eval (aMK[iMemo] == 2)
+				if iN == 0
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z accept at %.0f%z%q" iRow sM iB sD
+				elseif iN == 1
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z counter at %.0f%z%q" iRow sM iS sD
+				else
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z decline%z%q" iRow sM sD
+				endif
+			elseif iN == 0
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z pay 300 off the loan%z%q" iRow sM sD
+			else
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z keep the cash%z%q" iRow sM sD
+			endif
+			set iN to iN + 1
+		loop
+		set iRow to iRow + 1
+		set iMemo to iMemo + 1
+	loop
+	Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qBACK%q" iRow
+	set iN to iRow + 1
+	SetFunctionValue iN
+end

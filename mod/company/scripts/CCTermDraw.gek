@@ -423,71 +423,8 @@ begin Function {}
 		SetVariable "iRows" iN CCTerm
 
 	elseif iScreen == 7
-		; Memos: each memo's title (its text is the result text), then its answers; [x] is the pick
-		let aMK := GetArrayVariable "aMemoKind" CCCore
-		let aMDue := GetArrayVariable "aMemoDue" CCCore
-		let aMP := GetArrayVariable "aMemoPick" CCCore
-		let iK := call CCCoverFn
-		let iB := GetVariable "iOfferPrice" CCCore
-		let iS := Floor (iB * (1 + 0.07) + 0.5)
-		set iRow to 0
-		if eval ((ar_Size aMK) == 0)
-			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qNo memos waiting.%q"
-			set iRow to 1
-		endif
-		set iMemo to 0
-		while iMemo < ar_Size aMK
-			let iDue := aMDue[iMemo] - iDay
-			let iPick := aMP[iMemo]
-			if eval (aMK[iMemo] == 0)
-				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qBANDIT SIGN, PRIMM ROAD  due %.0fd%q" iRow iDue
-				Console "SetTerminalMenuItemText CCOfficeTerm 2 %.0f %qBandit sign on the Primm road tomorrow: about 60 strong, our cover is %.0f. Send the wagon, hire a gun for 25, or keep it home? If you say nothing, it stays home.%q" iRow iK
-				set iN to 3
-			elseif eval (aMK[iMemo] == 2)
-				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qPRIMM WANTS WATER  due %.0fd%q" iRow iDue
-				Console "SetTerminalMenuItemText CCOfficeTerm 2 %.0f %qPrimm's store wants 4 crates of water every 3 days for 28 days, at %.0f a crate. Accept, or counter at %.0f (they may walk)? If you say nothing, we decline.%q" iRow iB iS
-				set iN to 3
-			else
-				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qPAY DOWN THE LOAN?  due %.0fd%q" iRow iDue
-				Console "SetTerminalMenuItemText CCOfficeTerm 2 %.0f %qThe bills are paid and we hold %.0f caps. Pay 300 off the loan now and save 12 a week in interest? If you say nothing, we keep the cash.%q" iRow iCash
-				set iN to 2
-			endif
-			set iA to 0
-			while iA < iN
-				set iRow to iRow + 1
-				if iPick == iA
-					let sM := "[x]"
-				else
-					let sM := "[ ]"
-				endif
-				if eval (aMK[iMemo] == 0)
-					if iA == 0
-						Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z send as planned%q" iRow sM
-					elseif iA == 1
-						Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z hire a gun for 25%q" iRow sM
-					else
-						Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z keep the wagon home (default)%q" iRow sM
-					endif
-				elseif eval (aMK[iMemo] == 2)
-					if iA == 0
-						Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z accept at %.0f%q" iRow sM iB
-					elseif iA == 1
-						Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z counter at %.0f%q" iRow sM iS
-					else
-						Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z decline (default)%q" iRow sM
-					endif
-				elseif iA == 0
-					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z pay 300 off the loan%q" iRow sM
-				else
-					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z keep the cash (default)%q" iRow sM
-				endif
-				set iA to iA + 1
-			loop
-			set iRow to iRow + 1
-			set iMemo to iMemo + 1
-		loop
-		Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qBACK%q" iRow
-		set iN to iRow + 1
+		; Memos: drawn by CCMemoFn (M1 1.10: it moved out to keep this script under the compile limit)
+		let iN := call CCMemoFn
 		SetVariable "iRows" iN CCTerm
 
 	elseif iScreen == 8

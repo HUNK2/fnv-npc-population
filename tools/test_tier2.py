@@ -139,11 +139,11 @@ class Build(unittest.TestCase):
 
 
 class Screen(unittest.TestCase):
-    def test_chains_row_at_tier_1_opens_nothing(self):
+    def test_chains_row_at_tier_1_opens_the_tier_2_checklist(self):
         c, t = founded(), tm.Terminal()
         self.assertEqual(tm.labels(c, t)[6], 'CHAINS   none yet (tier 2)')
         tm.click(c, t, 6)
-        self.assertEqual(t.screen, tm.FRONT)
+        self.assertEqual(t.screen, tm.BUILD)
 
     def test_chains_row_at_tier_2_opens_build(self):
         c, t = outfit(), tm.Terminal()

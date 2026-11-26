@@ -54,6 +54,11 @@ async def would_say(s, topic='CCFoundAsk'):
 
 async def talk(s, choices):
     out = await s.tool('fnv_dialogue_choose', {'speaker': HOLLIS, 'choices': choices, 'close': True})
+    if (out.get('error') or {}).get('code') == 'NO_DIALOGUE':
+        # once after the Powder Ganger takeover the talk did not open; the next try did
+        await asyncio.sleep(2)
+        await s.to_game_mode()
+        out = await s.tool('fnv_dialogue_choose', {'speaker': HOLLIS, 'choices': choices, 'close': True})
     return json.dumps(out)
 
 
@@ -71,6 +76,8 @@ async def run():
         check('Hollis is in the Prospector Saloon', True)
         check('the terminal is in the Prospector Saloon',
               bool(await s.value('CCAgentTermRef.GetInCell GSProspectorSaloonInterior')))
+        check('the Primm branch terminal is in Vikki and Vance',
+              bool(await s.value('CCPrimmTermRef.GetInCell VikkiAndVance')))
         check('the wagon yard waits (disabled)',
               all([await s.value('%s.GetDisabled' % r) for r in YARD]))
         await s.console('player.MoveTo %s' % HOLLIS)
@@ -87,6 +94,8 @@ async def run():
         await s.wait_for('CCFounding.iAliceDead', want=False)
 
         await s.console('SetStage VMS16b 100')
+        await asyncio.sleep(1)
+        await s.to_game_mode()          # the stage shows a reputation box: quest scripts wait under it
         await s.wait_for('CCFounding.iGangLandlord')
         said = await would_say(s)
         check('Powder Gangers hold Goodsprings: landlord pitch', said == PITCH_GANG, said[:300])

@@ -97,7 +97,7 @@ class Clicks(unittest.TestCase):
 
     def test_info_rows_and_hidden_rows_do_nothing(self):
         c, t = founded(), tm.Terminal()
-        for row in (0, 6, 13):
+        for row in (0, 13):
             tm.click(c, t, row)
             self.assertEqual(t.screen, tm.FRONT)
         self.assertEqual(c.queue_list, [])

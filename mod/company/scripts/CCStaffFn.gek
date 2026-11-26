@@ -55,6 +55,10 @@ begin Function {iAct iIdx}
 	if iAct == 1
 		if eval (iIdx >= 0 && iIdx < (ar_Size aCN))
 			set iN to 0
+			; at most 10 on the books (the Staff screen's 14 rows)
+			if eval ((ar_Size aSN) >= 10)
+				set iN to 1
+			endif
 			if eval (aCR[iIdx] == 0)
 				set iK to 0
 				while iK < ar_Size aSR

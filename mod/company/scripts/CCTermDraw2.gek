@@ -144,7 +144,9 @@ begin Function {}
 					set iK to iK + 1
 				loop
 			endif
-			if iDriver
+			if eval ((ar_Size aSR) >= 10)
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qHIRE: the books are full (10)%q"
+			elseif iDriver
 				Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qHIRE: one driver is enough%q"
 			else
 				Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qHIRE for %.0f a day%q" iN

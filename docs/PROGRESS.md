@@ -62,7 +62,15 @@ calls are mine and are marked "my call" here and in the plans.
   script errors. Pictures: `docs/evidence/m1/m1_build_screen.png`, `m1_office_inside.png`,
   `m1_office_exit.png`, `m1_office_outside.png`. `tools/balance_run.py` (100 model days for a
   passive, careful and good player) is ready for 1.10.
-- Next: 1.10 balance, FPS, old save, review, what to try.
+  1.10 milestone check (141 model tests pass; `tools/test_review.py` 11 of them): the review fixes
+  (below) in the models and the game; the Memos screen moved to `CCMemoFn` (`CCTermDraw` was at the
+  in-game compile limit; now 13.1 KB); a Primm branch terminal on the Vikki and Vance cashier
+  counter. In-game checks on fresh games, all with 0 script errors: `ingame_run.py 28` matches the model on all 28 days; founding 14 checks (with the Primm terminal), post 33, ladder 70, hiring 133, terminal 23 (screens and clicks), tier 2 72 (with the tier 1 checklist) pass. FPS (`fnv_profile frame`, 5 s, vsync 60): Prospector Saloon 59.2 fps / 16.06 ms with the company, 60.0 / 16.02 with its refs disabled; Primm (Vikki and Vance) 60.0 / 16.12 with the branch terminal, 60.0 / 16.14 without; quest scripts 0.1 ms a frame. Old save `fnvmcp_test_rotf_release_car`: Hollis and both terminals placed, the quests run, founding and day 1 work (cash 3,195, the daily plan on), 0 script errors (the save was not overwritten).
+  `tools/balance_run.py` (100 model days): passive nets 258 to 673 a week after week 1 (target
+  about 250), careful and good players reach tier 2 on day 10 and repay the loan in week 6
+  (targets 5 and 8), no ended companies. What to try: `docs/m1-what-to-try.md`.
+- **M1 One road is done.** Next: the towns design (`docs/towns-design.md`, reviewed) and T1
+  Goodsprings (`docs/plans/2026-11-27-t1-goodsprings.md`).
 
 ## Done
 
@@ -163,6 +171,22 @@ calls are mine and are marked "my call" here and in the plans.
   changed (a compile-cache miss), so the game had no `CCCore` variables. `tools/rebuild.sh` now runs
   `tools/check_compiled.py` after every build and stops on any uncompiled script.
 
+- 1.10 review answers: (1) the daily plan now starts on at founding: the company works while you
+  are away (design). (2) No float for the first week: the stress test showed a company with 0 to
+  800 cash dies either way; rescue loans and the contract advance come in M2; the forecast warns
+  5 days ahead. (3) A second miss on probation skips Grace, as the design says. (4) An unanswered
+  road memo on a Primm delivery day sends the wagon (keeping it home would miss the delivery); the
+  memo and the road letter give the odds of a clean run. (5) At tier 1 the CHAINS row opens a
+  checklist of what tier 2 needs. (6) No bandits for 2 days after a new tier. (7) At most 10 people
+  on the books (the Staff screen's rows). (8) Paying the loan down by hand is M2; M1 has the prepay
+  memo. (9) Underdog contracts and easing after a loss are M2. (10) Correction: terminal text is
+  not always cut to 200 characters: report page 1 can reach 214, under the engine's 259.
+  (11) The sheriff flag is read once at founding; workshop hands are M2.
+- 1.10: the Primm branch terminal is the company terminal form placed by `CCFounding` with
+  `MoveToCell VikkiAndVance 1010 4027 7370`, facing the floor (heading 0).
+- 1.10 fix (checks): a reputation box (`SetStage VMS16b 100`) and Sunny Smiles' greeting
+  (DialogMenu) stop quest scripts; `tools/live.py to_game_mode` now closes both.
+
 ## Open items for the final report
 
 - fnv-mcp: when an in-game compile fails, the tool retries with editor IDs swapped for hex form
@@ -183,3 +207,7 @@ calls are mine and are marked "my call" here and in the plans.
   `fnv_spec build` can write a script uncompiled on a cache miss without saying so.
 - Not in M1: office rent; skill-gated workshop hires (Survival 50 for the purifier).
 - The checks move the game window to the monitor named in `tools/local.json` (not in git).
+- Unverified: VMS16 (Ghost Town Gunfight) completion for a player who sided with the Powder Gangers;
+  the DLC quest IDs used by the busy shield; `nVPrimmDeputyConv`.
+- fnv-mcp (uncommitted in fnv-mcp-code): `fnv_spec build` now lets records name the plugin's own
+  placed references by editor id (an AI package's location).

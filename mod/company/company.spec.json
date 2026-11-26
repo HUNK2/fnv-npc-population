@@ -838,6 +838,11 @@
    "type": "SCPT",
    "source": "scripts/CCBuildFn.gek",
    "script_type": "object"
+  },
+  "CCMemoFn": {
+   "type": "SCPT",
+   "source": "scripts/CCMemoFn.gek",
+   "script_type": "object"
   }
  },
  "cells": {
@@ -862,6 +867,17 @@
      "persistent": true,
      "position": [
       200,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "primmterm",
+     "base": "@CCOfficeTerm",
+     "editor_id": "CCPrimmTermRef",
+     "persistent": true,
+     "position": [
+      400,
       0,
       0
      ]

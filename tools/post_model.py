@@ -112,9 +112,13 @@ def memo_title(c, m):
 
 def memo_text(c, m):
     if m.kind == 'road':
-        return ('Bandit sign on the Primm road tomorrow: about %d strong, our cover is %d. Send the wagon, '
-                'hire a gun for %d, or keep it home? If you say nothing, it stays home.'
-                % (cm.DANGER, c.cover(), cm.GUN_COST))
+        cover = c.cover()
+        tail = ('Unanswered, it goes: Primm\'s water is due.' if c.memo_default(m) == cm.SEND
+                else 'Unanswered, it stays home.')
+        return ('Bandit sign on the Primm road tomorrow: about %d strong, our cover %d: %d in 100 to get '
+                'through clean, %d with a gun (%d). Send, hire a gun, or keep it home? %s'
+                % (cm.DANGER, cover, c.clean_chance(cover), c.clean_chance(cover + cm.GUN_COVER), cm.GUN_COST,
+                   tail))
     if m.kind == 'contract':
         return ('Primm\'s store wants %d crates of water every %d days for %d days, at %d a crate. Accept, '
                 'or counter at %d (they may walk)? If you say nothing, we decline.'
@@ -125,9 +129,9 @@ def memo_text(c, m):
             % (c.cash, cm.PREPAY, cm.half_up(cm.INTEREST * cm.PREPAY)))
 
 
-def answer_label(m, i):
+def answer_label(m, i, c=None):
     mark = '[x]' if m.pick == i else '[ ]'
-    default = ' (default)' if cm.MEMO_DEFAULT[m.kind] == i else ''
+    default = ' (default)' if (c.memo_default(m) if c else cm.MEMO_DEFAULT[m.kind]) == i else ''
     return '  %s %s%s' % (mark, m.answers[i], default)
 
 
@@ -182,8 +186,10 @@ def letter_text(letter):
     if letter.kind == 'tier':
         return TIER_TEXT
     if letter.kind == 'road':
-        return ('Bandit sign on the Primm road tomorrow: about %d strong, our cover is %d. '
-                'Keep the wagon home tomorrow?' % v)
+        danger, cover, chance, due = v
+        return ('Bandit sign on the Primm road tomorrow: about %d strong, our cover %d: %d in 100 to get '
+                'through clean. Keep the wagon home tomorrow?%s'
+                % (danger, cover, chance, ' Primm\'s water is due tomorrow.' if due else ''))
     event, loss = v
     if event == 'bandits_wreck':
         return 'Bandits took the whole strongbox on the Primm road: %d caps lost. The crew is unhurt.' % loss
