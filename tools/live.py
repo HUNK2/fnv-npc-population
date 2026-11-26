@@ -6,12 +6,15 @@ server's own live tools are talking to the game: the companion pipe has one inst
 import asyncio
 import contextlib
 import json
+import sys
 import time
 from pathlib import Path
 
 import fnvmcp_call
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+import game_window                          # noqa: E402
 COMPANY_SPEC = HERE.parent / 'mod' / 'company' / 'company.spec.json'
 SEED = 1234
 ARRIVAL_WINDOW = 105    # fnv-mcp closes message boxes for 90 s after a coc launch; margin for the load
@@ -67,6 +70,9 @@ class Session:
                 print('waiting %.0f s for the launch message closer to stop' % left)
                 await asyncio.sleep(left)
         await self.tool('fnv_window', {'action': 'background'})
+        if game_window.wanted_monitor():
+            game_window.move(game_window.wanted_monitor())
+            await asyncio.sleep(0.5)
         for _ in range(30):
             data = await self.menus()
             if data.get('messageBox'):

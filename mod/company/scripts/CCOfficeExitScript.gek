@@ -1,0 +1,9 @@
+scn CCOfficeExitScript
+
+; The company office's door, inside: out to Goodsprings by the Prospector Saloon.
+
+begin OnActivate
+	if IsActionRef player
+		player.MoveTo CCOfficeOutMarker
+	endif
+end

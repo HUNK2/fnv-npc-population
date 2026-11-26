@@ -154,13 +154,17 @@ def notice_buttons(c, acts):
     return '|'.join(words[a] for a in acts)
 
 
+TIER_TEXT = ('Boss, we are an Outfit now. Our office next to the Prospector Saloon is open and Primm gave us '
+             'a stall. The Build screen is open at the terminal: purifier, apothecary, well rig, forager hut.')
+
+
 def letter_title(letter):
     if letter.kind == 'notice':
         word = {'grace': 'notice served', 'final': 'final notice', 'seized': 'wagon seized',
                 'takeover': 'takeover notice', 'probation': 'strike'}[letter.values[0]]
     else:
         word = {'away': 'while you were away', 'road': 'bandit sign', 'loss': 'robbed',
-                'forecast': 'short on bill day', 'closed': 'company closed'}[letter.kind]
+                'forecast': 'short on bill day', 'closed': 'company closed', 'tier': 'an Outfit now'}[letter.kind]
     return 'LETTER day %d  %s' % (letter.day, word)
 
 
@@ -175,6 +179,8 @@ def letter_text(letter):
         return forecast_text(*v)
     if letter.kind == 'closed':
         return CLOSED_TEXT[v[0]]
+    if letter.kind == 'tier':
+        return TIER_TEXT
     if letter.kind == 'road':
         return ('Bandit sign on the Primm road tomorrow: about %d strong, our cover is %d. '
                 'Keep the wagon home tomorrow?' % v)

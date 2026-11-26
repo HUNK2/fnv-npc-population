@@ -50,7 +50,19 @@ calls are mine and are marked "my call" here and in the plans.
   Contracts, Standing orders, Slot. `tools/ingame_hiring.py`: 18 days and every screen after every
   select match the model, no script errors. Pictures: `docs/evidence/m1/m1_staff_screen.png`,
   `m1_candidate_screen.png`, `m1_standing_slot.png`, `m1_contracts_screen.png`.
-- Next: 1.9 tier 2 (purifier, apothecary, the office).
+  1.9 tier 2 (`tools/test_tier2.py`, 16 tests; 130 model tests pass): trust from deliveries (+1 a
+  leg that sells into a town) and Ghost Town Gunfight (+10 once); the tier gate (earned worth 1,500,
+  no strike in 56 days, Goodsprings trust 50, Ghost Town done); the tier letter; the Build screen
+  from the front page's CHAINS row (purifier, apothecary, well rig, forager hut, owner money first);
+  the office (a shack by the Prospector Saloon with a scripted door into a new interior: desk and
+  company terminal, map board, safe) and a Primm stall appear on the tier day. `tools/ingame_tier2.py`:
+  every day's numbers, letter, trust, tier and cash match the model; tier 2 on day 13 with Primm's
+  contract; the world refs enabled; building the well rig and purifier on the terminal; three days
+  of workshop output in the warehouse; in through the office door, its terminal, and out again; no
+  script errors. Pictures: `docs/evidence/m1/m1_build_screen.png`, `m1_office_inside.png`,
+  `m1_office_exit.png`, `m1_office_outside.png`. `tools/balance_run.py` (100 model days for a
+  passive, careful and good player) is ready for 1.10.
+- Next: 1.10 balance, FPS, old save, review, what to try.
 
 ## Done
 
@@ -141,6 +153,15 @@ calls are mine and are marked "my call" here and in the plans.
   the script engine rounds it (single-float precision; the console gives 28 where the model gives
   25). Every game roll is now `((day % 100) * 19 + (seed % 100) * 29 + key * 31) % 100`, the same
   value as the model's formula. The bandit rolls had matched so far by luck.
+- 1.9: the calls are in the M1 plan ("My calls for 1.9"): delivery and Ghost Town trust, the tier
+  letter (kind 7), the Build screen (screen 15), the office as a vanilla shack with scripted doors,
+  the Primm stall, no office rent.
+- 1.9: the office terminal mesh faces 90 degrees off its rotation (set to 270 to face the room);
+  the desk is turned 180. The exit marker stands west of the door, facing south-west, clear of a
+  vanilla boulder (the third-person camera sat inside it).
+- 1.9 fix: `fnv_spec build` wrote `CCCoreScript` without its compiled data after the spec's cells
+  changed (a compile-cache miss), so the game had no `CCCore` variables. `tools/rebuild.sh` now runs
+  `tools/check_compiled.py` after every build and stops on any uncompiled script.
 
 ## Open items for the final report
 
@@ -158,3 +179,7 @@ calls are mine and are marked "my call" here and in the plans.
 - fnv-mcp: after a `coc` launch the companion closes every message box for 90 s (the arrival
   closer), the mod's field letters too, and `fnv_status` does not list that task. The checks now
   wait until 105 s after launch (`tools/live.py`).
+- fnv-mcp: the spec builder writes no door teleports (XTEL); the office doors are scripted.
+  `fnv_spec build` can write a script uncompiled on a cache miss without saying so.
+- Not in M1: office rent; skill-gated workshop hires (Survival 50 for the purifier).
+- The checks move the game window to the monitor named in `tools/local.json` (not in git).

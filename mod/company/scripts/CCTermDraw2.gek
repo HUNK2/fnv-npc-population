@@ -1,7 +1,7 @@
 scn CCTermDraw2
 
 ; The terminal screens of M1 task 1.8 (tools/terminal_model.py labels): 9 Staff, 10 Hire, 11 Candidate,
-; 12 Contracts, 13 Standing orders, 14 Slot. Called by CCTermDraw; writes the rows and CCTerm.iRows.
+; 12 Contracts, 13 Standing orders, 14 Slot; and 1.9's 15 Build (CCBuildFn 0). Called by CCTermDraw; writes the rows and CCTerm.iRows.
 
 int iScreen
 int iPick
@@ -245,6 +245,10 @@ begin Function {}
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 4 %qLESS%q"
 			set iRow to 5
 		endif
+	endif
+
+	if iScreen == 15
+		let iRow := call CCBuildFn 0
 	endif
 
 	Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qBACK%q" iRow

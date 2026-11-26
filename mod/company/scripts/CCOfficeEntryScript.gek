@@ -1,0 +1,9 @@
+scn CCOfficeEntryScript
+
+; The company office's front door by the Prospector Saloon (tier 2): in to the office cell.
+
+begin OnActivate
+	if IsActionRef player
+		player.MoveTo CCOfficeInMarker
+	endif
+end

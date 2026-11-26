@@ -211,7 +211,7 @@ begin Function {}
 		else
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 5 %qPRICES   best GS>PR: materials %.0f%q" iBest
 		endif
-		Console "SetTerminalMenuItemText CCOfficeTerm 1 6 %qCHAINS   none yet (tier 2)%q"
+		call CCBuildFn 5
 		let aS := GetArrayVariable "aStaffName" CCCore
 		let iN := (ar_Size aS) + iHands
 		let iK := call CCCoverFn

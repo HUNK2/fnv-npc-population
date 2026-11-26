@@ -48,7 +48,7 @@ GUN_COST, GUN_COVER = 25, 30     # a hired gun for one trip: 25 caps, cover 45 -
 ROB_SHARE = 0.3                  # a robbery takes 30% of the strongbox, a wreck all of it (capped)
 AWAY_DAYS = 3                    # the while-you-were-away letter after 3 days without a terminal visit
 POST_KEEP = 3                    # the Post screen keeps the last 3 letters
-LETTER_ORDER = ('closed', 'notice', 'forecast', 'away', 'road', 'loss')    # which letter waits first
+LETTER_ORDER = ('closed', 'notice', 'forecast', 'away', 'road', 'loss', 'tier')    # which letter waits first
 # Memo answers in order; the default is the cautious one (design: Memos).
 MEMO_ANSWERS = {'road': ('send as planned', 'hire a gun for 25', 'keep the wagon home'),
                 'prepay': ('pay 300 off the loan', 'keep the cash'),
@@ -93,6 +93,8 @@ RUMOURS = ('Lost a cousin to the Powder Gangers.', 'Drove for the Crimson Carava
            'Talks too much at the saloon.')
 
 TIER2_WORTH, TIER2_TRUST = 1500, 50
+DELIVERY_TRUST, DEED_TRUST = 1, 10       # a leg that sells into a town; Ghost Town Gunfight (GS)
+BUILD_ORDER = ('purifier', 'apothecary', 'well', 'forager')     # the Build screen's rows
 WORKSHOP_COST, SITE_COST, HAND_WAGE = 300, 200, 14
 WORKSHOPS = {                    # name: (inputs per batch, outputs per batch, output crates a day)
     'purifier': ({'dirty': 5}, {'water': 4}, 4),
@@ -210,6 +212,7 @@ class DayReport:
     contract: str = ''          # 'delivered' or 'missed' (+ ' completed' on the last one), or 'walked'
     signed: int = 0             # a contract signed today: its price a crate
     skim: int = 0               # skimmed by dishonest staff
+    tier_up: bool = False       # the company reached a new tier today
 
     @property
     def margin(self):
@@ -244,6 +247,7 @@ class Company:
         self.last_event_day = -99
         self.wagon_ok = True
         self.ghost_town_done = False
+        self.ghost_town_paid = False     # its +10 Goodsprings trust was given (game: CCCore.iGhostPaid)
         self.warehouse = {g: 0 for g in GOODS}
         self.workshops, self.sites, self.hands = [], [], 0
         self.memos, self.road_mode = [], SEND
@@ -393,6 +397,9 @@ class Company:
         if d % 7 == 1:
             self._new_candidates()
         self._ladder(r)
+        if self.ghost_town_done and not self.ghost_town_paid:
+            self.ghost_town_paid = True
+            self.trust['GS'] = min(100, self.trust['GS'] + DEED_TRUST)
         self._tier_check(r)
         r.cash = self.cash
         self.history.append(r)
@@ -424,6 +431,8 @@ class Company:
             self.week_sales += sale
             self.stock[dest][g] += 1
             r.loads[(origin, g)] = r.loads.get((origin, g), 0) + 1
+        if crates:
+            self.trust[dest] = min(100, self.trust[dest] + DELIVERY_TRUST)
 
     def event_fires(self, d):
         """Does the director place a bandit event on day d's return leg? Known a day ahead (the forecast):
@@ -936,11 +945,13 @@ class Company:
             new.append(Letter(self.day, 'road', (DANGER, self.cover())))
         if r.event in ('bandits_took_cargo', 'bandits_wreck'):
             new.append(Letter(self.day, 'loss', (r.event, r.event_loss)))
+        if r.tier_up:
+            new.append(Letter(self.day, 'tier', (2,)))
         self.post = (self.post + new)[-POST_KEEP:]
         waiting = list(new)
         if self.stage == 'deferred' and not any(x.kind == 'notice' for x in new):
             waiting.append(Letter(self.day, 'notice', self.notice_values()))     # rewritten, not re-posted
-        if self.letter and self.letter.kind == 'away':
+        if self.letter and self.letter.kind in ('away', 'tier'):
             waiting.append(self.letter)
         waiting.sort(key=lambda x: LETTER_ORDER.index(x.kind))                # stable: new letters first
         self.letter = waiting[0] if waiting else None
@@ -1003,6 +1014,18 @@ class Company:
         if self.tier_two_ready():
             self.tier = 2
             r.notes.append('tier 2: Outfit')
+            r.tier_up = True
+
+    def build_cost(self, name):
+        return WORKSHOP_COST if name in WORKSHOPS else SITE_COST
+
+    def built(self, name):
+        return name in self.workshops or name in self.sites
+
+    def can_build(self, name):
+        """From tier 2, each once, paid from owner money first, then cash."""
+        return (self.tier >= 2 and not self.ended and not self.built(name)
+                and self.cash + self.owner_funds >= self.build_cost(name))
 
     def build(self, name):
         if name in WORKSHOPS:

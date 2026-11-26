@@ -807,6 +807,37 @@
      ]
     }
    ]
+  },
+  "CCOfficeEntryScript": {
+   "type": "SCPT",
+   "source": "scripts/CCOfficeEntryScript.gek",
+   "script_type": "object"
+  },
+  "CCOfficeExitScript": {
+   "type": "SCPT",
+   "source": "scripts/CCOfficeExitScript.gek",
+   "script_type": "object"
+  },
+  "CCOfficeEntryDoor": {
+   "type": "DOOR",
+   "template": "@WoodShackDoor",
+   "set": {
+    "name": "Mojave Caravan Co. office",
+    "script": "@CCOfficeEntryScript"
+   }
+  },
+  "CCOfficeExitDoor": {
+   "type": "DOOR",
+   "template": "@RamshackleScrapDoor01",
+   "set": {
+    "name": "Goodsprings",
+    "script": "@CCOfficeExitScript"
+   }
+  },
+  "CCBuildFn": {
+   "type": "SCPT",
+   "source": "scripts/CCBuildFn.gek",
+   "script_type": "object"
   }
  },
  "cells": {
@@ -833,6 +864,169 @@
       200,
       0,
       0
+     ]
+    }
+   ]
+  },
+  "CCOfficeCell": {
+   "name": "Mojave Caravan Co. Office",
+   "lighting": {
+    "ambient": [
+     112,
+     96,
+     76
+    ],
+    "directional": [
+     120,
+     104,
+     80
+    ]
+   },
+   "objects": [
+    {
+     "ref_id": "shell",
+     "base": "@WoodShackInterior",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "exit",
+     "base": "@CCOfficeExitDoor",
+     "position": [
+      -5,
+      298,
+      -3
+     ],
+     "rotation": [
+      0,
+      0,
+      270
+     ],
+     "editor_id": "CCOfficeExitDoorRef",
+     "persistent": true
+    },
+    {
+     "ref_id": "inmark",
+     "base": "@XMarkerHeading",
+     "position": [
+      0,
+      240,
+      5
+     ],
+     "rotation": [
+      0,
+      0,
+      180
+     ],
+     "editor_id": "CCOfficeInMarker",
+     "persistent": true
+    },
+    {
+     "ref_id": "desk",
+     "base": "@DeskOfficeMetalStatic",
+     "position": [
+      -80,
+      -292,
+      0
+     ],
+     "rotation": [
+      0,
+      0,
+      180
+     ]
+    },
+    {
+     "ref_id": "term",
+     "base": "@CCOfficeTerm",
+     "position": [
+      -80,
+      -300,
+      55
+     ],
+     "rotation": [
+      0,
+      0,
+      270
+     ],
+     "editor_id": "CCOfficeTermRef",
+     "persistent": true
+    },
+    {
+     "ref_id": "board",
+     "base": "@Chalkboard02",
+     "position": [
+      192,
+      -120,
+      150
+     ],
+     "rotation": [
+      0,
+      0,
+      270
+     ]
+    },
+    {
+     "ref_id": "safe",
+     "base": "@Safe",
+     "position": [
+      140,
+      -295,
+      0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "kick",
+     "base": "@BasementLightKickerWarm",
+     "position": [
+      11,
+      -1,
+      240
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "fill",
+     "base": "@BasementLightFillWarm",
+     "position": [
+      11,
+      -1,
+      80
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "hang",
+     "base": "@ShackHangingLight02",
+     "position": [
+      30,
+      8,
+      420
+     ],
+     "rotation": [
+      0,
+      0,
+      265
      ]
     }
    ]
@@ -921,6 +1115,132 @@
         0,
         0,
         180
+       ]
+      },
+      {
+       "ref_id": "office",
+       "base": "@WoodShack01",
+       "position": [
+        -66930,
+        3040,
+        8623
+       ],
+       "rotation": [
+        0,
+        0,
+        180
+       ],
+       "editor_id": "CCOfficeShackRef",
+       "persistent": true,
+       "disabled": true
+      },
+      {
+       "ref_id": "officedoor",
+       "base": "@CCOfficeEntryDoor",
+       "position": [
+        -66920,
+        2735,
+        8433
+       ],
+       "rotation": [
+        0,
+        0,
+        180
+       ],
+       "editor_id": "CCOfficeDoorRef",
+       "persistent": true,
+       "disabled": true
+      },
+      {
+       "ref_id": "outmark",
+       "base": "@XMarkerHeading",
+       "position": [
+        -66935,
+        2650,
+        8360
+       ],
+       "rotation": [
+        0,
+        0,
+        225
+       ],
+       "editor_id": "CCOfficeOutMarker",
+       "persistent": true
+      }
+     ]
+    },
+    "primmstall": {
+     "grid": [
+      -14,
+      -13
+     ],
+     "objects": [
+      {
+       "ref_id": "stallcart",
+       "base": "@NVWoodCart",
+       "editor_id": "CCPrimmStallCartRef",
+       "persistent": true,
+       "disabled": true,
+       "position": [
+        -56450,
+        -52900,
+        5781.15
+       ],
+       "rotation": [
+        0,
+        0,
+        90
+       ]
+      },
+      {
+       "ref_id": "stallcrate1",
+       "base": "@CrateGenericNV",
+       "editor_id": "CCPrimmStallCrate1Ref",
+       "persistent": true,
+       "disabled": true,
+       "position": [
+        -56450,
+        -52745,
+        5808
+       ],
+       "rotation": [
+        0,
+        0,
+        10
+       ]
+      },
+      {
+       "ref_id": "stallcrate2",
+       "base": "@CrateGenericNV",
+       "editor_id": "CCPrimmStallCrate2Ref",
+       "persistent": true,
+       "disabled": true,
+       "position": [
+        -56330,
+        -52750,
+        5808
+       ],
+       "rotation": [
+        0,
+        0,
+        355
+       ]
+      },
+      {
+       "ref_id": "stallboard",
+       "base": "@Chalkboard01",
+       "editor_id": "CCPrimmStallBoardRef",
+       "persistent": true,
+       "disabled": true,
+       "position": [
+        -56590,
+        -52800,
+        5854
+       ],
+       "rotation": [
+        0,
+        0,
+        200
        ]
       }
      ]

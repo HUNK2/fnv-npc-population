@@ -1,7 +1,8 @@
 scn CCLetterScript
 
 ; Field post (tools/company_model.py Company.field_letter, letter_buttons, answer_letter). CCCore leaves
-; at most one letter waiting (iLetterKind 1 robbed, 2 road, 3 away, 4 notice, 5 forecast, 6 closed; its
+; at most one letter waiting (iLetterKind 1 robbed, 2 road, 3 away, 4 notice, 5 forecast, 6 closed,
+; 7 tier; its
 ; text in aLetter[0]). It is shown with MessageBoxEx, only in GameMode (this block does not run in menus
 ; or dialogue), out of combat, outside a DLC's own lands (CCShieldFn: no runner finds you there), at
 ; most once a company day. A road letter's buttons answer the road memo: 0 keep it home, 1 send as

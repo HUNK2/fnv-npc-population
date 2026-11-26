@@ -11,7 +11,7 @@ from company_model import GOODS
 from post_model import bill_estimate, days_to_bills   # noqa: F401 (used by the tests and the game check)
 
 FRONT, PRICES, LEDGER, ORDERS, ROUTES, SETTINGS, POST, MEMOS, NOTICE = range(9)
-STAFF, HIRE, CANDIDATE, CONTRACTS, STANDING, SLOT = range(9, 15)
+STAFF, HIRE, CANDIDATE, CONTRACTS, STANDING, SLOT, BUILD = range(9, 16)
 # BACK on a screen reached from another screen goes back there; otherwise to the front page.
 PARENT = {HIRE: STAFF, CANDIDATE: HIRE, SLOT: STANDING, STANDING: ORDERS}
 SO_LABEL = {None: 'empty', 'keep': 'keep stocked', 'sell_above': 'sell above', 'max_pay': 'pay at most'}
@@ -27,6 +27,9 @@ STAGES = {'ok': 'none', 'deferred': 'deferred', 'grace': 'SERVED', 'final': 'FIN
           'probation': 'probation', 'takeover': 'TAKEOVER'}
 CLOSED = {'receivership': 'the lender took the office', 'takeover': 'the lender took the office',
           'walked': 'you wound it up'}
+# The Build screen (tier 2): what each building does, padded as the game writes it.
+BUILD_TEXT = {'purifier': 'PURIFIER   5 dirty > 4 water  ', 'apothecary': 'APOTHECARY 1 herbs > 1 powder ',
+              'well': 'WELL RIG   4 dirty water a day', 'forager': 'FORAGER    4 herbs a day      '}
 EVENTS = {'': '', 'bandits_driven_off': '  driven off', 'bandits_took_cargo': '  bandits -%d',
           'bandits_wreck': '  WRECKED -%d', 'bandits_empty': '  nothing taken'}
 
@@ -200,6 +203,20 @@ def slot_click(c, t, row):
         o.value = max(o.value - step, 1 if o.kind == 'keep' else 5)
 
 
+def chains_row(c):
+    if c.tier < 2:
+        return 'CHAINS   none yet (tier 2)'
+    return 'CHAINS   %d of 4 built' % sum(c.built(b) for b in cm.BUILD_ORDER)
+
+
+def build_rows(c):
+    """The Build screen: money first, then a row per building (its cost, or BUILT), then BACK."""
+    rows = ['MONEY  cash %d, own money %d' % (c.cash, c.owner_funds)]
+    for b in cm.BUILD_ORDER:
+        rows.append('%s %s' % (BUILD_TEXT[b], 'BUILT' if c.built(b) else '%d' % c.build_cost(b)))
+    return rows + ['BACK']
+
+
 def post_rows(c):
     """(label, result text) for each Post screen row before BACK: the report's pages, then letters newest first."""
     pages = pm.report_pages(c)
@@ -238,7 +255,7 @@ def labels(c, t):
                 memos_row(c),
                 'ROUTES   wagon %s' % ('home' if c.wagon_ok else 'none'),
                 'PRICES   best GS>PR: %s %d' % (NAMES[g].strip(), m),
-                'CHAINS   none yet (tier 2)',
+                chains_row(c),
                 'STAFF    %d on the books, cover %d' % (len(c.staff) + c.hands, c.cover()),
                 contract_row(c),
                 'LEDGER   loan %d, week sales %d' % (c.loan, c.week_sales),
@@ -297,6 +314,8 @@ def labels(c, t):
         return contract_rows(c) + ['BACK']
     if t.screen == STANDING:
         return [slot_label(c, i) for i in range(cm.SLOTS)] + ['BACK']
+    if t.screen == BUILD:
+        return build_rows(c)
     if t.screen == SLOT:
         return slot_rows(c, t) + ['BACK']
     raise ValueError(t.screen)
@@ -314,6 +333,8 @@ def click(c, t, row):
         else:
             t.screen = {2: POST, 3: MEMOS, 4: ROUTES, 5: PRICES, 7: STAFF, 8: CONTRACTS, 9: LEDGER,
                         10: ORDERS, 11: SETTINGS, 12: NOTICE}.get(row, FRONT)
+            if row == 6 and c.tier >= 2:
+                t.screen = BUILD
         return
     if row == len(rows) - 1:                    # BACK is always the last row
         t.screen = PARENT.get(t.screen, FRONT)
@@ -334,6 +355,9 @@ def click(c, t, row):
         t.pick, t.screen = row, SLOT
     elif t.screen == SLOT:
         slot_click(c, t, row)
+    elif t.screen == BUILD:
+        if 1 <= row <= len(cm.BUILD_ORDER) and c.can_build(cm.BUILD_ORDER[row - 1]):
+            c.build(cm.BUILD_ORDER[row - 1])
     elif t.screen == STAFF:
         act = staff_rows(c, t)[row][1]
         if act == 'hire':

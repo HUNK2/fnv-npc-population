@@ -26,7 +26,11 @@ array_var aAnchor
 begin Function {iClick iWas}
 	let iScreen := GetVariable "iScreen" CCTerm
 	let iPick := GetVariable "iPick" CCTerm
-	if iScreen == 9
+	if iScreen == 15
+		if iClick >= 1 && iClick <= 4
+			call CCBuildFn iClick
+		endif
+	elseif iScreen == 9
 		let aSN := GetArrayVariable "aStaffName" CCCore
 		let iN := ar_Size aSN
 		if iClick == iN + 1

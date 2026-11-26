@@ -9,7 +9,7 @@ scn CCCoreScript
 ; The post (plan task 1.6, texts in tools/post_model.py): memos (aMemo*: kind 0 road, 1 prepay; pick
 ; -1 unanswered), tomorrow's forecast, the report's two pages (aPage), the last 3 letter texts (aPost*) and
 ; the one letter waiting to be shown in the field (iLetterKind 1 robbed, 2 road, 3 away, 4 notice,
-; 5 forecast, 6 closed; aLetter[0]).
+; 5 forecast, 6 closed, 7 tier; aLetter[0]).
 ; The debt ladder (plan task 1.7): iStage 0 none, 1 deferred, 2 grace, 3 final notice, 4 seized,
 ; 5 probation, 6 takeover. A missed bill is deferred until its notice is served (CCServeFn: at a terminal
 ; or by its field letter); cures in CCCureFn; texts in CCNoticeFn; the busy shield is CCShieldFn.
@@ -181,6 +181,8 @@ array_var aSOKind
 array_var aSOTown
 array_var aSOGood
 array_var aSOValue
+int iGhostPaid
+int iTierUp
 
 begin GameMode
 
@@ -490,6 +492,12 @@ begin GameMode
 					endif
 					set iI to iI + 1
 				loop
+				if eval ((ar_Size aLeg) > 0)
+					let aTrust[iDest] += 1
+					if eval (aTrust[iDest] > 100)
+						let aTrust[iDest] := 100
+					endif
+				endif
 				set iLeg to iLeg + 1
 			loop
 		endif
@@ -666,6 +674,13 @@ begin GameMode
 		endif
 
 		set iGhostTown to GetQuestCompleted VMS16
+		if iGhostTown && iGhostPaid == 0
+			set iGhostPaid to 1
+			let aTrust[0] += 10
+			if eval (aTrust[0] > 100)
+				let aTrust[0] := 100
+			endif
+		endif
 		; tier 2 gate (Company.tier_two_ready): earned worth 1,500, no strike in 56 days,
 		; Goodsprings trust 50, Ghost Town Gunfight done
 		set iN to 0
@@ -677,8 +692,11 @@ begin GameMode
 			set iK to iK + 1
 		loop
 		let iValue := iCash + iOwner + 200 * aWh[0] + 100 * aWh[1] + 200 * aWh[2] + 100 * aWh[3] + 60 * aWh[4] + 150 * aWh[5] + iAssets - iLoan - iArrears - iOwnerPaidIn
+		set iTierUp to 0
 		if eval (iTier == 1 && iValue >= 1500 && iN == 0 && aTrust[0] >= 50 && iGhostTown)
 			set iTier to 2
+			set iTierUp to 1
+			call CCBuildFn 6
 		endif
 
 		ar_Append aHistCash iCash
@@ -826,6 +844,16 @@ begin GameMode
 			let sS := sv_Construct "LETTER day %.0f  robbed" iDay
 			ar_Append aPostTitle sS
 		endif
+		if iTierUp
+			let sS := "Boss, we are an Outfit now. Our office next to the Prospector Saloon is open and Primm gave us a stall. The Build screen is open at the terminal: purifier, apothecary, well rig, forager hut."
+			ar_Append aPostText sS
+			if iNewKind == 0
+				set iNewKind to 7
+				let sNew := sS
+			endif
+			let sS := sv_Construct "LETTER day %.0f  an Outfit now" iDay
+			ar_Append aPostTitle sS
+		endif
 		while (ar_Size aPostText) > 3
 			ar_Erase aPostText 0
 			ar_Erase aPostTitle 0
@@ -836,8 +864,10 @@ begin GameMode
 			set iNewKind to 4
 			let sNew := call CCNoticeFn 0
 		endif
-		if iLetterKind == 3 && (iNewKind == 0 || iNewKind == 1 || iNewKind == 2)
+		if iLetterKind == 3 && (iNewKind == 0 || iNewKind == 1 || iNewKind == 2 || iNewKind == 7)
 			set iLetterKind to 3
+		elseif iLetterKind == 7 && iNewKind == 0
+			set iLetterKind to 7
 		else
 			set iLetterKind to iNewKind
 			if iNewKind

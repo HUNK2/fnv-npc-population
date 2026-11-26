@@ -134,8 +134,8 @@ class Contracts(unittest.TestCase):
         self.assertEqual(r.contract, 'delivered')
         self.assertIsNotNone(c.contract)
         self.assertEqual(c.contract.next_due, 7)
-        self.assertEqual(c.trust['PR'], trust + 1)
         gs = sum(n for (o, _), n in r.loads.items() if o == 'GS')
+        self.assertEqual(c.trust['PR'], trust + 1 + (gs > 0))        # the contract, and the leg (1.9)
         self.assertLessEqual(gs, cm.CRATES_PER_LEG - cm.CONTRACT_CRATES)
         self.assertIn('Primm got its water', pm.report_pages(c)[0])
         days = {4}
