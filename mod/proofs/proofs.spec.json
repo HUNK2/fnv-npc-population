@@ -1,0 +1,345 @@
+{
+ "schema": 1,
+ "project_id": "ccproofs",
+ "plugin": "CCProofs.esp",
+ "author": "fnv-npc-population M0",
+ "description": "M0 proofs for the Mojave Caravan Company: terminal, day tick, crews. Test plugin, not for release.",
+ "masters": [
+  "FalloutNV.esm"
+ ],
+ "records": {
+  "CCProofsQuestScript": {
+   "type": "SCPT",
+   "source": "scripts/CCProofsQuestScript.gek",
+   "script_type": "quest"
+  },
+  "CCProofsQuest": {
+   "type": "QUST",
+   "fields": [
+    {
+     "tag": "SCRI",
+     "form": "@CCProofsQuestScript"
+    },
+    {
+     "tag": "FULL",
+     "text": "CC Proofs"
+    },
+    {
+     "tag": "DATA",
+     "pack": "<BBBBf",
+     "values": [
+      1,
+      50,
+      0,
+      0,
+      0.1
+     ]
+    }
+   ]
+  },
+  "CCLedgerItemScript": {
+   "type": "SCPT",
+   "source": "scripts/CCLedgerItemScript.gek",
+   "script_type": "object"
+  },
+  "CCLedgerItem": {
+   "type": "BOOK",
+   "template": "@BookSkillBarter",
+   "set": {
+    "name": "Company Ledger",
+    "script": "@CCLedgerItemScript",
+    "value": 0,
+    "weight": 0
+   }
+  },
+  "CCProofsTerm": {
+   "type": "TERM",
+   "template": "@TerminalDesk01",
+   "set": {
+    "name": "Company Ledger (proofs)",
+    "welcome_text": "MOJAVE CARAVAN COMPANY - proofs terminal",
+    "flags": [
+     "unlocked"
+    ],
+    "menu": [
+     {
+      "text": "Row 01",
+      "result": "Row 01 picked."
+     },
+     {
+      "text": "Row 02",
+      "result": "Row 02 picked."
+     },
+     {
+      "text": "Row 03",
+      "result": "Row 03 picked."
+     },
+     {
+      "text": "Row 04",
+      "result": "Row 04 picked."
+     },
+     {
+      "text": "Row 05",
+      "result": "Row 05 picked."
+     },
+     {
+      "text": "Row 06",
+      "result": "Row 06 picked."
+     },
+     {
+      "text": "Row 07",
+      "result": "Row 07 picked."
+     },
+     {
+      "text": "Row 08",
+      "result": "Row 08 picked."
+     },
+     {
+      "text": "Row 09",
+      "result": "Row 09 picked."
+     },
+     {
+      "text": "Row 10",
+      "result": "Row 10 picked."
+     },
+     {
+      "text": "Row 11",
+      "result": "Row 11 picked."
+     },
+     {
+      "text": "Row 12",
+      "result": "Row 12 picked."
+     },
+     {
+      "text": "Row 13",
+      "result": "Row 13 picked."
+     },
+     {
+      "text": "Row 14",
+      "result": "Row 14 picked."
+     },
+     {
+      "text": "Row 15",
+      "result": "Row 15 picked."
+     },
+     {
+      "text": "Row 16",
+      "result": "Row 16 picked."
+     },
+     {
+      "text": "Row 17",
+      "result": "Row 17 picked."
+     },
+     {
+      "text": "Row 18",
+      "result": "Row 18 picked."
+     },
+     {
+      "text": "Row 19",
+      "result": "Row 19 picked."
+     },
+     {
+      "text": "Row 20",
+      "result": "Row 20 picked."
+     },
+     {
+      "text": "Row 21",
+      "result": "Row 21 picked."
+     },
+     {
+      "text": "Row 22",
+      "result": "Row 22 picked."
+     },
+     {
+      "text": "Row 23",
+      "result": "Row 23 picked."
+     },
+     {
+      "text": "Row 24",
+      "result": "Row 24 picked."
+     },
+     {
+      "text": "Row 25",
+      "result": "Row 25 picked."
+     },
+     {
+      "text": "Row 26",
+      "result": "Row 26 picked."
+     },
+     {
+      "text": "Row 27",
+      "result": "Row 27 picked."
+     },
+     {
+      "text": "Row 28",
+      "result": "Row 28 picked."
+     },
+     {
+      "text": "Row 29",
+      "result": "Row 29 picked."
+     },
+     {
+      "text": "Row 30",
+      "result": "Row 30 picked."
+     }
+    ]
+   }
+  },
+  "CCProofsSettler1": {
+   "type": "NPC_",
+   "template": "@GSSettlerAM"
+  },
+  "CCProofsSettler2": {
+   "type": "NPC_",
+   "template": "@GSSettlerCF"
+  },
+  "CCProofsSettler3": {
+   "type": "NPC_",
+   "template": "@GSSettlerCM"
+  },
+  "CCProofsLight": {
+   "type": "LIGH",
+   "radius": 700,
+   "color": [
+    255,
+    220,
+    160
+   ],
+   "flags": [
+    "dynamic"
+   ],
+   "falloff": 1.0,
+   "fov": 90.0,
+   "fade": 1.0
+  }
+ },
+ "cells": {
+  "CCProofsRoom": {
+   "name": "CC Proofs Room",
+   "lighting": {
+    "ambient": [
+     60,
+     56,
+     52
+    ],
+    "directional": [
+     30,
+     30,
+     34
+    ],
+    "fog_color": [
+     0,
+     0,
+     0
+    ],
+    "fog_near": 0.0,
+    "fog_far": 10000.0,
+    "clip_distance": 10000.0,
+    "directional_fade": 1.0,
+    "fog_power": 1.0
+   },
+   "objects": [
+    {
+     "ref_id": "coc.marker",
+     "base": "@COCMarkerHeading",
+     "position": [
+      0,
+      -170,
+      8
+     ]
+    },
+    {
+     "ref_id": "light",
+     "base": "@CCProofsLight",
+     "position": [
+      0,
+      0,
+      220
+     ]
+    },
+    {
+     "ref_id": "floor.w",
+     "base": "@FacRmFloor01",
+     "position": [
+      -256,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "floor.c",
+     "base": "@FacRmFloor01",
+     "position": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "floor.e",
+     "base": "@FacRmFloor01",
+     "position": [
+      256,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "term",
+     "base": "@CCProofsTerm",
+     "position": [
+      0,
+      110,
+      0
+     ],
+     "editor_id": "CCProofsTermRef",
+     "persistent": true
+    },
+    {
+     "ref_id": "npc.1",
+     "base": "@CCProofsSettler1",
+     "position": [
+      -200,
+      40,
+      10
+     ],
+     "editor_id": "CCProofsSettler1Ref",
+     "persistent": true
+    },
+    {
+     "ref_id": "npc.2",
+     "base": "@CCProofsSettler2",
+     "position": [
+      -230,
+      -40,
+      10
+     ],
+     "editor_id": "CCProofsSettler2Ref",
+     "persistent": true
+    },
+    {
+     "ref_id": "npc.3",
+     "base": "@CCProofsSettler3",
+     "position": [
+      -170,
+      -90,
+      10
+     ],
+     "editor_id": "CCProofsSettler3Ref",
+     "persistent": true
+    },
+    {
+     "ref_id": "road.marker",
+     "base": "@XMarkerHeading",
+     "position": [
+      200,
+      -60,
+      10
+     ],
+     "editor_id": "CCProofsRoadMarkerRef",
+     "persistent": true
+    }
+   ]
+  }
+ }
+}

@@ -6,16 +6,21 @@ calls are mine and are marked "my call" here and in the plans.
 
 ## Now
 
-- Milestone: **M0 Proofs** (`docs/plans/2026-11-27-m0-proofs.md`)
-- Next task: 0.2 tooling (build our plugins with fnv-mcp)
+- Milestone: **M0 Proofs** (`docs/plans/2026-11-27-m0-proofs.md`), results in `docs/m0-results.md`
+- Next: 0.6 (terminal from an item), 0.7, 0.10 to 0.13, then the crowd test 0.14
 
 ## Done
 
-- 0.1 Ledger reference model: `tools/ledger_model.py` reproduces the doc's worked first week
-  exactly (legs, day margins, sales 8,178, COGS 6,857, operating 842, net 722, cash 2,972, net
-  worth 923). Settings found: depth K = 2, spread 6%, a crate is loaded only at margin >= 20.
-  Tests: `python -m unittest test_ledger_model` in `tools/` (8 pass).
+- 0.1 Ledger reference model (8 tests pass).
+- 0.2 Tooling: `tools/fnvmcp_call.py` and `tools/rebuild.sh` build `mod/proofs` with fnv-mcp.
+- 0.3 Dependencies load (xNVSE, JIP LN, JohnnyGuitar 5.28).
+- 0.4 Live terminal labels, 0.5 clicked row (flag 4, route C), 0.8 limits (30 rows; text capped
+  at 200 characters), 0.9 day tick.
 
 ## My calls (to review)
 
-- Plugins are built with fnv-mcp's builder by pointing its (local) project file at our spec.
+- Plugins are built in-process with fnv-mcp's tools (`tools/fnvmcp_call.py`), not by editing the
+  MCP server's project file, because the server did not pick up the change.
+- Clicked rows are found by polling row flag 4 (route C), not by row result scripts or JIP's
+  click event: it needs no tool change and no event handler.
+- Terminal text is cut to 200 characters before it is set (JohnnyGuitar has no length check).

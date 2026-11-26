@@ -1,0 +1,10 @@
+scn CCLedgerItemScript
+
+; M0 proofs 0.6: open the office terminal from an item used in the Pip-Boy.
+
+int iUses
+
+begin OnEquip player
+	set iUses to iUses + 1
+	CCProofsTermRef.Activate player
+end

@@ -1,0 +1,42 @@
+scn CCProofsQuestScript
+
+; M0 proofs: the day tick with catch-up and seeded rolls (design: How it is built in FNV, The day tick).
+; Days only move forward; at most 14 missed days run one by one, anything older folds into one summary step.
+; One day is processed per script run (no while/loop: the fnv-mcp in-game compile breaks jumps after a loop),
+; which also spreads a long catch-up over several frames.
+; Note: GameDaysPassed cannot be set from the console; tests jump GameHour (Calendar::Update 0x00867A40 resyncs).
+
+int iInit
+int iLastDay
+int iToday
+int iMissed
+int iSteps
+int iSummaries
+int iSeed
+int iRoll
+int iRollSum
+int iDay	; unused now; kept so variable indices stay stable
+int iTicks
+
+begin GameMode
+	set iTicks to iTicks + 1
+	set iToday to GameDaysPassed
+	if iInit == 0
+		set iInit to 1
+		set iLastDay to iToday
+		set iSeed to 1234
+		return
+	endif
+	if iToday <= iLastDay
+		return
+	endif
+	set iMissed to iToday - iLastDay
+	if iMissed > 14
+		set iSummaries to iSummaries + 1
+		set iLastDay to iToday - 14
+	endif
+	set iLastDay to iLastDay + 1
+	set iRoll to (iLastDay * 7919 + iSeed * 104729) % 100
+	set iRollSum to iRollSum + iRoll
+	set iSteps to iSteps + 1
+end
