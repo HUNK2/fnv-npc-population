@@ -95,7 +95,7 @@ begin Function {iAct iIdx iPick}
 					set iGone to 1
 				endif
 			endif
-			if iGone == 0 && aSL[iK] < 20
+			if eval (iGone == 0 && aSL[iK] < 20)
 				set iGone to 2
 			endif
 			if iGone

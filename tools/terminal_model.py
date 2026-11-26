@@ -7,6 +7,7 @@ of labels (rows past the list are hidden by the row condition CCTerm.iRows > n) 
 """
 import company_model as cm
 import law_model as law
+import late_model as late
 import post_model as pm
 from company_model import GOODS
 from post_model import bill_estimate, days_to_bills   # noqa: F401 (used by the tests and the game check)
@@ -28,7 +29,7 @@ TOWNS = ('GS', 'PR')
 STAGES = {'ok': 'none', 'deferred': 'deferred', 'grace': 'SERVED', 'final': 'FINAL', 'seized': 'SEIZED',
           'probation': 'probation', 'takeover': 'TAKEOVER'}
 CLOSED = {'receivership': 'the lender took the office', 'takeover': 'the lender took the office',
-          'walked': 'you wound it up', 'revoked': 'the NCR revoked the licence'}
+          'walked': 'you wound it up', 'revoked': 'the NCR revoked the licence', 'retired': 'you retired'}
 # The Build screen (tier 2): what each building does, padded as the game writes it.
 BUILD_TEXT = {'purifier': 'PURIFIER   5 dirty > 4 water  ', 'apothecary': 'APOTHECARY 1 herbs > 1 powder ',
               'well': 'WELL RIG   4 dirty water a day', 'forager': 'FORAGER    4 herbs a day      ',
@@ -175,13 +176,23 @@ def contract_rows(c):
     rows = ['%s TRUST %d' % (cm.TOWN_NAME[town].upper(), c.trust[town])]
     if k is None:
         offer = any(m.kind == 'contract' for m in c.memos)
-        return rows + ['An offer is waiting in Memos.' if offer else 'No contract running.']
+        return rows + ['An offer is waiting in Memos.' if offer else 'No contract running.'] + forward_rows(c)
     for k in c.contracts:
         rows += ['%s %d crates every %dd at %d%s' % (pm.GOOD_NAME[k.good].upper(), k.crates, k.every, k.price,
                                                      '' if k.town == 'PR' else ' to ' + k.town),
                  'NEXT day %d  ENDS day %d' % (k.next_due, k.start + k.days),
                  'DELIVERED %d  MISSED %d' % (k.done, k.missed)]
-    return rows
+    return rows + forward_rows(c)
+
+
+def forward_rows(c):
+    """M4: one row a forward ticket, under the contracts."""
+    import post_model as pm
+    return ['FWD %s %s %d/%d by %d' % (t.town, pm.GOOD_NAME[t.good], t.filled, t.crates, t.due)
+            for t in c.tickets]
+
+
+ROWS = 16                               # the office terminal's row pool (M4: 14 -> 16)
 
 
 def slot_label(c, i):
@@ -250,10 +261,30 @@ def law_rows(c):
             'DECLARE  %d%% of sales (select)' % round(100 * (1 - law.HIDE[c.hide])),
             'SEALED   crates %s, %d a run' % (on[c.sealed], law.SEALED_PAY),
             'COVER    Crimson Cover %s, %d a wagon' % (on[c.insured], law.COVER_PREMIUM),
-            'NCR      standing %d, inspect day %d' % (c.ncr_standing, c.inspect_next)]
+            'NCR      standing %d, inspect day %d' % (c.ncr_standing, c.inspect_next)] + late_rows(c)
 
 
-LAW_CLICK = {1: 'cycle_hide', 2: 'toggle_sealed', 3: 'toggle_cover'}
+BLOCK_DEED = ('lead in Primm 14 days', 'beat her to an NCR bid', 'hold two blocks')
+LAW_NAME = {'duty': 'Free trade act', 'licence': 'Carrier act', 'audit': 'Press audit'}
+
+
+def late_rows(c):
+    """M4: SHARES (tier 4: the next share block) and LAWS (tier 5: favour and the next law)."""
+    rows = []
+    if c.tier >= 4:
+        if c.rival_out:
+            rows.append('SHARES   3 of 3: her board ousted her')
+        elif c.block_ready():
+            rows.append('SHARES   %d of 3: BUY a block for %d' % (c.blocks, late.BLOCK_PRICE[c.blocks]))
+        else:
+            rows.append('SHARES   %d of 3: %s' % (c.blocks, BLOCK_DEED[c.blocks]))
+    if c.tier >= 5:
+        law = c.next_law()
+        rows.append('LAWS     favour %d: %s' % (c.favour, 'PASS ' + LAW_NAME[law] if law else 'all passed'))
+    return rows
+
+
+LAW_CLICK = {1: 'cycle_hide', 2: 'toggle_sealed', 3: 'toggle_cover', 5: 'buy_block', 6: 'pass_law'}
 
 
 def wagon_rows(c):
@@ -350,10 +381,12 @@ def build_rows(c):
 def post_rows(c):
     """(label, result text) for each Post screen row before BACK: the report's pages, then letters newest first."""
     pages = pm.report_pages(c)
-    if not pages:
+    if not pages and not c.post:
         return [('No post yet.', '')]
-    d = c.history[-1].day
-    rows = [('REPORT day %d  page 1' % d, pages[0]), ('REPORT day %d  page 2' % d, pages[1])]
+    rows = []
+    if pages:
+        d = c.history[-1].day
+        rows = [('REPORT day %d  page 1' % d, pages[0]), ('REPORT day %d  page 2' % d, pages[1])]
     return rows + [(pm.letter_title(x), pm.letter_text(x)) for x in c.post[::-1]]
 
 
@@ -374,8 +407,11 @@ def labels(c, t):
     """Row labels of the screen that is up."""
     if not c.founded:
         return ["No company yet: see Alice's agent."]
+    if c.ended and t.screen == POST:             # M4: the last letters (the ending) stay readable
+        return [label for label, _ in post_rows(c)] + ['BACK']
     if c.ended:
-        return ['CLOSED: %s' % CLOSED[c.end_reason], 'DAY %d  CASH %d  OWED %d' % (c.day, c.cash, c.arrears)]
+        return ['CLOSED: %s' % CLOSED[c.end_reason], 'DAY %d  CASH %d  OWED %d' % (c.day, c.cash, c.arrears),
+                'POST     the last letters']
     if t.screen == FRONT:
         r = last_report(c)
         g, m = best_margin(c)
@@ -437,7 +473,10 @@ def labels(c, t):
     if t.screen == TOWNS_SCREEN:
         return town_rows(c) + manager_rows(c) + sell_rows(c) + law_rows(c) + ['BACK']
     if t.screen == SETTINGS:
-        return ['PLAN EVERY DAY   %s' % ('ON' if c.auto else 'OFF'), 'BACK']
+        rows = ['PLAN EVERY DAY   %s' % ('ON' if c.auto else 'OFF')]
+        if c.tier >= 5:                         # M4
+            rows.append('RETIRE?  select again to hand it on' if t.confirm else 'RETIRE   hand the company on')
+        return rows + ['BACK']
     if t.screen == POST:
         return [label for label, _ in post_rows(c)] + ['BACK']
     if t.screen == MEMOS:
@@ -451,7 +490,7 @@ def labels(c, t):
     if t.screen == CANDIDATE:
         return [row[0] for row in candidate_rows(c, t)] + ['BACK']
     if t.screen == CONTRACTS:
-        return contract_rows(c) + ['BACK']
+        return contract_rows(c)[:ROWS - 1] + ['BACK']     # M4: BACK stays on the screen
     if t.screen == STANDING:
         return [slot_label(c, i) for i in range(cm.SLOTS)] + ['BACK']
     if t.screen == BUILD:
@@ -464,6 +503,12 @@ def labels(c, t):
 def click(c, t, row):
     """What selecting a row does. Rows past the screen's labels are hidden: a click there does nothing."""
     rows = labels(c, t)
+    if c.founded and c.ended and row < len(rows):      # M4: only the Post screen opens
+        if t.screen == FRONT and row == 2:
+            t.screen = POST
+        elif t.screen == POST and row == len(rows) - 1:
+            t.screen = FRONT
+        return
     if not c.founded or c.ended or row >= len(rows):
         return
     confirm, t.confirm = t.confirm, False
@@ -541,6 +586,12 @@ def click(c, t, row):
                 t.confirm = True
     elif t.screen == SETTINGS and row == 0:
         c.auto = not c.auto
+    elif t.screen == SETTINGS and row == 1 and c.tier >= 5:
+        if confirm:
+            c.retire()
+            t.screen = FRONT
+        else:
+            t.confirm = True
     elif t.screen == MEMOS:
         _, _, m, i = memo_rows(c)[row]
         if i is not None:

@@ -136,6 +136,22 @@ begin Function {}
 			Console "SetTerminalMenuItemText CCOfficeTerm 2 %.0f %q%z asks for a raise: loyalty %.0f, wage %.0f a day. Give a quarter more (%.0f a day), or refuse? If you say nothing, we refuse.%q" iRow sT iB iS iN
 			set iA to 2
 			set iDef to 1
+		elseif eval (aMK[iMemo] == 4)
+			; M3: the NCR's ammo bid (aMemoX the market price)
+			let iB := Floor (1.3 * iX + 0.5)
+			let iS := Floor (1.2 * iX + 0.5)
+			let iK := GetVariable "iAggr" CCLaw
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qNCR BID: OUTPOST AMMO  due %.0fd%q" iRow iDue
+			Console "SetTerminalMenuItemText CCOfficeTerm 2 %.0f %qThe NCR at the Outpost wants 4 crates of ammunition every 3 days for 14 days. Market is %.0f. Bid %.0f, or %.0f to beat the Crimson Caravan (aggression %.0f)? If you say nothing, we pass.%q" iRow iX iB iS iK
+			set iA to 3
+		elseif eval (aMK[iMemo] == 5)
+			; M3: a warrant
+			let iK := GetVariable "iHeat" CCLaw
+			let iN := aMDue[iMemo]
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qWARRANT SERVED  raid in %.0fd%q" iRow iDue
+			Console "SetTerminalMenuItemText CCOfficeTerm 2 %.0f %qThe NCR served a warrant, heat %.0f. Rangers come on day %.0f: our cover %.0f against 60. A fixer can lose the papers for 300. If you say nothing, we let them come.%q" iRow iK iN iCover
+			set iA to 2
+			set iDef to 1
 		else
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qPAY DOWN THE LOAN?  due %.0fd%q" iRow iDue
 			Console "SetTerminalMenuItemText CCOfficeTerm 2 %.0f %qThe bills are paid and we hold %.0f caps. Pay 300 off the loan now and save 12 a week in interest? If you say nothing, we keep the cash.%q" iRow iCash
@@ -178,6 +194,20 @@ begin Function {}
 					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z counter at %.0f%z%q" iRow sM iS sD
 				else
 					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z decline%z%q" iRow sM sD
+				endif
+			elseif eval (aMK[iMemo] == 4)
+				if iN == 0
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z bid %.0f a crate%z%q" iRow sM iB sD
+				elseif iN == 1
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z bid %.0f a crate%z%q" iRow sM iS sD
+				else
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z pass%z%q" iRow sM sD
+				endif
+			elseif eval (aMK[iMemo] == 5)
+				if iN == 0
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z pay a fixer 300%z%q" iRow sM sD
+				else
+					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z let them come%z%q" iRow sM sD
 				endif
 			elseif iN == 0
 				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q  %z pay 300 off the loan%z%q" iRow sM sD

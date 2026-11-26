@@ -44,7 +44,12 @@ begin Function {iAct iA}
 			set iK to iK + 1
 		loop
 		let iM := ((GetVariable "iBookkeeper" CCCore) > 0) + ((GetVariable "iRouteMgr" CCCore) > 0)
-		Console "SetTerminalMenuItemText CCOfficeTerm 1 13 %qTOWNS    %.0f trusted, managers %.0f of 2%q" iN iM
+		if iTier >= 3
+			; M3: heat and NCR standing
+			call CCLawTextFn 6
+		else
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 13 %qTOWNS    %.0f trusted, managers %.0f of 2%q" iN iM
+		endif
 	elseif iAct == 0
 		let aLv := GetArrayVariable "aLevel" CCCore
 		let aTN := Ar_List "Goodsprings    ", "Primm          ", "Sloan          ", "Mojave Outpost "
@@ -88,6 +93,11 @@ begin Function {iAct iA}
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 6 %qSELL 10 purified water: 160 (%.0f left)%q" iLeft
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 7 %qSELL 10 healing powder: 80 (%.0f left)%q" iLeft
 			set iOut to 8
+		endif
+		; M3 (tier 3): the rival, the back room, Crimson Cover and the NCR in rows 8 to 12
+		if iTier >= 3
+			call CCLawTextFn 5
+			set iOut to 13
 		endif
 	elseif iAct == 2 && (GetVariable "iEnded" CCCore) == 0
 		if iA == 4
@@ -138,6 +148,10 @@ begin Function {iAct iA}
 				let iK := iA - 6
 				let aWh[iK] := aWh[iK] + 1
 			endif
+		elseif iA >= 9 && iA <= 11
+			; M3: the declared share, sealed crates, Crimson Cover
+			let iN := iA + 11
+			call CCLawFn iN 0 0
 		endif
 		set iOut to 1
 	endif

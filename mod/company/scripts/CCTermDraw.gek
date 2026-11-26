@@ -99,6 +99,8 @@ begin Function {}
 		let iArrears := GetVariable "iArrears" CCCore
 		if iEndReason == 3
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qCLOSED: you wound it up%q"
+		elseif iEndReason == 4
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qCLOSED: the NCR revoked the licence%q"
 		else
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qCLOSED: the lender took the office%q"
 		endif
@@ -192,7 +194,7 @@ begin Function {}
 		set iBestG to -1
 		set iG to 0
 		while iG < 6
-			let iS := call CCPriceFn aAnchor[iG], aStock[12 + iG], aUse[12 + iG], aTrust[1], 1
+			let iS := call CCPriceFn aAnchor[iG], aStock[12 + iG], aUse[12 + iG], aTrust[1], 21
 			let iB := call CCPriceFn aAnchor[iG], aStock[iG], aUse[iG], aTrust[0], 0
 			if iBestG < 0 || iS - iB > iBest
 				set iBest to iS - iB
@@ -229,7 +231,10 @@ begin Function {}
 			let iK := aS[0]
 			let aS := Ar_List "GS", "PR", "SL", "MO"
 			let sN := aS[iK]
-			Console "SetTerminalMenuItemText CCOfficeTerm 1 8 %qCONTRACTS %z %.0f/9 to %z%q" sT iA sN
+			; M3: an NCR contract runs 14 days (4 deliveries)
+			let aS := GetArrayVariable "aConNcr" CCLaw
+			let iK := 9 - 5 * aS[0]
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 8 %qCONTRACTS %z %.0f/%.0f to %z%q" sT iA iK sN
 		else
 			Console "SetTerminalMenuItemText CCOfficeTerm 1 8 %qCONTRACTS none running%q"
 		endif
@@ -256,7 +261,7 @@ begin Function {}
 		set iG to 0
 		while iG < 6
 			let iB := call CCPriceFn aAnchor[iG], aStock[iO * 12 + iG], aUse[iO * 12 + iG], aTrust[iO], 0
-			let iS := call CCPriceFn aAnchor[iG], aStock[iD * 12 + iG], aUse[iD * 12 + iG], aTrust[iD], 1
+			let iS := call CCPriceFn aAnchor[iG], aStock[iD * 12 + iG], aUse[iD * 12 + iG], aTrust[iD], (11 + 10 * iD)
 			set iN to 0
 			set iK to 0
 			while iK < ar_Size aQ

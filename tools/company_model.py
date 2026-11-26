@@ -14,6 +14,7 @@ every 7th day, the debt ladder, tier check, then the post: tomorrow's forecast, 
 from dataclasses import dataclass, field
 
 from law_model import LawMixin
+from late_model import LateMixin
 
 GOODS = ('water', 'powder', 'ammo', 'dirty', 'herbs', 'materials')         # the M1 goods (price board order)
 # M2: smoked meat has markets; brahmin, stone, sand and scrap are site goods (no market: the company's
@@ -67,7 +68,7 @@ GUN_COST, GUN_COVER = 25, 30     # a hired gun for one trip: 25 caps, cover 45 -
 ROB_SHARE = 0.3                  # a robbery takes 30% of the strongbox, a wreck all of it (capped)
 AWAY_DAYS = 3                    # the while-you-were-away letter after 3 days without a terminal visit
 POST_KEEP = 3                    # the Post screen keeps the last 3 letters
-LETTER_ORDER = ('closed', 'notice', 'warrant', 'forecast', 'away', 'road', 'loss', 'tier')    # which letter waits first
+LETTER_ORDER = ('closed', 'ending', 'notice', 'warrant', 'forecast', 'away', 'road', 'loss', 'tier')    # which letter waits first
 # Memo answers in order; the default is the cautious one (design: Memos).
 MEMO_ANSWERS = {'road': ('send as planned', 'hire a gun for 25', 'keep the wagon home'),
                 'prepay': ('pay 300 off the loan', 'keep the cash'),
@@ -77,6 +78,12 @@ MEMO_DEFAULT = {'road': 2, 'prepay': 1, 'contract': 2}
 MEMO_ANSWERS.update({'ncr': ('bid %d a crate', 'bid %d a crate', 'pass'),
                      'warrant': ('pay a fixer 300', 'let them come')})
 MEMO_DEFAULT.update({'ncr': 2, 'warrant': 1})
+# M4: a forward ticket, the quartermaster's deal, a loan to an outfit, a failed outfit
+MEMO_ANSWERS.update({'forward': ('accept', 'accept with an advance of %d', 'decline'),
+                     'patron': ('take the deal', 'refuse'),
+                     'lend': ('lend at 2%', 'lend at 4%', 'lend at 8%', 'refuse'),
+                     'outfit': ('seize the wagon', 'forgive the debt')})
+MEMO_DEFAULT.update({'forward': 2, 'patron': 1, 'lend': 3, 'outfit': 0})
 SEND, GUN, HOLD = 0, 1, 2        # road memo answers
 
 # The debt ladder (plan task 1.7, design: Losing and coming back).
@@ -235,6 +242,9 @@ class Memo:
         if self.kind == 'contract':
             a = MEMO_ANSWERS['contract']
             return (a[0] % self.price, a[1] % half_up(self.price * (1 + COUNTER_PREMIUM)), a[2])
+        if self.kind == 'forward':
+            a = MEMO_ANSWERS['forward']
+            return (a[0], a[1] % half_up(0.5 * 12 * self.price), a[2])
         if self.kind == 'ncr':
             a = MEMO_ANSWERS['ncr']
             return (a[0] % half_up(1.3 * self.price), a[1] % half_up(1.2 * self.price), a[2])
@@ -327,13 +337,23 @@ class DayReport:
     ncr: str = ''               # M3: the NCR bid 'won' or 'lost'
     who: str = ''               # M3: the person a poach is about
     raid_loss: int = 0          # M3: what a lost raid took
+    fwd: str = ''               # M4: a forward ticket 'signed', 'filled' or 'missed'
+    fwd_adv: int = 0            # M4: the advance taken on a ticket signed today
+    fwd_pay: int = 0            # M4: paid for a missed ticket
+    fwd_crates: int = 0         # M4: crates the legs delivered to tickets
+    patron: str = ''            # M4: the quartermaster's deal 'signed' or 'broken'
+    lent: int = 0               # M4: lent to an outfit today
+    lend_in: int = 0            # M4: the outfits' instalments received
+    outfit_miss: int = 0        # M4: outfits that missed this week's instalment
+    outfit: str = ''            # M4: a failed outfit 'seized' or 'forgiven'
+    outfit_got: int = 0         # M4: recovered from a seized outfit
 
     @property
     def margin(self):
         return self.sales - self.costs
 
 
-class Company(LawMixin):
+class Company(LawMixin, LateMixin):
     def __init__(self, seed, sheriff=False):
         self.seed, self.sheriff = seed, sheriff
         self.auto = False            # accept the bookkeeper's plan at every tick (game: CCCore.iAuto)
@@ -383,6 +403,7 @@ class Company(LawMixin):
         self.gangers_town = False                            # Goodsprings run by the Powder Gangers
         self.bought_today, self.bought_day = 0, 0
         self._law_init()                                     # M3 (tools/law_model.py)
+        self._late_init()                                    # M4 (tools/late_model.py)
 
     # --- founding -------------------------------------------------------------------------------
     def found(self):
@@ -444,6 +465,7 @@ class Company(LawMixin):
         ceil_ = {o.good: o.value for o in self.standing if o and o.kind == 'max_pay'}
         whs = {t: dict(v) for t, v in self.wh.items()}
         stocks = {t: dict(v) for t, v in self.stock.items()}
+        rem = {(t.town, t.good): t.crates - t.filled for t in self.tickets}    # M4: forward tickets
         for w, road in self.running_roads():
           for origin, dest in (ROADS[road], ROADS[road][::-1]):
             so, sd = stocks[origin], stocks[dest]
@@ -461,7 +483,8 @@ class Company(LawMixin):
             def offer(g):
                 if not self.has_market(dest, g):
                     return None
-                sale = self.price(dest, g, 'sell', sd[g])
+                tk = next((t for t in self.tickets if t.town == dest and t.good == g), None)
+                sale = tk.price if tk is not None and rem[(dest, g)] > 0 else self.price(dest, g, 'sell', sd[g])
                 own = wh[g] > 0
                 if not own and not self.has_market(origin, g):
                     return None
@@ -479,7 +502,10 @@ class Company(LawMixin):
                 else:
                     so[g] -= 1
                     cash -= cost
-                sd[g] += 1
+                if rem.get((dest, g), 0) > 0:
+                    rem[(dest, g)] -= 1         # M4: to the ticket, not the market
+                else:
+                    sd[g] += 1
                 n += 1
                 orders.append(Order('carry', origin, g, 1, w))  # one order per crate, in pick order
 
@@ -490,6 +516,13 @@ class Company(LawMixin):
                         if got is None or got[0] < 0:
                             break
                         take(o.good, got[1], got[2])
+            for t in self.tickets:                        # M4: a forward ticket's crates next
+                if t.town == dest:
+                    while n < cap and rem[(dest, t.good)] > 0:
+                        got = offer(t.good)
+                        if got is None or got[0] < 0:
+                            break
+                        take(t.good, got[1], got[2])
             while n < cap:
                 best = None
                 for g in ALL_GOODS:
@@ -592,6 +625,7 @@ class Company(LawMixin):
             self._bills(r)
             self._week_people(r)
             self._week_law(r)
+            self._week_late(r)
         if d % 7 == 1:
             self._new_candidates()
         self._levels(r)
@@ -602,6 +636,7 @@ class Company(LawMixin):
         self._ladder(r)
         if not self.ended:
             self._day_law(r)
+            self._day_fwd(r)
         if self.ghost_town_done and not self.ghost_town_paid:
             self.ghost_town_paid = True
             self.trust['GS'] = min(100, self.trust['GS'] + DEED_TRUST)
@@ -610,6 +645,9 @@ class Company(LawMixin):
         self.history.append(r)
         road = self._post_memos(r)
         self._post_letters(r, road)
+        import post_model                       # the morning report is written now, as in the game
+        self.report = None
+        self.report = post_model.report_pages(self)
         return r
 
     def _leg(self, r, origin, dest, orders, cap=CRATES_PER_LEG):
@@ -641,6 +679,9 @@ class Company(LawMixin):
             if cost is None:
                 continue
             sold = True
+            if self._fwd_take(r, dest, g):        # M4: a forward ticket takes it first, at its price
+                r.loads[(origin, g)] = r.loads.get((origin, g), 0) + 1
+                continue
             sale = self.price(dest, g, 'sell')
             self.cash += sale
             r.sales += sale
@@ -1046,11 +1087,13 @@ class Company(LawMixin):
         declared, hidden = self.declared(self.week_sales)     # M3: the back room hides a share
         self.hidden_since += hidden
         self.heat_gain += HIDE_HEAT * self.hide
-        bill = {'wages': self.accrued_wages, 'duty': duty(declared), 'rent': RENT_WEEK,
+        bill = {'wages': self.accrued_wages, 'duty': self.law_duty(duty(declared)), 'rent': RENT_WEEK,
                 'feed': self.accrued_feed, 'interest': half_up(INTEREST * self.loan),
                 'principal': min(MIN_PRINCIPAL, self.loan)}
-        if self.day % 28 == 0:
+        if self.day % 28 == 0 and 'licence' not in self.laws:     # M4: the Carrier act
             bill['licence'] = self.licence_fee()
+        if self.qm_loan:                                    # M4: the quartermaster's interest and repayment
+            bill['patron'] = sum(self.qm_bill())
         if self.premium():
             bill['cover'] = self.premium()
         r.bills = bill
@@ -1059,17 +1102,20 @@ class Company(LawMixin):
         if self.cash >= total:
             self.cash -= total
             self.loan -= bill['principal']
+            self._qm_paid(bill.get('patron', 0))
             r.bills_paid = True
             return
         r.bills_paid = False
         paid = 0
-        for k in ('wages', 'duty', 'rent', 'feed', 'licence', 'cover', 'interest', 'principal'):
+        for k in ('wages', 'duty', 'rent', 'feed', 'licence', 'cover', 'interest', 'principal', 'patron'):
             amount = bill.get(k, 0)
             take = min(amount, self.cash)
             self.cash -= take
             paid += take
             if k == 'principal':
                 self.loan -= take
+            if k == 'patron':
+                self._qm_paid(take)
         rest = total - paid
         self.arrears += rest + half_up(LATE_FEE * rest)
         if self.stage in ('ok', 'probation'):
@@ -1171,7 +1217,9 @@ class Company(LawMixin):
             r.notes.append({'receivership': 'receivership: the office is now a Crimson Caravan branch',
                             'takeover': 'takeover: Alice took the office',
                             'walked': 'wound up by the owner',
-                            'revoked': 'licence revoked: the NCR closed the company'}[reason])
+                            'revoked': 'licence revoked: the NCR closed the company',
+                            'retired': 'retired: the company passes to a successor'}[reason])
+        self._write_ending()                                 # M4: the "20 years on" pages
 
     # cures (design: Cures at Final notice); each one works at a terminal or from a notice letter
     def wagon_value(self):
@@ -1228,6 +1276,7 @@ class Company(LawMixin):
         if not self.can_walk_away():
             return False
         self._end(None, 'walked')
+        self.post = (self.post + self.ending_letters())[-POST_KEEP:]     # M4: the last letters
         return True
 
     def can_buy_wagon(self):
@@ -1315,6 +1364,8 @@ class Company(LawMixin):
                 self._settle_ncr(r, m, a)
             elif m.kind == 'warrant':
                 self._settle_warrant(r, a)
+            elif m.kind in ('forward', 'patron', 'lend', 'outfit'):
+                self._settle_late(r, m, a)
             elif m.kind == 'prepay' and a == 0:
                 pay = min(PREPAY, self.loan, self.cash)
                 self.cash -= pay
@@ -1347,6 +1398,7 @@ class Company(LawMixin):
                                        road=con_road)):
                     self.last_offer = self.day
         self._post_ncr(r)                       # M3
+        self._post_late(r)                      # M4
         return road
 
     def notice_values(self):
@@ -1370,6 +1422,7 @@ class Company(LawMixin):
         new = []
         if self.ended:
             new.append(Letter(self.day, 'closed', (self.end_reason,)))
+            new += self.ending_letters()                                       # M4: 20 years on
         elif (self.stage == 'deferred' and r.bills_paid is False) or any(
                 n == 'final notice' or n.startswith('seized') for n in r.notes):
             new.append(Letter(self.day, 'notice', self.notice_values()))
@@ -1464,7 +1517,8 @@ class Company(LawMixin):
     # --- worth and tiers --------------------------------------------------------------------------
     def net_worth(self):
         stock_value = sum(ANCHOR[g] * n for wh in self.wh.values() for g, n in wh.items())
-        return self.cash + self.owner_funds + stock_value + self.assets - self.loan - self.arrears
+        return (self.cash + self.owner_funds + stock_value + self.assets - self.loan - self.arrears
+                - self.late_debt())
 
     def earned_worth(self):
         return self.net_worth() - self.owner_paid_in
@@ -1492,6 +1546,11 @@ class Company(LawMixin):
             r.tier_up = True
             self.last_event_day = self.day
             self._tier3_day()
+        elif self.tier_five_ready():
+            self.tier = 5
+            r.notes.append('tier 5: Mojave concern')
+            r.tier_up = True
+            self.last_event_day = self.day
         elif self.tier_four_ready():
             self.tier = 4
             r.notes.append('tier 4: Trading house')

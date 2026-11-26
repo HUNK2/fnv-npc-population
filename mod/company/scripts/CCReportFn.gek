@@ -153,6 +153,9 @@ begin Function {}
 	if iDayCon
 		let sP1 := sP1 + sS
 	endif
+	; M3: the rival and the law
+	let sS := call CCLawTextFn 1
+	let sP1 := sP1 + sS
 	let aPage[0] := sP1
 
 	; page 2: the numbers and tomorrow's forecast

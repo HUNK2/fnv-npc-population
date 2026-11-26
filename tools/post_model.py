@@ -6,6 +6,7 @@ text into a 260-byte buffer). Numbers are whole caps with no thousands separator
 """
 import company_model as cm
 import law_model as law
+import late_model as late
 
 MAX_TEXT = 200
 ROAD_NAME = {1: 'Primm road', 2: 'Sloan road', 3: 'Outpost road'}
@@ -54,6 +55,7 @@ CLOSED_TEXT = {
     'walked': 'You wound the company up. The lender took what was left, and the books are closed.',
     'revoked': 'Second raid in a month, boss. The NCR revoked our licence and sealed the office. '
                'The company is closed.',
+    'retired': 'You handed the company on, boss. The books are closed, and the last letters tell the rest.',
 }
 
 
@@ -119,11 +121,42 @@ def law_line(r):
         out += ' %s left for the Crimson Caravan.' % r.who
     if r.claim:
         out += ' Crimson Cover paid back %d.' % r.claim
+    return out + late_line(r)
+
+
+def late_line(r):
+    """M4: forward tickets, the quartermaster, the outfits' loans, in a fixed order. Empty on a quiet day."""
+    out = ''
+    if r.fwd == 'signed':
+        out += (' We signed a forward ticket and took an advance of %d.' % r.fwd_adv if r.fwd_adv
+                else ' We signed a forward ticket.')
+    elif r.fwd == 'filled':
+        out += ' A forward ticket is filled.'
+    elif r.fwd == 'missed':
+        out += ' We missed a forward ticket and paid %d.' % r.fwd_pay
+    if r.patron == 'signed':
+        out += ' The quartermaster lent us %d: we are his preferred carrier.' % late.QM_LOAN
+    elif r.patron == 'broken':
+        out += " The quartermaster's deal is broken: the rest of his loan is owed now."
+    if r.lent:
+        out += ' We lent %d to an outfit.' % r.lent
+    if r.lend_in:
+        out += ' The outfits paid us %d.' % r.lend_in
+    if r.outfit_miss:
+        out += ' %d outfit%s missed a payment.' % (r.outfit_miss, '' if r.outfit_miss == 1 else 's')
+    if r.outfit == 'seized':
+        out += " We seized a failed outfit's wagon: %d recovered." % r.outfit_got
+    elif r.outfit == 'forgiven':
+        out += " We forgave a failed outfit's debt."
     return out
 
 
 def report_pages(c):
-    """The morning report after the last tick: page 1 the bookkeeper's letter, page 2 the numbers."""
+    """The morning report after the last tick: page 1 the bookkeeper's letter, page 2 the numbers. It is
+    written at the end of the tick (Company.tick keeps it in c.report): a hire or a payment later in
+    the day does not change it."""
+    if getattr(c, 'report', None) is not None:
+        return c.report
     if not c.history:
         return None
     r = c.history[-1]
@@ -164,7 +197,7 @@ def report_pages(c):
     p2 = ('Day %d: sales %d, costs %d, net %d. Cash %d, runway %dd. Bills in %dd, about %d. Tomorrow: %s'
           % (r.day, r.sales, r.costs, r.margin, c.cash, c.runway(), days_to_bills(c), bill_estimate(c),
              forecast_line(c)))
-    return p1, p2
+    return p1[:MAX_TEXT], p2         # M4: page 1 is cut at 200 characters (the game's buffer)
 
 
 def memo_title(c, m):
@@ -179,6 +212,14 @@ def memo_title(c, m):
         return 'NCR BID: OUTPOST AMMO  due %dd' % due
     if m.kind == 'warrant':
         return 'WARRANT SERVED  raid in %dd' % due
+    if m.kind == 'forward':
+        return 'FORWARD %s %s  due %dd' % (m.town, GOOD_NAME[m.good].upper(), due)
+    if m.kind == 'patron':
+        return 'THE NCR QUARTERMASTER  due %dd' % due
+    if m.kind == 'lend':
+        return '%s ASKS FOR %d  due %dd' % (m.who.upper(), m.price, due)
+    if m.kind == 'outfit':
+        return '%s HAS FAILED  due %dd' % (m.who.upper(), due)
     return 'PAY DOWN THE LOAN?  due %dd' % due
 
 
@@ -207,6 +248,21 @@ def memo_text(c, m):
         return ('The NCR served a warrant, heat %d. Rangers come on day %d: our cover %d against %d. A fixer can '
                 'lose the papers for %d. If you say nothing, we let them come.'
                 % (c.heat, m.due, c.cover(), law.RAID_STRENGTH, law.FIXER))
+    if m.kind == 'forward':
+        return ('%s wants 12 crates of %s within 10 days at %d a crate. Accept, or take %d now as an advance? A '
+                'miss costs a quarter of the rest. If you say nothing, we decline.'
+                % (cm.TOWN_NAME[m.town], GOOD_NAME[m.good], m.price,
+                   cm.half_up(late.FWD_ADVANCE * late.FWD_CRATES * m.price)))
+    if m.kind == 'patron':
+        return ('The NCR quartermaster offers 10000 caps at 2% a week, repaid 500 a week. His string: heat under 20 '
+                'and never outlaws, or the rest is due at once. If you say nothing, we refuse.')
+    if m.kind == 'lend':
+        return ('%s of %s asks to borrow %d over 8 weeks. Lend at 2%%, 4%% or 8%% a week (the higher, the likelier '
+                'they miss), or refuse? If you say nothing, we refuse.' % (m.who, cm.TOWN_NAME[m.town], m.price))
+    if m.kind == 'outfit':
+        return ('%s missed two payments in a row and owes %d. Seize the wagon (half its loan, at most what it '
+                'owes; %s will not like it), or forgive it? If you say nothing, we seize it.'
+                % (m.who, m.price, cm.TOWN_NAME[m.town]))
     if m.kind == 'raise':
         p = next((x for x in c.staff if x.name == m.who), None)
         loyal, wage = (p.loyalty, p.wage) if p else (0, 0)
@@ -250,6 +306,8 @@ TIER_TEXT = ('Boss, we are an Outfit now. Our office next to the Prospector Salo
              'a stall. The Build screen is open at the terminal: purifier, apothecary, well rig, forager hut.')
 TIER4_TEXT = ('Boss, we are a trading house now. The NCR clerk calls us a preferred carrier: no toll at the '
               'Outpost. The licence is 900 a season from here.')
+TIER5_TEXT = ('Boss, we are the Mojave concern now. New Vegas listens: favour from NCR deliveries can pass a '
+              'law on the Towns screen, and the Settings screen has a RETIRE row when you are ready.')
 TIER3_TEXT = ('Boss, we are a caravan company now. Sloan and the Outpost gave us branches, the route manager '
               'can be hired, and the smokehouse and stone yard are on the Build screen.')
 
@@ -262,7 +320,9 @@ def letter_title(letter):
         word = {'away': 'while you were away', 'road': 'bandit sign', 'loss': 'robbed',
                 'forecast': 'short on bill day', 'closed': 'company closed',
                 'warrant': 'warrant served',
-                'tier': {3: 'a caravan company', 4: 'a trading house'}.get(letter.values[0], 'an Outfit now')
+                'ending': '20 years on',
+                'tier': {3: 'a caravan company', 4: 'a trading house',
+                         5: 'the Mojave concern'}.get(letter.values[0], 'an Outfit now')
                 }[letter.kind]
     return 'LETTER day %d  %s' % (letter.day, word)
 
@@ -279,7 +339,9 @@ def letter_text(letter):
     if letter.kind == 'closed':
         return CLOSED_TEXT[v[0]]
     if letter.kind == 'tier':
-        return {3: TIER3_TEXT, 4: TIER4_TEXT}.get(v[0], TIER_TEXT)
+        return {3: TIER3_TEXT, 4: TIER4_TEXT, 5: TIER5_TEXT}.get(v[0], TIER_TEXT)
+    if letter.kind == 'ending':
+        return ' '.join(v[1])
     if letter.kind == 'warrant':
         return ('Boss, the NCR served a warrant: heat %d. The Rangers come on day %d unless a fixer loses the '
                 'papers. The memo is at the office.' % v)

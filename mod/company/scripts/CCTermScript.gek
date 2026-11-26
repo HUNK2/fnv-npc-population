@@ -173,7 +173,7 @@ begin MenuMode 1057
 			set iM to 0
 			while iM < ar_Size aMK
 				set iN to 2
-				if eval (aMK[iM] == 0 || aMK[iM] == 2)
+				if eval (aMK[iM] == 0 || aMK[iM] == 2 || aMK[iM] == 4)
 					set iN to 3
 				endif
 				if iClick > iRow && iClick <= iRow + iN

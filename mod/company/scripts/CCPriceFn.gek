@@ -13,6 +13,8 @@ int iSide
 float fP
 float fS
 
+float fWar
+int iT
 begin Function {fAnchor fStock fUse fTrust iSide}
 	let fS := 0.1 - 0.08 * fTrust / 100 - (GetVariable "fCut" CCCore)
 	if fS < 0.02
@@ -21,7 +23,19 @@ begin Function {fAnchor fStock fUse fTrust iSide}
 	if iSide == 0
 		let fP := Floor ((fAnchor * (0.5 + 1 / (1 + fStock / (3 * fUse)))) * (1 + fS) + 0.5)
 	else
-		let fP := Floor ((fAnchor * (0.5 + 1 / (1 + fStock / (3 * fUse)))) * (1 - fS) + 0.5)
+		; M3: iSide 1 + 10 * (town + 1) names the town; the Crimson Caravan's price war there cuts 15%
+		; (20% with Crimson Cover: she reads your manifests)
+		set fWar to 0
+		if iSide > 1
+			let iT := Floor (iSide / 10)
+			if eval (iT == (GetVariable "iWarTown" CCLaw) && (GetVariable "iDay" CCCore) <= (GetVariable "iWarUntil" CCLaw))
+				set fWar to 0.15
+				if eval (GetVariable "iInsured" CCLaw)
+					set fWar to 0.2
+				endif
+			endif
+		endif
+		let fP := Floor ((fAnchor * (0.5 + 1 / (1 + fStock / (3 * fUse)))) * (1 - fS) * (1 - fWar) + 0.5)
 	endif
 	SetFunctionValue fP
 end

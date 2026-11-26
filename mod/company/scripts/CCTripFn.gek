@@ -108,6 +108,8 @@ begin Function {}
 				let iN := (GetVariable "iDayCosts" CCCore) + iTake
 				SetVariable "iDayCosts" iN CCCore
 			endif
+			; M3: the Outpost toll and a sealed-crate run (CCLawFn 10)
+			call CCLawFn 10 iRoad 0
 			let iSales0 := GetVariable "iDaySales" CCCore
 			; contract crates: returns crates loaded out of the road's first town * 100 + its second
 			let iLoaded := call CCContractFn 1 iRoad 1
@@ -189,6 +191,9 @@ begin Function {}
 							let iN := (GetVariable "iDayCosts" CCCore) + iValue
 							SetVariable "iDayCosts" iN CCCore
 							SetVariable "iDayLoss" iValue CCCore
+							; M3: Crimson Cover pays back 60% of it
+							let iN := call CCLawFn 11 iValue 0
+							set iCash to iCash + iN
 						endif
 					endif
 				endif
@@ -230,7 +235,7 @@ begin Function {}
 				set iI to 0
 				while iI < ar_Size aLeg
 					let iG := aLeg[iI]
-					let iSale := call CCPriceFn aAnchor[iG], aStock[iDest * 12 + iG], aUse[iDest * 12 + iG], aTrust[iDest], 1
+					let iSale := call CCPriceFn aAnchor[iG], aStock[iDest * 12 + iG], aUse[iDest * 12 + iG], aTrust[iDest], (11 + 10 * iDest)
 					set iCash to iCash + iSale
 					set iA to iA + iSale
 					set iB to iB + iSale
@@ -252,6 +257,7 @@ begin Function {}
 					SetVariable "iDayBack" iN CCCore
 				endif
 				if iSold > 0
+					call CCLawFn 12 iDest iSold
 					let aTrust[iDest] += 1
 					if eval (aTrust[iDest] > 100)
 						let aTrust[iDest] := 100

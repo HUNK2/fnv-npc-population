@@ -173,7 +173,7 @@ begin Function {}
 					while iGo && iK < iCap && aStock[iDest * 12 + iG] < aSV[iS]
 						set iOk to 0
 						if eval (aMkt[iDest * 12 + iG])
-							let iSale := call CCPriceFn aAnchor[iG], aStock[iDest * 12 + iG], aUse[iDest * 12 + iG], aTrust[iDest], 1
+							let iSale := call CCPriceFn aAnchor[iG], aStock[iDest * 12 + iG], aUse[iDest * 12 + iG], aTrust[iDest], (11 + 10 * iDest)
 							let iOwn := aWhPlan[iOrigin * 12 + iG] > 0
 							set iCost to 0
 							set iOk to 1
@@ -225,7 +225,7 @@ begin Function {}
 							endif
 						endif
 						if iOk
-							let iSale := call CCPriceFn aAnchor[iG], aStock[iDest * 12 + iG], aUse[iDest * 12 + iG], aTrust[iDest], 1
+							let iSale := call CCPriceFn aAnchor[iG], aStock[iDest * 12 + iG], aUse[iDest * 12 + iG], aTrust[iDest], (11 + 10 * iDest)
 							if eval (iOwn == 0 && (iCost > iPlanCash || iCost > aCeil[iG]))
 								set iOk to 0
 							endif

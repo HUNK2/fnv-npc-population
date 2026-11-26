@@ -1,0 +1,53 @@
+scn CCLawScript
+
+; M3: the rival and the law (tools/law_model.py; docs/plans/2026-11-28-m3-rival-law.md). The state lives
+; here, in its own quest, so CCCoreScript stays under the compile size limit; CCLawFn changes it and
+; CCLawTextFn writes its texts. Everything starts at tier 3. Variables are only ever appended.
+; iWarTown is the town at war + 1 (0: none). aSoldWk and aLastShare are per town (0 Goodsprings, 1 Primm,
+; 2 Sloan, 3 Mojave Outpost). aConNcr runs beside CCCore's aCon* arrays: 1 for an NCR contract (14 days).
+; The day's news for the report (reset at each tick): iDToll, iDSealed (1 a sealed run, 2 searched),
+; iDClaim, iDRival (1 war, 2 poach, 3 poached; sDWho the person), iDWarrant, iDInsp (1 clean, 2 a fault),
+; iDFine, iDRaid (1 won, 2 seized, 3 bribed), iDRaidLoss, iDNcr (1 won, 2 lost).
+
+int iInit
+int iHeat
+int iClean
+int iHeatGain
+int iAggr
+int iStanding
+int iWarTown
+int iWarUntil
+int iPoachDay
+int iHide
+int iSealed
+int iSealedLast
+int iHidden
+int iFaults
+int iInspNext
+int iInsured
+int iOutlaw
+int iRaidLast
+int iNcrDone
+int iLastNcr
+string_var sPoach
+array_var aSoldWk
+array_var aLastShare
+array_var aRaids
+array_var aConNcr
+int iDToll
+int iDSealed
+int iDClaim
+int iDRival
+int iDWarrant
+int iDInsp
+int iDFine
+int iDRaid
+int iDRaidLoss
+int iDNcr
+string_var sDWho
+
+begin GameMode
+	if iInit == 0
+		call CCLawFn 0 0 0
+	endif
+end

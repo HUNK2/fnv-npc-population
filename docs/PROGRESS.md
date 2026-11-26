@@ -69,8 +69,23 @@ calls are mine and are marked "my call" here and in the plans.
   `tools/balance_run.py` (100 model days): passive nets 258 to 673 a week after week 1 (target
   about 250), careful and good players reach tier 2 on day 10 and repay the loan in week 6
   (targets 5 and 8), no ended companies. What to try: `docs/m1-what-to-try.md`.
-- **M1 One road is done.** Next: the towns design (`docs/towns-design.md`, reviewed) and T1
-  Goodsprings (`docs/plans/2026-11-27-t1-goodsprings.md`).
+- **M1 One road is done.** Then the towns design (`docs/towns-design.md`, reviewed) and T1
+  Goodsprings (`docs/plans/2026-11-27-t1-goodsprings.md`, proofs in `docs/t1-results.md`).
+- **T1 and M2** (commits 35c36ec, bf6302f): Goodsprings residents on schedules; four towns, three
+  roads, site goods, staff and managers; the M2 checks pass in game. What to try:
+  `docs/t1-what-to-try.md`, `docs/m2-what-to-try.md`. Still open from M2: the world branch
+  terminals and the tier 3 stash perk.
+- **M3 The rival and the law** (plan `docs/plans/2026-11-28-m3-rival-law.md`): the Crimson Caravan
+  as a rival (anger, price wars, poaching, NCR bids), heat, the licence and the duty, outlaw marks
+  (`CCLawFn`, `CCLawScript`, `CCLawTextFn`; models `tools/law_model.py`, `tools/company_model.py`).
+  `tools/ingame_m3.py` (game vs model every day) found three game bugs, all fixed: a plain
+  `set x to arr[i]` aborts a script silently at run time (it killed every tier 2+ contract offer;
+  now `let`); a plain `if` on an array element did the same in the weekly people pass (the 0x35F
+  error, now `if eval`); and the bill estimate used the wages from before the day's staff changes
+  (now recomputed; the model now writes its report at the tick, as the game does). The last run had
+  0 script errors and 3 estimate mismatches, the ones fixed after it; `tools/ingame_m4.py` covers
+  them again. What to try: `docs/m3-what-to-try.md`.
+- **M4 The late game and the ending** (plan `docs/plans/2026-11-28-m4-ending.md`): in progress.
 
 ## Done
 

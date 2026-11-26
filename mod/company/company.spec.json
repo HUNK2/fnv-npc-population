@@ -888,6 +888,45 @@
    "type": "SCPT",
    "source": "scripts/CCMemoFn.gek",
    "script_type": "object"
+  },
+  "CCLawFn": {
+   "type": "SCPT",
+   "source": "scripts/CCLawFn.gek",
+   "script_type": "object"
+  },
+  "CCLawTextFn": {
+   "type": "SCPT",
+   "source": "scripts/CCLawTextFn.gek",
+   "script_type": "object"
+  },
+  "CCLawScript": {
+   "type": "SCPT",
+   "source": "scripts/CCLawScript.gek",
+   "script_type": "quest"
+  },
+  "CCLaw": {
+   "type": "QUST",
+   "fields": [
+    {
+     "tag": "SCRI",
+     "form": "@CCLawScript"
+    },
+    {
+     "tag": "FULL",
+     "text": "Mojave Caravan Company: the law"
+    },
+    {
+     "tag": "DATA",
+     "pack": "<BBBBf",
+     "values": [
+      1,
+      50,
+      0,
+      0,
+      5.0
+     ]
+    }
+   ]
   }
  },
  "cells": {

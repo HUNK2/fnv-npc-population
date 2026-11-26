@@ -233,7 +233,9 @@ begin Function {}
 					Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %q%z 4 crates every 3d at %.0f to %z%q" iRow sT iA sN
 				endif
 				let iA := aCN[iK]
-				let iN := 28 + aCS[iK]
+				let aCM := GetArrayVariable "aConNcr" CCLaw
+				let iN := 28 - 14 * aCM[iK] + aCS[iK]
+				let aCM := GetArrayVariable "aConMissed" CCCore
 				set iRow to iRow + 1
 				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qNEXT day %.0f  ENDS day %.0f%q" iRow iA iN
 				let iA := aCD[iK]

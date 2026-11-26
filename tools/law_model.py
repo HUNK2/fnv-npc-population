@@ -146,11 +146,13 @@ class LawMixin:
                 self.ncr_standing = min(100, self.ncr_standing + DUTY_STANDING)
             sh = self.shares()
             top = max(sh, key=lambda t: (sh[t], -('GS', 'PR', 'SL', 'MO').index(t)))
-            if sh[top] > SHARE_HIGH and sh[top] > self.last_share[top]:      # over 25% and rising
+            if self.rival_out:                                 # M4: her board voted her out
+                pass
+            elif sh[top] > SHARE_HIGH and sh[top] > self.last_share[top]:      # over 25% and rising
                 self.aggr = min(100, self.aggr + AGGR_HIGH)
             elif sh[top] < SHARE_LOW:
                 self.aggr = max(0, self.aggr + AGGR_LOW)
-            if self.aggr >= MOVE_AGGR:
+            if self.aggr >= MOVE_AGGR and not self.rival_out:
                 if sh[top] > SHARE_HIGH and self.day > self.war_until:
                     self.war_town, self.war_until = top, self.day + WAR_DAYS
                     r.rival, r.who = 'war', top
@@ -174,6 +176,7 @@ class LawMixin:
                 self.staff.remove(p)
                 r.notes.append('%s left for the Crimson Caravan' % p.name)
                 r.rival, r.who = 'poached', p.name
+                self.poached_name = p.name                 # M4: the ending names them
             self.poach_name = ''
         if self.heat_gain > 0:
             self.heat = min(100, self.heat + self.heat_gain)
@@ -264,6 +267,8 @@ class LawMixin:
             r.ncr = 'lost'
             return
         price = hi if a == 0 else lo
+        if a == 1 and self.aggr >= CRIMSON_BIDS:
+            self.won_vs_her = True                             # M4: the second share block's deed
         origin = [t for t in _cm().ROADS[NCR_ROAD] if t != NCR_TOWN][0]
         self.contracts.append(_cm().Contract(NCR_GOOD, NCR_CRATES, NCR_EVERY, price, self.day, self.day,
                                              town=NCR_TOWN, road=NCR_ROAD, origin=origin, days=NCR_DAYS, ncr=True))
@@ -276,6 +281,7 @@ class LawMixin:
         if c.ncr:
             self.ncr_standing = min(100, self.ncr_standing + NCR_STANDING)
             self.ncr_done += 1
+            self.favour += 1                                   # M4: favour for the laws
 
     # --- tier 4 --------------------------------------------------------------------------------------------
     def tier_four_ready(self):

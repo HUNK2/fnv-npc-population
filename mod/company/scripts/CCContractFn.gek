@@ -67,6 +67,7 @@ array_var aRA
 array_var aRB
 array_var aW
 
+array_var aNc
 begin Function {iAct iA iB}
 	set iOut to 0
 	let iDay := GetVariable "iDay" CCCore
@@ -82,6 +83,8 @@ begin Function {iAct iA iB}
 	let aCN := GetArrayVariable "aConNext" CCCore
 	let aCD := GetArrayVariable "aConDone" CCCore
 	let aCM := GetArrayVariable "aConMissed" CCCore
+	; M3: 1 for an NCR contract (14 days; CCLawFn)
+	let aNc := GetArrayVariable "aConNcr" CCLaw
 	let aRA := Ar_List 0, 0, 0, 1
 	let aRB := Ar_List 0, 1, 2, 3
 
@@ -136,6 +139,8 @@ begin Function {iAct iA iB}
 						endif
 						let aCD[iK] += 1
 						SetVariable "iDayCon" 1 CCCore
+						let iJ := 4 + 100 * aNc[iK]
+						call CCLawFn 12 iT iJ
 						set iN to 4
 						if eval (iO == aRA[iA])
 							set iOut to iOut + 400
@@ -161,7 +166,7 @@ begin Function {iAct iA iB}
 				SetVariable "iCash" iCash CCCore
 				SetVariable "iDayCosts" iCosts CCCore
 				let aCN[iK] += 3
-				if eval (aCN[iK] >= aCS[iK] + 28)
+				if eval (aCN[iK] >= aCS[iK] + 28 - 14 * aNc[iK])
 					let aTrust[iT] += 3
 					if eval (aTrust[iT] > 100)
 						let aTrust[iT] := 100
@@ -177,6 +182,7 @@ begin Function {iAct iA iB}
 					ar_Erase aCN iK
 					ar_Erase aCD iK
 					ar_Erase aCM iK
+					ar_Erase aNc iK
 					set iK to iK - 1
 				endif
 			endif
@@ -199,8 +205,17 @@ begin Function {iAct iA iB}
 			endif
 			set iK to iK + 1
 		loop
+		; NCR contracts do not count against the open contracts
+		set iJ to 0
+		set iK to 0
+		while iK < ar_Size aNc
+			if eval (aNc[iK] == 0)
+				set iJ to iJ + 1
+			endif
+			set iK to iK + 1
+		loop
 		let iK := call CCCoverFn
-		if eval (iN == 0 && iK > 0 && (ar_Size aCT) < iTier && (GetVariable "iStage" CCCore) == 0 && (GetVariable "iWagonOk" CCCore) && iDay % 7 == 3 && iDay - (GetVariable "iLastOffer" CCCore) >= 7 && (ar_Size aMK) < 3)
+		if eval (iN == 0 && iK > 0 && iJ < iTier && (GetVariable "iStage" CCCore) == 0 && (GetVariable "iWagonOk" CCCore) && iDay % 7 == 3 && iDay - (GetVariable "iLastOffer" CCCore) >= 7 && (ar_Size aMK) < 3)
 			let aNormal := GetArrayVariable "aNormal" CCCore
 			let aMkt := GetArrayVariable "aMkt" CCCore
 			; the offer (Company.contract_offer): tier 1 Primm water on road 1; from tier 2 the biggest
@@ -237,7 +252,7 @@ begin Function {iAct iA iB}
 							endif
 							set iB to 0
 							while iB < 7
-								set iN to aMkt[iA * 12 + iB]
+								let iN := aMkt[iA * 12 + iB]
 								set iK to 0
 								while iK < ar_Size aCT
 									if eval (aCT[iK] == iA && aCG[iK] == iB)
@@ -272,7 +287,7 @@ begin Function {iAct iA iB}
 				set iR to iPrice
 			endif
 			if iOk
-				let iK := call CCPriceFn aAnchor[iG], aNormal[iT * 12 + iG], aUse[iT * 12 + iG], aTrust[iT], 1
+				let iK := call CCPriceFn aAnchor[iG], aNormal[iT * 12 + iG], aUse[iT * 12 + iG], aTrust[iT], (11 + 10 * iT)
 				let iPrice := Floor ((1 + 0.09) * iK + 0.5)
 				let aMD := GetArrayVariable "aMemoDay" CCCore
 				let aMDue := GetArrayVariable "aMemoDue" CCCore
@@ -325,6 +340,7 @@ begin Function {iAct iA iB}
 			ar_Append aCN iDay
 			ar_Append aCD 0
 			ar_Append aCM 0
+			ar_Append aNc 0
 			SetVariable "iDaySigned" iN CCCore
 			let iJ := iT * 100 + iG
 			SetVariable "iDayConTG" iJ CCCore

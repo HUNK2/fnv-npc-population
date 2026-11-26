@@ -1,0 +1,128 @@
+scn CCLawTextFn
+
+; M3 texts (tools/post_model.py law_line, letter_text, TIER4_TEXT, CLOSED_TEXT; tools/terminal_model.py
+; law_rows, towns_row). The state is CCLaw's.
+; iAct 1: the report's law sentences for today (raid, NCR bid, inspection, search, rival, cover), or "".
+; iAct 2: today's warrant letter: posts its text and title to CCCore's Post and returns the text, or "".
+; iAct 3: the tier 4 letter. iAct 4: the closed letter for a revoked licence.
+; iAct 5: the Towns screen's law rows (8 to 12). iAct 6: the front page's TOWNS row at tier 3 (13).
+
+int iAct
+int iN
+int iK
+int iJ
+int iDay
+string_var sOut
+string_var sS
+string_var sWord
+array_var aX
+
+begin Function {iAct}
+	let sOut := ""
+	let iDay := GetVariable "iDay" CCCore
+	if iAct == 1
+		let iN := GetVariable "iDRaid" CCLaw
+		if iN == 1
+			let sOut += " The Rangers raided the office and our guards held them off: we are outlaws now."
+		elseif iN == 2
+			let iK := GetVariable "iDRaidLoss" CCLaw
+			let sS := sv_Construct " The Rangers raided the office and took %.0f caps." iK
+			let sOut += sS
+		elseif iN == 3
+			let sOut += " A fixer lost the warrant's papers for 300."
+		endif
+		let iN := GetVariable "iDNcr" CCLaw
+		if iN == 1
+			let sOut += " We won the NCR bid."
+		elseif iN == 2
+			let sOut += " The Crimson Caravan won the NCR bid."
+		endif
+		let iN := GetVariable "iDInsp" CCLaw
+		let iK := GetVariable "iDFine" CCLaw
+		if iN == 1
+			let sOut += " The NCR inspected the books: all in order."
+		elseif iN == 2 && iK > 0
+			let sS := sv_Construct " The NCR inspected the books and fined us %.0f." iK
+			let sOut += sS
+		elseif iN == 2
+			let sOut += " The NCR inspected the books and found a fault: a warning."
+		endif
+		if (GetVariable "iDSealed" CCLaw) == 2
+			let sOut += " A patrol searched the wagon: fined 100."
+		endif
+		let iN := GetVariable "iDRival" CCLaw
+		let sWord := CCLaw.sDWho
+		if iN == 1
+			let iK := (GetVariable "iWarTown" CCLaw) - 1
+			let sWord := call CCTextFn 3 iK
+			let sS := sv_Construct " The Crimson Caravan started a price war in %z." sWord
+			let sOut += sS
+		elseif iN == 2
+			let sS := sv_Construct " Alice is courting %z: they leave tomorrow unless their loyalty is 40." sWord
+			let sOut += sS
+		elseif iN == 3
+			let sS := sv_Construct " %z left for the Crimson Caravan." sWord
+			let sOut += sS
+		endif
+		let iK := GetVariable "iDClaim" CCLaw
+		if iK > 0
+			let sS := sv_Construct " Crimson Cover paid back %.0f." iK
+			let sOut += sS
+		endif
+	elseif iAct == 2
+		if (GetVariable "iDWarrant" CCLaw)
+			let iN := GetVariable "iHeat" CCLaw
+			let iK := iDay + 7
+			let sOut := sv_Construct "Boss, the NCR served a warrant: heat %.0f. The Rangers come on day %.0f unless a fixer loses the papers. The memo is at the office." iN iK
+			let aX := GetArrayVariable "aPostText" CCCore
+			ar_Append aX sOut
+			let sS := sv_Construct "LETTER day %.0f  warrant served" iDay
+			let aX := GetArrayVariable "aPostTitle" CCCore
+			ar_Append aX sS
+		endif
+	elseif iAct == 3
+		let sOut := "Boss, we are a trading house now. The NCR clerk calls us a preferred carrier: no toll at the Outpost. The licence is 900 a season from here."
+	elseif iAct == 4
+		let sOut := "Second raid in a month, boss. The NCR revoked our licence and sealed the office. The company is closed."
+	elseif iAct == 5
+		let iN := GetVariable "iAggr" CCLaw
+		let iK := GetVariable "iWarTown" CCLaw
+		let iJ := GetVariable "iWarUntil" CCLaw
+		if iK > 0 && iDay <= iJ
+			let aX := Ar_List "GS", "PR", "SL", "MO"
+			let sWord := aX[iK - 1]
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 8 %qRIVAL    anger %.0f  war %z to day %.0f%q" iN sWord iJ
+		else
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 8 %qRIVAL    anger %.0f%q" iN
+		endif
+		let iN := 100 - 10 * (GetVariable "iHide" CCLaw)
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 9 %qDECLARE  %.0f%% of sales (select)%q" iN
+		if (GetVariable "iSealed" CCLaw)
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 10 %qSEALED   crates ON, 50 a run%q"
+		else
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 10 %qSEALED   crates OFF, 50 a run%q"
+		endif
+		if (GetVariable "iInsured" CCLaw)
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 11 %qCOVER    Crimson Cover ON, 40 a wagon%q"
+		else
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 11 %qCOVER    Crimson Cover OFF, 40 a wagon%q"
+		endif
+		let iN := GetVariable "iStanding" CCLaw
+		let iK := GetVariable "iInspNext" CCLaw
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 12 %qNCR      standing %.0f, inspect day %.0f%q" iN iK
+	elseif iAct == 6
+		let aX := GetArrayVariable "aTrust" CCCore
+		set iN to 0
+		set iK to 0
+		while iK < 4
+			if eval (aX[iK] >= 50)
+				set iN to iN + 1
+			endif
+			set iK to iK + 1
+		loop
+		let iK := GetVariable "iHeat" CCLaw
+		let iJ := GetVariable "iStanding" CCLaw
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 13 %qTOWNS    %.0f trusted, heat %.0f, NCR %.0f%q" iN iK iJ
+	endif
+	SetFunctionValue sOut
+end

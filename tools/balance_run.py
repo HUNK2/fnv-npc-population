@@ -35,7 +35,7 @@ def play(kind, days=100, seed=1234):
     c.sheriff = kind in ('good', 'dodgy')
     out = {'tier3': None, 'kind': kind, 'day1': None, 'tier2': None, 'loan_paid': None, 'ended': None,
            'worst_event_runway': 0.0, 'weeks': [], 'contract_income': 0, 'income': 0, 'worth28': None,
-           'tier4': None, 'heat': 0, 'warrants': 0}
+           'tier4': None, 'heat': 0, 'warrants': 0, 'tier5': None, 'fwd': [], 'lent': 0}
     # a week's net: the change in cash and owner money, not counting loan repaid or buildings bought:
     # trade margin after the weekly bills (wages, feed, rent, interest, duty, licence)
     week_start = c.cash + c.owner_funds - c.loan + c.buildings
@@ -61,6 +61,11 @@ def play(kind, days=100, seed=1234):
             out['tier3'] = d
         if c.tier >= 4 and out['tier4'] is None:
             out['tier4'] = d
+        if c.tier >= 5 and out['tier5'] is None:
+            out['tier5'] = d
+        if r.fwd in ('filled', 'missed'):
+            out['fwd'].append(r.fwd)
+        out['lent'] += r.lent
         out['heat'] = max(out['heat'], c.heat)
         out['warrants'] += int(r.warrant)
         if c.loan == 0 and out['loan_paid'] is None:
@@ -81,6 +86,18 @@ def play(kind, days=100, seed=1234):
                 c.answer(m, 1)
             elif m.kind == 'warrant' and kind in ('good', 'dodgy'):
                 c.answer(m, 0)
+            elif m.kind == 'forward' and kind == 'good':          # M4
+                c.answer(m, 0)
+            elif m.kind == 'patron' and kind == 'good':
+                c.answer(m, 0)
+            elif m.kind == 'lend' and kind == 'good' and c.cash - m.price >= 28 * c.daily_burn():
+                c.answer(m, 1)
+            elif m.kind == 'outfit' and kind == 'good':
+                c.answer(m, 1)
+        if kind == 'good' and c.tier >= 4:
+            while c.buy_block():
+                pass
+            c.pass_law()
         if kind in ('good', 'dodgy') and c.tier >= 3 and not c.insured:
             c.toggle_cover()
         if kind == 'dodgy' and c.tier >= 3:
@@ -136,6 +153,8 @@ def main(argv):
         print('%-8s M3: tier 4 day %s, heat max %d, warrants %d, raids %s, NCR standing %d, deliveries %d, '
               'aggression %d' % ('', o['tier4'], o['heat'], o['warrants'], o['raids'], o['standing'], o['ncr'],
                                  o['aggr']))
+        print('%-8s M4: tier 5 day %s, forward tickets %s, lent %d' % ('', o['tier5'], ' '.join(o['fwd']) or '-',
+                                                                     o['lent']))
     return 0
 
 
