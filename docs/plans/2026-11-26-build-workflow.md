@@ -54,6 +54,11 @@ M0 Proofs ──> M1 One road ──> Towns design ──> T1 Goodsprings ──
 
 Each task in a plan goes through the same steps:
 
+0. **Read the engine first.** The decompiled game code is the main source of truth for how the
+   game works. Before building or testing anything that touches the engine (terminals, menus, the
+   day clock, AI, cells, saves), I read the code that runs it (`fnv_func`, `fnv_guide engine`, the
+   decomp source and the engine catalogue in `research/`) and write the expected result from it.
+   The live test then confirms the code reading, and a mismatch is investigated, not guessed at.
 1. **Write the test first.** Ledger maths: a Python unit test against the reference model
    (section 5). Game behaviour: an `fnv_test` scenario with exact pass marks.
 2. **See it fail** (the record or script does not exist yet).
@@ -134,8 +139,8 @@ costs a re-read, not lost work.
 | Gate | When | What I need from you |
 | --- | --- | --- |
 | G1 | now | OK this workflow (or change it) |
-| G2 | start of M0 | JohnnyGuitar NVSE is not in the Dev profile. Either you install it there, or you OK me downloading the release from its official GitHub page (I'll give the file name and size first) |
-| G3 | start of M0 | the project folder is not a git repo. May I `git init` it and commit after each task (local only)? Pushing to a private GitHub repo only when you say |
+| G2 | start of M0 | DONE 2026-11-27: JohnnyGuitar NVSE 5.28 downloaded from its official GitHub release and installed in the Dev profile |
+| G3 | start of M0 | DONE 2026-11-27: public repo https://github.com/HUNK2/fnv-npc-population, MIT licence; a commit after each passing task, pushed at task ends |
 | G4 | end of M0 | the M0 results, plus the towns core question (plugin-first or engine-plugin-first) with the crowd-test numbers |
 | G5 | each milestone plan | OK the plan |
 | G6 | each milestone end | your playtest notes; whether to ship a beta |
