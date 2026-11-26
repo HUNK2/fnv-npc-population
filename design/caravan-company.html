@@ -1,0 +1,740 @@
+<title>Mojave Caravan Company</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil+Display:wght@700;800&display=swap">
+<style>
+/* Layout: a freight dispatch board. One column of sheets; each sheet pairs a stencilled crate-style header with its diagram. Wide diagrams scroll inside their own box. */
+:root {
+  --bg: #E9EDE8;
+  --sheet: #F7F9F5;
+  --ink: #1D272A;
+  --muted: #546266;
+  --rule: #C3CCC7;
+  --faint: #DFE5DF;
+  --you: #2A4E9E;
+  --you-soft: #DCE4F4;
+  --rival: #A2303A;
+  --ncr: #806019;
+  --dodgy: #A9521A;
+  --term-bg: #0E1912;
+  --term-fg: #7BE08A;
+  --term-dim: #4E9A5A;
+  --f-display: "Big Shoulders Stencil Display", "Big Shoulders Display", "Oswald", "Arial Narrow", Impact, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121819; --sheet: #1A2224; --ink: #E1E6E2; --muted: #9AA7A9; --rule: #344241; --faint: #232D2F;
+    --you: #8CAAF1; --you-soft: #233150; --rival: #EA7A80; --ncr: #D6B466; --dodgy: #EA955D;
+    --term-bg: #07100A; --term-fg: #85EA93; --term-dim: #4C9457;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121819; --sheet: #1A2224; --ink: #E1E6E2; --muted: #9AA7A9; --rule: #344241; --faint: #232D2F;
+  --you: #8CAAF1; --you-soft: #233150; --rival: #EA7A80; --ncr: #D6B466; --dodgy: #EA955D;
+  --term-bg: #07100A; --term-fg: #85EA93; --term-dim: #4C9457;
+  color-scheme: dark;
+}
+
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 64px; display: grid; gap: 18px; }
+h1, h2, h3, h4 { text-wrap: balance; margin: 0; }
+p { margin: 0; }
+a { color: var(--you); }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--you); outline-offset: 2px; }
+
+.eyebrow { font: 600 11.5px/1.3 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+header.top { display: grid; gap: 12px; padding-block: 8px 4px; }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(40px, 7vw, 68px); line-height: .95; letter-spacing: .01em; text-transform: uppercase; }
+.lede { max-width: 66ch; font-size: 16.5px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; font-size: 13.5px; color: var(--muted); }
+.legend span.item { display: inline-flex; gap: 8px; align-items: center; }
+
+.stamp { display: inline-block; font: 600 10.5px/1 var(--f-mono); letter-spacing: .09em; text-transform: uppercase; padding: 4px 7px; border: 1.5px solid var(--ink); border-radius: 2px; color: var(--ink); white-space: nowrap; }
+.stamp.decided { background: var(--ink); color: var(--sheet); }
+.stamp.open { border-style: dashed; }
+
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px 16px; padding-block: 10px; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+nav.toc a { font: 500 12.5px var(--f-mono); letter-spacing: .05em; text-transform: uppercase; color: var(--ink); text-decoration: none; }
+nav.toc a:hover { color: var(--you); text-decoration: underline; }
+
+section.sheet { background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding-block: 24px; padding-inline: clamp(16px, 3vw, 30px); display: grid; gap: 18px; scroll-margin-top: 12px; }
+.sheet-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+h2 { font-family: var(--f-display); font-weight: 800; font-size: clamp(26px, 3.6vw, 34px); line-height: 1; letter-spacing: .02em; text-transform: uppercase; }
+.intro { max-width: 70ch; }
+.note { font-size: 13.5px; color: var(--muted); max-width: 75ch; }
+.ex { font: 500 10.5px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border: 1px dashed var(--rule); padding: 2px 5px; border-radius: 2px; vertical-align: middle; }
+
+figure { margin: 0; display: grid; gap: 8px; min-width: 0; }
+figcaption { color: var(--muted); font-size: 13.5px; max-width: 78ch; }
+.scroll { overflow-x: auto; min-width: 0; }
+.scroll svg { display: block; width: 100%; height: auto; }
+#loop-svg { min-width: 760px; }
+#map-svg { min-width: 520px; }
+
+/* SVG: loop */
+.n rect { fill: var(--sheet); stroke: var(--ink); stroke-width: 1.5; }
+.n.key rect { fill: var(--you-soft); stroke: var(--you); stroke-width: 2.5; }
+.nt { fill: var(--ink); font: 600 14px var(--f-body); text-anchor: middle; }
+.ns { fill: var(--muted); font: 12px var(--f-body); text-anchor: middle; }
+.act rect { fill: var(--sheet); stroke-width: 1.8; }
+.act.you rect { stroke: var(--you); } .act.you .nt { fill: var(--you); }
+.act.rival rect { stroke: var(--rival); } .act.rival .nt { fill: var(--rival); }
+.act.ncr rect { stroke: var(--ncr); } .act.ncr .nt { fill: var(--ncr); }
+.act.raid rect { stroke: var(--muted); stroke-dasharray: 4 3; }
+.a { stroke: var(--ink); stroke-width: 1.5; fill: none; }
+.a.you { stroke: var(--you); } .a.rival { stroke: var(--rival); } .a.ncr { stroke: var(--ncr); } .a.raid { stroke: var(--muted); }
+.a.dodgy { stroke: var(--dodgy); stroke-dasharray: 6 5; }
+.al { fill: var(--muted); font: 12px var(--f-mono); text-anchor: middle; }
+.al.l { text-anchor: end; } .al.r { text-anchor: start; }
+.al.you { fill: var(--you); } .al.rival { fill: var(--rival); } .al.ncr { fill: var(--ncr); } .al.dodgy { fill: var(--dodgy); }
+.mk-ink { fill: var(--ink); } .mk-you { fill: var(--you); } .mk-rival { fill: var(--rival); } .mk-ncr { fill: var(--ncr); } .mk-dodgy { fill: var(--dodgy); } .mk-muted { fill: var(--muted); }
+
+/* growth */
+.steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: end; gap: 6px; }
+.step { height: calc(48px + var(--i) * 15px); border: 1.5px solid var(--ink); background: var(--sheet); color: var(--ink); text-align: left; padding: 6px 8px; border-radius: 3px; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; cursor: pointer; font-family: var(--f-body); min-width: 0; }
+.step:hover { background: var(--faint); }
+.step .num { font: 600 11px var(--f-mono); color: var(--muted); }
+.step .nm { font: 800 clamp(13px, 1.8vw, 17px)/1.05 var(--f-display); text-transform: uppercase; letter-spacing: .02em; overflow-wrap: anywhere; }
+.step[aria-pressed="true"] { background: var(--you); border-color: var(--you); color: var(--sheet); }
+.step[aria-pressed="true"] .num { color: var(--sheet); }
+.grow-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 860px) { .grow-grid { grid-template-columns: minmax(0, 1fr); } }
+.toggle { display: inline-flex; gap: 8px; align-items: center; font-size: 13.5px; color: var(--muted); cursor: pointer; }
+.toggle input { accent-color: var(--dodgy); width: 16px; height: 16px; }
+.tier-panel { display: grid; gap: 10px; align-content: start; border-left: 2px solid var(--rule); padding-left: 18px; min-width: 0; }
+@media (max-width: 860px) { .tier-panel { border-left: 0; padding-left: 0; border-top: 2px solid var(--rule); padding-top: 14px; } }
+.tier-panel h3 { font: 800 28px/1 var(--f-display); text-transform: uppercase; letter-spacing: .02em; color: var(--you); }
+.tier-panel h4 { font: 600 11.5px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+.tier-panel ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; }
+.share { display: grid; gap: 6px; }
+.share-row { display: grid; grid-template-columns: 112px minmax(0, 1fr) 40px; gap: 8px; align-items: center; font-size: 13px; }
+.share-row .pct { font: 600 12px var(--f-mono); text-align: right; font-variant-numeric: tabular-nums; color: var(--you); }
+.bar { display: flex; height: 10px; border-radius: 2px; overflow: hidden; background: var(--faint); }
+.bar span { display: block; height: 100%; transition: width .35s ease; }
+.bar .y { background: var(--you); } .bar .r { background: var(--rival); } .bar .o { background: var(--rule); }
+.share-key { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); }
+.share-key i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+
+/* SVG: map */
+.route { stroke: var(--you); stroke-width: 3.5; stroke-linecap: round; transition: stroke .25s, stroke-width .25s; }
+.route.locked { stroke: var(--rule); stroke-width: 2; stroke-dasharray: 3 6; }
+.route-smuggle { stroke: var(--dodgy); stroke-width: 3; stroke-dasharray: 8 5; stroke-linecap: round; }
+.quarry-link { stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 2 4; }
+.rl { fill: var(--you); font: 500 12px var(--f-mono); transition: opacity .25s; }
+.rl.dodgy { fill: var(--dodgy); }
+.locked { opacity: .3; }
+.route.locked { opacity: 1; }
+.smuggle { display: none; }
+#grow.show-smuggle .smuggle { display: inline; }
+.town { fill: var(--sheet); stroke: var(--ink); stroke-width: 2; }
+.town.pg { stroke: var(--dodgy); }
+.hq { fill: none; stroke: var(--you); stroke-width: 2; }
+.tl { fill: var(--ink); font: 600 13.5px var(--f-body); }
+.tl.pg { fill: var(--dodgy); }
+.ts { fill: var(--muted); font: 11.5px var(--f-body); }
+.wl { transition: opacity .25s; }
+.wl rect { fill: var(--you); }
+.wl text { fill: var(--ink); font: 12px var(--f-body); }
+.wl .tg { fill: var(--muted); font: 600 10.5px var(--f-mono); }
+
+/* chains */
+.shape-key { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12.5px; color: var(--muted); }
+.chains { display: grid; gap: 0; }
+.chain { border-top: 1px solid var(--rule); padding-block: 16px; display: grid; gap: 10px; min-width: 0; }
+.chain:last-child { padding-bottom: 0; }
+.chain-head { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; }
+.chain-head h3 { font: 800 22px/1 var(--f-display); text-transform: uppercase; letter-spacing: .03em; }
+.unlock { font: 600 11px var(--f-mono); letter-spacing: .05em; text-transform: uppercase; color: var(--you); }
+.flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.inputs { display: grid; gap: 6px; }
+.node { display: grid; gap: 1px; padding: 6px 10px; border: 1.5px solid var(--ink); border-radius: 3px; background: var(--sheet); min-width: 0; }
+.node b { font-weight: 600; font-size: 14px; }
+.node small { color: var(--muted); font-size: 12px; line-height: 1.35; }
+.node .k { font: 600 9.5px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-style: normal; }
+.node.shop { background: var(--faint); }
+.node.good { border-color: var(--you); border-radius: 999px; padding-inline: 14px; }
+.node.good b { color: var(--you); }
+.node.buy { border-style: dashed; }
+.node.contra { border-color: var(--dodgy); }
+.node.contra b { color: var(--dodgy); }
+.arr { font: 600 17px var(--f-mono); color: var(--muted); }
+.badge { font: 600 9.5px var(--f-mono); letter-spacing: .07em; text-transform: uppercase; padding: 2px 5px; border-radius: 2px; border: 1px solid var(--rule); color: var(--muted); justify-self: start; }
+
+/* day */
+.day { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1.5px solid var(--ink); border-radius: 3px; overflow: hidden; }
+.seg { padding: 12px 14px; display: grid; gap: 4px; align-content: start; border-right: 1px solid var(--rule); min-width: 0; }
+.seg:last-child { border-right: 0; }
+.seg h4 { font: 800 17px/1.05 var(--f-display); text-transform: uppercase; letter-spacing: .02em; }
+.seg p { font-size: 13.5px; color: var(--muted); }
+.seg.away { background: var(--faint); }
+@media (max-width: 720px) { .day { grid-template-columns: repeat(2, minmax(0, 1fr)); } .seg:nth-child(2) { border-right: 0; } .seg:nth-child(-n+2) { border-bottom: 1px solid var(--rule); } }
+.week { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)) minmax(0, 3.2fr); gap: 4px; }
+.d { border: 1px solid var(--rule); border-radius: 2px; padding: 8px 4px; font: 600 12px var(--f-mono); text-align: center; color: var(--muted); }
+.d.bill { background: var(--ink); color: var(--sheet); border-color: var(--ink); text-align: left; padding-inline: 10px; font-weight: 500; }
+@media (max-width: 620px) { .week { grid-template-columns: repeat(6, minmax(0, 1fr)); } .d.bill { grid-column: 1 / -1; } }
+.memos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 780px) { .memos { grid-template-columns: minmax(0, 1fr); } }
+.memo { border: 1px solid var(--rule); background: var(--bg); border-radius: 3px; padding: 12px 14px; display: grid; gap: 8px; align-content: start; }
+.memo .from { font: 600 10.5px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.memo p { font-weight: 500; }
+.choices { display: flex; flex-wrap: wrap; gap: 6px; }
+.choice { font: 500 12px var(--f-mono); padding: 3px 8px; border: 1px solid var(--ink); border-radius: 2px; }
+.memo.dodgy { border-color: var(--dodgy); } .memo.dodgy .from { color: var(--dodgy); }
+.cols3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 820px) { .cols3 { grid-template-columns: minmax(0, 1fr); } }
+.cols3 h4, .pieces h4 { font: 600 11.5px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.cols3 ul, .pieces ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
+
+/* lose */
+.ladders { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px; }
+@media (max-width: 780px) { .ladders { grid-template-columns: minmax(0, 1fr); } }
+.ladder { display: grid; gap: 12px; align-content: start; min-width: 0; }
+.ladder h3 { font: 800 21px/1.05 var(--f-display); text-transform: uppercase; letter-spacing: .02em; color: var(--c); }
+.ladder ol { list-style: none; margin: 0; padding: 0; display: grid; }
+.rung { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 12px; position: relative; padding-bottom: 16px; }
+.rung::before { content: ""; position: absolute; left: 12px; top: 26px; bottom: 2px; width: 2px; background: var(--c); opacity: .45; }
+.rung:last-child { padding-bottom: 0; }
+.rung:last-child::before { display: none; }
+.dot { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--c); display: grid; place-items: center; font: 600 12px var(--f-mono); color: var(--c); background: var(--sheet); }
+.rung.end .dot { background: var(--c); color: var(--sheet); }
+.rung b { display: block; }
+.rung p { font-size: 14px; }
+.way { color: var(--muted); font-size: 13px !important; margin-top: 2px; }
+.way em { font-style: normal; font-weight: 600; color: var(--ink); }
+.pieces { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; border-top: 1px solid var(--rule); padding-top: 16px; }
+@media (max-width: 780px) { .pieces { grid-template-columns: minmax(0, 1fr); } }
+.openbox { border: 1.5px dashed var(--ink); border-radius: 3px; padding: 14px 16px; display: grid; gap: 6px; }
+.openbox p { font-size: 14px; max-width: 80ch; }
+
+/* people */
+.people { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 900px) { .people { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .people { grid-template-columns: minmax(0, 1fr); } }
+.person { border: 1px solid var(--rule); border-radius: 3px; padding: 12px 14px; display: grid; gap: 5px; align-content: start; }
+.who { display: flex; gap: 8px; align-items: center; font-weight: 600; }
+.sw { width: 11px; height: 11px; border-radius: 2px; background: var(--c); flex: none; }
+.person p { font-size: 13.5px; color: var(--muted); }
+
+/* terminal */
+.term-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 860px) { .term-grid { grid-template-columns: minmax(0, 1fr); } }
+.term { background: var(--term-bg); color: var(--term-fg); font: 13.5px/1.5 var(--f-mono); padding: 18px 20px; border-radius: 6px; white-space: pre; overflow-x: auto; margin: 0; }
+.term .dim { color: var(--term-dim); }
+.term-notes { display: grid; gap: 10px; font-size: 14px; }
+.term-notes p { max-width: 60ch; }
+code { font-family: var(--f-mono); font-size: .92em; }
+
+/* status */
+.board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+@media (max-width: 880px) { .board { grid-template-columns: minmax(0, 1fr); } }
+.board .col { display: grid; gap: 10px; align-content: start; min-width: 0; }
+.board ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; }
+.board .mine { color: var(--muted); }
+footer { font-size: 13px; color: var(--muted); max-width: 80ch; padding-top: 4px; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow">Fallout: New Vegas mod · business design board · 26 Nov 2026</p>
+    <h1>Mojave Caravan Company</h1>
+    <p class="lede">You run a travelling merchant company from a terminal. Farms, the spring and the quarry make raw goods. Your workshops turn them into things people buy, and your caravans carry them to the towns and the NCR. The Crimson Caravan is your rival and your lender. The NCR licenses you, taxes you, and raids you if you smuggle.</p>
+    <div class="legend">
+      <span class="item"><span class="stamp decided">Decided</span> you chose it or agreed to it</span>
+      <span class="item"><span class="stamp">Proposed</span> my suggestion, waiting for your reaction</span>
+      <span class="item"><span class="stamp open">Open</span> a question still to answer</span>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="Sections">
+    <a href="#loop">The loop</a>
+    <a href="#grow">Growth and map</a>
+    <a href="#chains">Production chains</a>
+    <a href="#day">Day and week</a>
+    <a href="#lose">Losing</a>
+    <a href="#people">Who's who</a>
+    <a href="#terminal">The terminal</a>
+    <a href="#status">Where things stand</a>
+  </nav>
+
+  <!-- LOOP -->
+  <section class="sheet" id="loop">
+    <div class="sheet-head"><h2>The loop</h2><span class="stamp decided">Decided</span></div>
+    <p class="intro">Every part of the company sits on one loop. You steer it only from the terminal. Everything else in the Mojave pushes on one link of it.</p>
+    <figure>
+      <div class="scroll">
+        <svg id="loop-svg" viewBox="0 0 1000 440" role="img" aria-label="The business loop: raw goods go to workshops, workshops make goods that caravans deliver to buyers, buyers pay into the ledger, the ledger reports to your terminal, and from the terminal you hire, build and route. Raiders hit caravans, the Crimson Caravan undercuts buyers and holds your loan, the NCR taxes the ledger and raids your office if you smuggle, and your own adventuring opens supply and escorts caravans.">
+          <defs>
+            <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk-ink"/></marker>
+            <marker id="ah-you" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk-you"/></marker>
+            <marker id="ah-rival" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk-rival"/></marker>
+            <marker id="ah-ncr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk-ncr"/></marker>
+            <marker id="ah-dodgy" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk-dodgy"/></marker>
+            <marker id="ah-muted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk-muted"/></marker>
+          </defs>
+
+          <!-- outside pressures -->
+          <g class="act you"><rect x="290" y="40" width="200" height="44" rx="4"/><text x="390" y="59" class="nt">You, out in the world</text><text x="390" y="76" class="ns">quests · escorts</text></g>
+          <g class="act raid"><rect x="630" y="40" width="130" height="44" rx="4"/><text x="695" y="59" class="nt">Raiders</text><text x="695" y="76" class="ns">and wildlife</text></g>
+          <g class="act rival"><rect x="780" y="40" width="160" height="44" rx="4"/><text x="860" y="59" class="nt">Crimson Caravan</text><text x="860" y="76" class="ns">rival · your lender</text></g>
+          <g class="act ncr"><rect x="790" y="376" width="170" height="44" rx="4"/><text x="875" y="395" class="nt">NCR</text><text x="875" y="412" class="ns">government · buyer</text></g>
+
+          <!-- the loop -->
+          <g class="n"><rect x="40" y="150" width="170" height="56" rx="4"/><text x="125" y="174" class="nt">Raw goods</text><text x="125" y="193" class="ns">farms · spring · quarry</text></g>
+          <g class="n"><rect x="290" y="150" width="170" height="56" rx="4"/><text x="375" y="174" class="nt">Workshops</text><text x="375" y="193" class="ns">purifier · clinic · bench</text></g>
+          <g class="n"><rect x="540" y="150" width="170" height="56" rx="4"/><text x="625" y="174" class="nt">Caravans</text><text x="625" y="193" class="ns">brahmin · guards · traders</text></g>
+          <g class="n"><rect x="790" y="150" width="170" height="56" rx="4"/><text x="875" y="174" class="nt">Buyers</text><text x="875" y="193" class="ns">towns · NCR army</text></g>
+          <g class="n"><rect x="790" y="290" width="170" height="56" rx="4"/><text x="875" y="314" class="nt">Ledger</text><text x="875" y="333" class="ns">profit or loss</text></g>
+          <g class="n key"><rect x="415" y="290" width="170" height="56" rx="4"/><text x="500" y="314" class="nt">Your terminal</text><text x="500" y="333" class="ns">you decide</text></g>
+
+          <line x1="212" y1="178" x2="286" y2="178" class="a" marker-end="url(#ah)"/><text x="249" y="170" class="al">inputs</text>
+          <line x1="462" y1="178" x2="536" y2="178" class="a" marker-end="url(#ah)"/><text x="499" y="170" class="al">goods</text>
+          <line x1="712" y1="178" x2="786" y2="178" class="a" marker-end="url(#ah)"/><text x="749" y="170" class="al">deliver</text>
+          <line x1="875" y1="208" x2="875" y2="286" class="a" marker-end="url(#ah)"/><text x="885" y="252" class="al r">pay</text>
+          <line x1="788" y1="318" x2="589" y2="318" class="a" marker-end="url(#ah)"/><text x="688" y="310" class="al">morning report</text>
+          <polyline points="413,318 125,318 125,210" class="a you" marker-end="url(#ah-you)"/><text x="270" y="310" class="al you">hire residents</text>
+          <line x1="440" y1="288" x2="440" y2="210" class="a you" marker-end="url(#ah-you)"/><text x="448" y="254" class="al r you">build</text>
+          <line x1="560" y1="288" x2="560" y2="210" class="a you" marker-end="url(#ah-you)"/><text x="568" y="254" class="al r you">route, guard</text>
+
+          <line x1="330" y1="86" x2="177" y2="147" class="a you" marker-end="url(#ah-you)"/><text x="244" y="108" class="al l you">quests open supply</text>
+          <line x1="450" y1="86" x2="598" y2="147" class="a you" marker-end="url(#ah-you)"/><text x="506" y="104" class="al r you">escort, clear roads</text>
+          <line x1="690" y1="86" x2="690" y2="147" class="a raid" marker-end="url(#ah-muted)"/><text x="682" y="122" class="al l">ambush</text>
+          <line x1="860" y1="86" x2="860" y2="147" class="a rival" marker-end="url(#ah-rival)"/><text x="852" y="122" class="al l rival">undercuts prices</text>
+          <polyline points="942,62 972,62 972,318 963,318" class="a rival" marker-end="url(#ah-rival)"/><text x="988" y="190" class="al rival" transform="rotate(-90 988 190)">loan payments</text>
+          <line x1="875" y1="374" x2="875" y2="350" class="a ncr" marker-end="url(#ah-ncr)"/><text x="867" y="367" class="al l ncr">tax · tolls</text>
+          <polyline points="788,398 500,398 500,350" class="a dodgy" marker-end="url(#ah-dodgy)"/><text x="644" y="390" class="al dodgy">raids, if you smuggle</text>
+        </svg>
+      </div>
+      <figcaption>The terminal (blue) is the only place you make company decisions. Each outside pressure hits one link: raiders hit the road, the Crimson Caravan hits prices and your debt, the NCR hits the ledger. Towns you keep supplied grow, which gives you more people to hire.</figcaption>
+    </figure>
+  </section>
+
+  <!-- GROWTH -->
+  <section class="sheet show-smuggle" id="grow">
+    <div class="sheet-head"><h2>How the company grows</h2><span class="stamp">Proposed</span></div>
+    <p class="intro">Five tiers. Each one shows up in the world and adds a new kind of thing to do, not just bigger numbers. Pick a tier to see what you would have and where. The first version covers Goodsprings, Primm, Sloan and Mojave Outpost <span class="stamp decided">Decided</span></p>
+
+    <div class="steps" role="group" aria-label="Company tier">
+      <button class="step" id="tier-1" type="button" style="--i:0" aria-pressed="false" data-n="1"><span class="num">1</span><span class="nm">Peddler</span></button>
+      <button class="step" id="tier-2" type="button" style="--i:1" aria-pressed="false" data-n="2"><span class="num">2</span><span class="nm">Outfit</span></button>
+      <button class="step" id="tier-3" type="button" style="--i:2" aria-pressed="true" data-n="3"><span class="num">3</span><span class="nm">Caravan company</span></button>
+      <button class="step" id="tier-4" type="button" style="--i:3" aria-pressed="false" data-n="4"><span class="num">4</span><span class="nm">Trading house</span></button>
+      <button class="step" id="tier-5" type="button" style="--i:4" aria-pressed="false" data-n="5"><span class="num">5</span><span class="nm">Mojave concern</span></button>
+    </div>
+
+    <div class="grow-grid">
+      <figure>
+        <label class="toggle" for="show-smuggle"><input type="checkbox" id="show-smuggle" checked> Show the smuggling line</label>
+        <div class="scroll">
+          <svg id="map-svg" viewBox="0 0 640 480" role="img" aria-label="Schematic map of the first four towns: Goodsprings is the headquarters in the west, Sloan to the north-east below Quarry Junction, Primm to the south-east, Mojave Outpost in the south, and the NCR prison with the Powder Gangers to the east. Routes unlock by tier: Goodsprings to Primm first, then Goodsprings to Sloan, then Primm to Mojave Outpost, then Sloan to Primm. A smuggling line runs from the prison to Primm.">
+            <defs>
+              <marker id="mah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk-muted"/></marker>
+            </defs>
+            <line x1="440" y1="58" x2="440" y2="14" class="a raid" marker-end="url(#mah)"/>
+            <text x="450" y="26" class="ts">New Vegas</text>
+            <text x="450" y="40" class="ts">Crimson Caravan HQ</text>
+
+            <line x1="330" y1="118" x2="290" y2="48" class="quarry-link"/>
+            <line class="route" data-tier="1" x1="150" y1="200" x2="370" y2="336"/>
+            <line class="route" data-tier="2" x1="150" y1="200" x2="330" y2="118"/>
+            <line class="route" data-tier="3" x1="370" y1="336" x2="190" y2="424"/>
+            <line class="route" data-tier="4" x1="330" y1="118" x2="370" y2="336"/>
+            <line class="route-smuggle smuggle" x1="530" y1="236" x2="370" y2="336"/>
+
+            <text class="rl" data-tier="1" x="250" y="292" text-anchor="end">water · crops · meat</text>
+            <text class="rl" data-tier="2" x="250" y="182">stone · water</text>
+            <text class="rl" data-tier="3" x="292" y="404">meals · stimpaks · rounds</text>
+            <text class="rl" data-tier="4" x="360" y="230">scrap metal</text>
+            <text class="rl dodgy smuggle" x="462" y="306">powder (contraband)</text>
+
+            <circle cx="290" cy="48" r="5" class="town"/>
+            <text x="280" y="44" class="tl" text-anchor="end">Quarry Junction</text>
+            <text x="280" y="58" class="ts" text-anchor="end">deathclaws block the quarry</text>
+
+            <circle cx="150" cy="200" r="14" class="hq"/>
+            <circle cx="150" cy="200" r="8" class="town"/>
+            <text x="132" y="204" class="tl" text-anchor="end">Goodsprings</text>
+            <text x="132" y="219" class="ts" text-anchor="end">headquarters</text>
+
+            <circle cx="330" cy="118" r="8" class="town"/>
+            <text x="346" y="114" class="tl">Sloan</text>
+
+            <circle cx="370" cy="336" r="8" class="town"/>
+            <text x="386" y="340" class="tl">Primm</text>
+
+            <circle cx="190" cy="424" r="8" class="town"/>
+            <text x="190" y="452" class="tl" text-anchor="middle">Mojave Outpost</text>
+            <text x="190" y="467" class="ts" text-anchor="middle">NCR checkpoint · toll</text>
+
+            <circle cx="530" cy="236" r="8" class="town pg"/>
+            <text x="530" y="262" class="tl pg" text-anchor="middle">NCR prison</text>
+            <text x="530" y="277" class="ts" text-anchor="middle">Powder Gangers</text>
+
+            <!-- what you own, by tier -->
+            <g class="wl" data-tier="1"><rect x="16" y="113" width="7" height="7"/><text x="29" y="121"><tspan class="tg">T1 </tspan>rented desk</text></g>
+            <g class="wl" data-tier="2"><rect x="16" y="129" width="7" height="7"/><text x="29" y="137"><tspan class="tg">T2 </tspan>warehouse · purifier</text></g>
+            <g class="wl" data-tier="3"><rect x="16" y="145" width="7" height="7"/><text x="29" y="153"><tspan class="tg">T3 </tspan>drying shed · clinic</text></g>
+            <g class="wl" data-tier="2"><rect x="346" y="126" width="7" height="7"/><text x="359" y="134"><tspan class="tg">T2 </tspan>stone yard, once cleared</text></g>
+            <g class="wl" data-tier="3"><rect x="386" y="349" width="7" height="7"/><text x="399" y="357"><tspan class="tg">T3 </tspan>smokehouse</text></g>
+            <g class="wl" data-tier="4"><rect x="386" y="365" width="7" height="7"/><text x="399" y="373"><tspan class="tg">T4 </tspan>branch office · reloading bench</text></g>
+            <g class="wl" data-tier="3"><rect x="20" y="403" width="7" height="7"/><text x="33" y="411"><tspan class="tg">T3 </tspan>licence · bids</text></g>
+            <g class="wl" data-tier="5"><rect x="20" y="419" width="7" height="7"/><text x="33" y="427"><tspan class="tg">T5 </tspan>army contracts</text></g>
+          </svg>
+        </div>
+        <figcaption>Schematic, not to scale. Solid blue routes and the things you own are running at the chosen tier; faded ones come later. Sloan's stone only flows once the deathclaws at Quarry Junction are cleared. The orange line is the dodgy side, open at any tier.</figcaption>
+      </figure>
+
+      <div class="tier-panel" aria-live="polite">
+        <p class="eyebrow" id="tp-num">Tier 3 of 5</p>
+        <h3 id="tp-name">Caravan company</h3>
+        <h4>What you see in the world</h4>
+        <p id="tp-see"></p>
+        <h4>What's new</h4>
+        <ul id="tp-new"></ul>
+        <h4>To reach it</h4>
+        <p id="tp-gate"></p>
+        <h4>Market share by town <span class="ex">example numbers</span></h4>
+        <div class="share" id="tp-shares"></div>
+        <div class="share-key"><span><i style="background:var(--you)"></i>you</span><span><i style="background:var(--rival)"></i>Crimson Caravan</span><span><i style="background:var(--rule)"></i>others</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHAINS -->
+  <section class="sheet" id="chains">
+    <div class="sheet-head"><h2>Production chains</h2><span class="stamp decided">Chains: decided</span><span class="stamp">These five: proposed</span></div>
+    <p class="intro">Like Transport Fever 2: raw goods go to a workshop, and towns only buy what comes out. Each route exists to feed something, so one broken link stalls a whole chain. Recipes marked FNV come straight from the game's own crafting data.</p>
+    <div class="shape-key">
+      <span class="node"><b>Source</b></span>
+      <span class="node shop"><b>Workshop</b></span>
+      <span class="node good"><b>Finished good</b></span>
+      <span class="node buy"><b>Buyer</b></span>
+      <span class="node contra"><b>Contraband</b></span>
+    </div>
+    <div class="chains">
+      <div class="chain">
+        <div class="chain-head"><h3>Water</h3><span class="unlock">from tier 2</span></div>
+        <div class="flow">
+          <div class="node"><b>Dirty water</b><small>Goodsprings spring</small></div>
+          <span class="arr" aria-hidden="true">→</span>
+          <div class="node shop"><i class="k">workshop</i><b>Purifier shed</b><small>Goodsprings · Survival 50</small></div>
+          <span class="arr" aria-hidden="true">→</span>
+          <div class="node good"><b>Purified water</b><small>FNV item</small></div>
+          <span class="arr" aria-hidden="true">→</span>
+          <div class="node buy"><b>Everyone</b><small>NCR troops most</small></div>
+        </div>
+        <p class="note">FNV recipe: 5 dirty water make 4 purified water.</p>
+      </div>
+
+      <div class="chain">
+        <div class="chain-head"><h3>Building</h3><span class="unlock">from tier 2, once Quarry Junction is cleared</span></div>
+        <div class="flow">
+          <div class="node"><b>Stone</b><small>Sloan quarry</small></div>
+          <span class="arr" aria-hidden="true">→</span>
+          <div class="node shop"><i class="k">workshop</i><b>Stone yard</b><small>Sloan</small></div>
+          <span class="arr" aria-hidden="true">→</span>
+          <div class="node good"><b>Building materials</b><small>new cargo</small></div>
+          <span class="arr" aria-hidden="true">→</span>
+          <div class="node buy"><b>The towns themselves</b><small>new houses and stalls go up</small></div>
+        </div>
+        <p class="note">This is where the company feeds back into the lived-in towns: the places you supply physically grow.</p>
+      </div>
+
+      <div class="chain">
+        <div class="chain-head"><h3>Food</h3><span class="unlock">from tier 3</span></div>
+        <div class="flow">
+          <div class="inputs">
+            <div class="node"><b>Brahmin meat</b><small>Goodsprings ranch</small></div>
+            <div class="node"><b>Crops</b><small>Goodsprings fields</small></div>
+          </div>
+          <span class="arr" aria-hidden="true">→</span>
+          <div class="node shop"><i class="k">workshop</i><b>Smokehouse</b><small>Primm</small></div>
+          <span class="arr" aria-hidden="true">→</span>
+          <div class="node good"><b>Meals</b><small>FNV items, such as Brahmin Steak</small></div>
+          <span class="arr" aria-hidden="true">→</span>
+          <div class="node buy"><b>Primm's hotel</b><small>and Sloan's miners</small></div>
+        </div>
+      </div>
+
+      <div class="chain">
+        <div class="chain-head"><h3>Medicine</h3><span class="unlock">from tier 3</span></div>
+        <div class="flow">
+          <div class="inputs">
+            <div class="node"><b>Broc flower</b><small>Goodsprings fields</small></div>
+            <div class="node"><b>Xander root</b><small>Goodsprings fields</small></div>
+          </div>
+          <span class="arr" aria-hidden="true">→</span>
+          <div class="node shop"><i class="k">workshop</i><b>Drying shed</b><small>Goodsprings</small></div>
+          <span class="arr" aria-hidden="true">→</span>
+          <div class="node good"><b>Healing powder</b><small>FNV item</small></div>
+          <span class="arr" aria-hidden="true">→</span>
+          <div class="inputs">
+            <div class="node shop"><i class="k">workshop</i><b>Clinic bench</b><small>Goodsprings · a Science 70 hire</small></div>
+            <div class="node"><b>+ Surgical syringe</b><small>salvage</small></div>
+          </div>
+          <span class="arr" aria-hidden="true">→</span>
+          <div class="node good"><b>Stimpaks</b><small>FNV item</small></div>
+          <span class="arr" aria-hidden="true">→</span>
+          <div class="node buy"><b>NCR at Mojave Outpost</b><small>and Primm</small></div>
+        </div>
+        <p class="note">FNV recipes: broc flower and xander root make healing powder. A syringe with the same two herbs makes a stimpak, at Science 70.</p>
+      </div>
+
+      <div class="chain">
+        <div class="chain-head"><h3>Ammo</h3><span class="unlock">from tier 4 · the hard one</span></div>
+        <div class="flow">
+          <div class="inputs">
+            <div class="node"><b>Lead</b><small>from scrap metal, Sloan</small></div>
+            <div class="node contra"><b>Powder</b><small>NCR imports, or the Powder Gangers</small></div>
+            <div class="node"><b>Cases</b><small>salvage</small></div>
+            <div class="node"><b>Primers</b><small>NCR imports</small></div>
+          </div>
+          <span class="arr" aria-hidden="true">→</span>
+          <div class="node shop"><i class="k">workshop</i><b>Reloading bench</b><small>Primm · a Repair 25 hire</small></div>
+          <span class="arr" aria-hidden="true">→</span>
+          <div class="node good"><b>Rounds</b><small>FNV items</small></div>
+          <span class="arr" aria-hidden="true">→</span>
+          <div class="node buy"><b>NCR army</b><small>and Primm, while it has no sheriff</small></div>
+        </div>
+        <p class="note">FNV recipe for one 10mm round: 1 primer, 1 case, 9 powder, 17 lead. One scrap metal breaks down into 200 lead. Powder from the Powder Gangers is contraband and raises heat. Four inputs from three places makes this the chain most exposed to a broken route.</p>
+      </div>
+    </div>
+    <p class="note">Later idea: FNV also has chem recipes (Rocket, Slasher, Turbo), which could become a smuggling chain.</p>
+    <div class="openbox">
+      <span class="stamp open">Open</span>
+      <p><b>Which goods?</b> My pick is a mix: FNV's own items for what people buy (water, food, medicine, ammo), plus a few new bulk goods only for building. FNV items only would leave no stone or lumber for building. All-new cargo would mean nothing outside the company.</p>
+    </div>
+  </section>
+
+  <!-- DAY -->
+  <section class="sheet" id="day">
+    <div class="sheet-head"><h2>A day and a week</h2><span class="stamp">Proposed</span></div>
+    <p class="intro">The game clock runs 30 times faster than real time: a game day is 48 real minutes and a week is about 5.6 hours. So decisions come every day and bills every week.</p>
+    <div class="day">
+      <div class="seg"><p class="eyebrow">morning</p><h4>Report</h4><p>Waits at any company terminal: sales, losses, stock, cash.</p></div>
+      <div class="seg"><p class="eyebrow">at the terminal</p><h4>Decide</h4><p>One to three short decisions, each with a cost and a risk.</p></div>
+      <div class="seg away"><p class="eyebrow">the rest of the day</p><h4>Out in the world</h4><p>The company keeps running. Trouble near you is a real fight; trouble far away is settled on paper.</p></div>
+      <div class="seg"><p class="eyebrow">whenever you're back</p><h4>Catch up</h4><p>A summary of what happened while you were away. No pickup trips.</p></div>
+    </div>
+    <div class="week" aria-label="One week: six report days, then bills on day seven">
+      <div class="d">D1</div><div class="d">D2</div><div class="d">D3</div><div class="d">D4</div><div class="d">D5</div><div class="d">D6</div>
+      <div class="d bill">D7 · bills: wages, rent, NCR tax, loan payment. Ledger page and tier progress.</div>
+    </div>
+    <div class="memos">
+      <div class="memo"><span class="from">Route manager</span><p>Primm is short on water.</p><div class="choices"><span class="choice">Pay extra for a rush run</span><span class="choice">Wait for the next caravan</span></div></div>
+      <div class="memo"><span class="from">Trader in Sloan</span><p>The Crimson Caravan cut prices in Sloan by 20%.</p><div class="choices"><span class="choice">Match</span><span class="choice">Undercut</span><span class="choice">Pull out</span></div></div>
+      <div class="memo dodgy"><span class="from">Fixer · dodgy side</span><p>An NCR sergeant will look the other way for 200 caps.</p><div class="choices"><span class="choice">Pay</span><span class="choice">Refuse, heat rises</span></div></div>
+    </div>
+    <div class="cols3">
+      <div><h4>Your adventuring feeds the company</h4><ul><li>Escort a run yourself for a bonus.</li><li>Clear a gang off a route and that road stays safer.</li><li>Close a contract in person.</li><li>Recruit a resident.</li></ul></div>
+      <div><h4>Your quest choices move the market</h4><ul><li>Primm without a sheriff: risky road, high demand for ammo.</li><li>Powder Gangers driven off: safer Goodsprings.</li><li>Quarry Junction cleared: Sloan's stone flows.</li></ul></div>
+      <div><h4>Nothing stays easy</h4><ul><li>When a route gets profitable, the Crimson Caravan moves in.</li><li>New goods and routes open with each tier, so early income stops being the point.</li><li>Managers take a cut, so automation is never free.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- LOSE -->
+  <section class="sheet" id="lose">
+    <div class="sheet-head"><h2>How you can lose</h2><span class="stamp">Proposed</span></div>
+    <p class="intro">Two ways the company can die. Both are visible long before they happen, with a way out at every step. Everything else costs pieces, not the company.</p>
+    <div class="ladders">
+      <div class="ladder" style="--c: var(--rival)">
+        <h3>Money: the Crimson Caravan holds your debt</h3>
+        <p class="note">You start on a loan from Alice McLafferty. In the vanilla story she bought out Cass's company after its caravans were wrecked. The weekly payment and a countdown sit on the terminal's front page.</p>
+        <ol>
+          <li class="rung"><span class="dot">1</span><div><b>A payment is missed</b><p>A warning and a late fee.</p><p class="way"><em>Way out:</em> pay late, sell stock.</p></div></li>
+          <li class="rung"><span class="dot">2</span><div><b>Another is missed</b><p>Alice seizes a warehouse or a caravan.</p><p class="way"><em>Way out:</em> sell a warehouse, take an advance on an NCR contract, or pay with smuggling money.</p></div></li>
+          <li class="rung end"><span class="dot">3</span><div><b>A third, or three weeks in the red</b><p>Takeover. Your office becomes a Crimson Caravan branch, your sign comes down, and your staff wear her colours.</p></div></li>
+        </ol>
+        <p class="note">Paying the loan off is a milestone of its own. After that, the same steps run on wages, rent and tax.</p>
+      </div>
+      <div class="ladder" style="--c: var(--dodgy)">
+        <h3>Heat: the NCR shuts you down</h3>
+        <p class="note">Only on the dodgy side. Heat comes from how much contraband you move, what kind, and how much the NCR dislikes you.</p>
+        <ol>
+          <li class="rung"><span class="dot">1</span><div><b>Heat rises</b><p>Shown on the hidden ledger.</p><p class="way"><em>Lower it:</em> bribes, a fixer, hidden warehouses, lying low.</p></div></li>
+          <li class="rung"><span class="dot">2</span><div><b>Tip-offs</b><p>Contacts warn you a raid is coming.</p><p class="way"><em>Way out:</em> move the stock, pay someone, go quiet.</p></div></li>
+          <li class="rung"><span class="dot">3</span><div><b>Raid</b><p>At HQ it's real: bribe, surrender or fight. Away, it's on paper: cash and contraband seized, staff arrested, office closed for a while.</p></div></li>
+          <li class="rung end"><span class="dot">4</span><div><b>Shutdown</b><p>Licence revoked. The company is finished.</p></div></li>
+        </ol>
+      </div>
+    </div>
+    <div class="pieces">
+      <div><h4>Costs pieces, not the company</h4><ul><li>A caravan lost on the road.</li><li>A warehouse robbed.</li><li>Staff who quit when wages are late.</li><li>Your best traders lured away by Alice.</li><li>A route closed by danger.</li></ul></div>
+      <div><h4>Your own money</h4><ul><li>Company cash is kept apart from your caps.</li><li>Paying yourself weakens the company, which makes it a real choice.</li><li>Whatever you've taken out survives a takeover.</li></ul></div>
+    </div>
+    <div class="openbox">
+      <span class="stamp open">Open</span>
+      <p><b>After you lose the company, then what?</b> My pick is to start over smaller: you keep the save and found a new company, some former staff come back, and your old office stays a Crimson Caravan branch as a reminder. "Gone for good on that save" fits better as an optional hardcore setting, because players can always reload an earlier save.</p>
+    </div>
+  </section>
+
+  <!-- PEOPLE -->
+  <section class="sheet" id="people">
+    <div class="sheet-head"><h2>Who's who</h2><span class="stamp decided">Decided</span></div>
+    <div class="people">
+      <div class="person" style="--c: var(--you)"><div class="who"><span class="sw"></span>You</div><p>The owner. You steer the company from a terminal, and your adventuring opens roads and supply.</p></div>
+      <div class="person" style="--c: var(--you)"><div class="who"><span class="sw"></span>Staff</div><p>Hands, guards and traders. Real town residents you hire. They get better with experience and quit when wages are late.</p></div>
+      <div class="person" style="--c: var(--you)"><div class="who"><span class="sw"></span>Managers</div><p>Route manager, warehouse manager, bookkeeper, and a fixer if you smuggle. Each runs one job and takes a cut; a cheap one plays safe and earns less.</p></div>
+      <div class="person" style="--c: var(--you)"><div class="who"><span class="sw"></span>Skilled hires</div><p>FNV recipes have skill levels, so some steps need the right person: Science 70 for stimpaks, Repair 25 for ammo. <span class="stamp">Proposed</span></p></div>
+      <div class="person" style="--c: var(--rival)"><div class="who"><span class="sw"></span>Crimson Caravan</div><p>Alice McLafferty's company. Your rival in every town and the holder of your startup loan. Vanilla quests with them stay as they are.</p></div>
+      <div class="person" style="--c: var(--ncr)"><div class="who"><span class="sw"></span>NCR</div><p>The government. Licence, weekly tax, tolls at Mojave Outpost, supply contracts the Crimson Caravan bids on too, patrols that make roads safer, and raids if you smuggle.</p></div>
+      <div class="person" style="--c: var(--dodgy)"><div class="who"><span class="sw"></span>Powder Gangers</div><p>Based at the NCR prison. Cheap powder for the ammo chain, paid for in heat.</p></div>
+      <div class="person" style="--c: var(--muted)"><div class="who"><span class="sw"></span>Raiders and wildlife</div><p>Ambush caravans. Near you it's a real fight; elsewhere the outcome comes from your guards and the route's danger.</p></div>
+    </div>
+  </section>
+
+  <!-- TERMINAL -->
+  <section class="sheet" id="terminal">
+    <div class="sheet-head"><h2>The terminal</h2><span class="stamp decided">Decided</span></div>
+    <p class="intro">The whole company is run from terminals: at your HQ first, and later at each branch office. This is what the front page could show.</p>
+    <div class="term-grid">
+      <figure>
+<pre class="term" aria-label="Example terminal front page">MOJAVE CARAVAN CO.          DAY 23   WEEK 4
+CASH 1,240c   COMPANY VALUE 6,850c   <span class="dim">+12%</span>
+PAYMENT TO CRIMSON CARAVAN: 450c IN 2 DAYS
+
+PROFIT  W1 ###
+        W2 #####
+        W3 ####
+        W4 #######
+
+PRIMM   YOU 35%  CRIMSON 50%  OTHER 15%
+AMMO BENCH IDLE: WAITING ON POWDER (2 DAYS)
+
+&gt; MORNING REPORT
+&gt; DECISIONS (2)
+&gt; ROUTES AND CARAVANS
+&gt; WORKSHOPS
+&gt; STAFF
+&gt; LEDGER</pre>
+        <figcaption>Example numbers. Terminals show only text, so charts are drawn with plain characters.</figcaption>
+      </figure>
+      <div class="term-notes">
+        <p><b>No typing.</b> Terminals take menu choices only, so every action is a pick from a list.</p>
+        <p><b>Menus built by script.</b> JohnnyGuitar NVSE can add, rename, remove and refresh terminal menu items while the game runs.</p>
+        <p><b>Live numbers in the page text.</b> The body text would need a hook on the engine's terminal display function (<code>ComputersMenu::DisplayTerminal</code>, <code>0x007586E0</code>). Not tested in game yet.</p>
+        <p><b>Requirements.</b> xNVSE and JohnnyGuitar NVSE.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATUS -->
+  <section class="sheet" id="status">
+    <div class="sheet-head"><h2>Where things stand</h2></div>
+    <div class="board">
+      <div class="col">
+        <span class="stamp decided">Decided</span>
+        <ul>
+          <li>A travelling merchant company. You hire managers who run it and traders who work for it.</li>
+          <li>Run like a real company: profit and loss, revenue, warehouses, managers.</li>
+          <li>Managed entirely in a terminal.</li>
+          <li>The Crimson Caravan is the business rival; the NCR is the government.</li>
+          <li>A dodgy smuggling side, with NCR raids on your office as the risk.</li>
+          <li>Routes use production chains, like Transport Fever 2.</li>
+          <li class="mine">Agreed: money is worked out once a game day; caravans walk for real when you're near.</li>
+          <li class="mine">Agreed: NCR licence, weekly tax, Mojave Outpost tolls, supply contracts, patrols.</li>
+          <li class="mine">Agreed: heat meter; raids real at HQ, on paper when you're away.</li>
+          <li class="mine">Agreed: first version is Goodsprings, Primm, Sloan and Mojave Outpost.</li>
+        </ul>
+      </div>
+      <div class="col">
+        <span class="stamp">Proposed</span>
+        <ul>
+          <li>Alice McLafferty's startup loan, and the steps from a missed payment to takeover.</li>
+          <li>NCR shutdown as the second way to lose.</li>
+          <li>Company cash kept apart from your caps.</li>
+          <li>Five tiers, each needing money, town trust and a deed.</li>
+          <li>Market share in each town as the main number that grows.</li>
+          <li>A daily report with one to three decisions; bills weekly.</li>
+          <li>Quest outcomes move prices and danger.</li>
+          <li>The Crimson Caravan moves in on profitable routes.</li>
+          <li>The five chains and where their workshops sit.</li>
+          <li>Staff skills unlock recipe steps.</li>
+        </ul>
+      </div>
+      <div class="col">
+        <span class="stamp open">Open</span>
+        <ul>
+          <li>After losing the company: start over smaller (my pick) or gone for good?</li>
+          <li>Chain goods: FNV items plus new building cargo (my pick), FNV items only, or all new?</li>
+          <li>One mod, or a towns core plus a company add-on (my pick)?</li>
+          <li>Towns part: data-first build (my pick) or engine-driven?</li>
+          <li>Not started: naming your company from a list, balancing the numbers, how caravans walk for real.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>Built from the design conversation of 26 November 2026. Research notes and sources are in <code>fnv-npc-population/research/BUSINESS-RESEARCH.md</code>. Numbers marked as examples are only there to show the idea; nothing is balanced yet.</footer>
+</div>
+
+<script>
+(function () {
+  var TIERS = [
+    { name: "Peddler", see: "A rented desk in Goodsprings. You, one brahmin and one hired hand.",
+      add: ["One route: Goodsprings to Primm", "Haul raw goods: water, crops, meat", "Alice's loan and its weekly payment"],
+      gate: "Where you start." },
+    { name: "Outfit", see: "Your sign on a shed in Goodsprings, with crates stacked outside.",
+      add: ["First warehouse", "First workshop: the purifier at the spring", "First hired trader", "Route to Sloan, and the stone yard once Quarry Junction is cleared"],
+      gate: "Money, Goodsprings trusting you, and a deed such as ten safe deliveries." },
+    { name: "Caravan company", see: "Guards in your colours on the road, and a second brahmin train.",
+      add: ["Second caravan", "First manager", "NCR licence: the Mojave Outpost route, its toll, and contract bids", "Two-step chains: food and medicine"],
+      gate: "Money, trust in two towns, and a deed such as surviving a raid." },
+    { name: "Trading house", see: "A branch office in Primm with its own terminal.",
+      add: ["Bookkeeper and a warehouse network", "Reloading bench in Primm: the four-input ammo chain", "Route from Sloan to Primm", "Alice fights back: price cuts and luring your staff"],
+      gate: "Money, trust, and a delivered NCR contract." },
+    { name: "Mojave concern", see: "Your caravans lined up at Mojave Outpost.",
+      add: ["Army supply contracts", "Push the Crimson Caravan out of a town", "Goal: the biggest trader in the south"],
+      gate: "The biggest market share in two towns." }
+  ];
+  var TOWNS = ["Goodsprings", "Primm", "Sloan", "Mojave Outpost"];
+  var SHARES = [[25, 5, 0, 0], [45, 15, 20, 0], [55, 30, 35, 15], [60, 45, 50, 30], [70, 60, 60, 50]];
+
+  var steps = Array.prototype.slice.call(document.querySelectorAll(".step"));
+  var tierEls = Array.prototype.slice.call(document.querySelectorAll("#map-svg [data-tier]"));
+  var shareBox = document.getElementById("tp-shares");
+
+  TOWNS.forEach(function (t, i) {
+    var row = document.createElement("div"); row.className = "share-row";
+    var name = document.createElement("span"); name.textContent = t;
+    var bar = document.createElement("div"); bar.className = "bar";
+    ["y", "r", "o"].forEach(function (c) { var s = document.createElement("span"); s.className = c; bar.appendChild(s); });
+    var pct = document.createElement("span"); pct.className = "pct";
+    row.appendChild(name); row.appendChild(bar); row.appendChild(pct);
+    shareBox.appendChild(row);
+  });
+
+  function setTier(n) {
+    var t = TIERS[n - 1];
+    steps.forEach(function (b, i) { b.setAttribute("aria-pressed", String(i + 1 === n)); });
+    tierEls.forEach(function (el) { el.classList.toggle("locked", Number(el.getAttribute("data-tier")) > n); });
+    document.getElementById("tp-num").textContent = "Tier " + n + " of 5";
+    document.getElementById("tp-name").textContent = t.name;
+    document.getElementById("tp-see").textContent = t.see;
+    document.getElementById("tp-gate").textContent = t.gate;
+    var ul = document.getElementById("tp-new"); ul.textContent = "";
+    t.add.forEach(function (a) { var li = document.createElement("li"); li.textContent = a; ul.appendChild(li); });
+    var rows = shareBox.querySelectorAll(".share-row");
+    SHARES[n - 1].forEach(function (you, i) {
+      var rival = Math.round((100 - you) * 0.65), other = 100 - you - rival;
+      var spans = rows[i].querySelectorAll(".bar span");
+      spans[0].style.width = you + "%"; spans[1].style.width = rival + "%"; spans[2].style.width = other + "%";
+      rows[i].querySelector(".pct").textContent = you + "%";
+    });
+  }
+
+  steps.forEach(function (b) { b.addEventListener("click", function () { setTier(Number(b.getAttribute("data-n"))); }); });
+  var tog = document.getElementById("show-smuggle");
+  var grow = document.getElementById("grow");
+  function syncSmuggle() { grow.classList.toggle("show-smuggle", tog.checked); }
+  tog.addEventListener("change", syncSmuggle);
+  syncSmuggle();
+  setTier(3);
+})();
+</script>

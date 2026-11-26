@@ -1,0 +1,214 @@
+command,short,opcode,table,execute,eval,params,help
+AddCreatureToLeveledList,,0x1235,script,0x005DE670,,"Leveled Creature, Creature or Leveled Creature, Level",
+AddItemToLeveledList,,0x1236,script,0x005DE700,,"Leveled Item, Object ID, Level, Count, Health Percent",
+AddNPCToLeveledList,,0x1234,script,0x005DE670,,"Leveled Character, NPC or Leveled Character, Level",
+AddScriptPackage,,0x1097,script,0x005CC4F0,,Package,
+AddToFaction,Addfac,0x117F,script,0x005D5390,,"Faction, Value",
+AgeRace,,0x11E4,script,0x005DA690,,Integer,
+AlwaysShowActorSubtitles,,0x1277,script,0x005DFF70,,Integer,Set actor to always show subtitles
+CalcLowPathToPoint,LP2P,0x0129,console,0x005C25F0,,"Integer, Integer, Integer","ignore locks, allow disabled doors, ignore min use"
+CalcPathToPoint,P2P,0x0128,console,0x005D4A40,,,
+ClearActorsFactionsPlayerEnemyFlag,,0x11CA,script,0x005D9550,,,
+ClearFactionPlayerEnemyFlag,,0x11C9,script,0x005D9500,,Faction,
+CreateDetectionEvent,,0x1068,script,0x005DAC80,,"TESObjectREFR, Integer , [Integer ]",
+DamageActorValue,DamageAV,0x1181,script,0x005BDF20,,"Actor Value, Amount",Damage an actor value.
+DebugCombatPlan,dcp,0x0196,console,0x005D5720,,,Debugs the combat plan on an actor
+Disable,,0x1022,script,0x005C45E0,,[Integer (Optional)],
+DisableAllActors,DisAA,0x11A9,script,0x005C47E0,,,
+DisableLinkedPathPoints,,0x112B,script,0x005D4A40,,,
+DisableNavMesh,,0x11BF,script,0x005BD240,,String,Disable navmesh by FormID
+DuplicateNPCStats,,0x114F,script,0x005C6C80,,[Actor (optional)],
+Enable,,0x1021,script,0x005C43D0,,[Integer (Optional)],
+EnableCellTracking,,0x127E,script,0x005D4A40,,Integer,Enables or disables cell tracking
+EnableLinkedPathPoints,,0x112A,script,0x005D4A40,,,
+EnableNavMesh,,0x11C0,script,0x005BD300,,String,Enable navmesh by FormID
+EssentialDeathReload,,0x114D,script,0x005B4550,,String,
+EvalActorTextures,EAT,0x01CA,console,0x005D4A40,,,
+EvaluatePackage,evp,0x105E,script,0x005C95A0,,,
+FlushNonPersistActors,Flush,0x017F,console,0x005D4400,,Integer,Deletes all the actors in High who are not persistant
+ForceActorValue,ForceAV,0x110E,script,0x005BE190,,"Actor Value, Amount",Does modav XXX (value - getav XXX). [player.forceav luck 25]
+ForceFlee,Flee,0x10F5,script,0x005D09E0,,"[Cell (optional)], [ObjectReferenceID (optional)]",Forces a actor to flee if destination or cell is passed in uses them
+FriendDispositionBoost,,0x1195,script,0x005BE870,,,
+GetActorAggroRadiusViolated,,0x1076,script,0x005DA280,0x005A4F30,,
+GetActorCrimePlayerEnemy,,0x11CB,script,0x005D9590,0x005A4930,,
+GetActorFactionPlayerEnemy,,0x11CC,script,0x005D95B0,0x005A49F0,,
+GetActorsInHigh,,0x122D,script,0x005DC5C0,0x005A5AB0,,
+GetActorValue,GetAV,0x100E,script,0x005BD8A0,0x0059C4F0,Actor Value,Get an actor value. [player.getav luck]
+GetActorValueInfo,GetAVInfo,0x01B1,console,0x005BD960,,Actor Value,Get detailed an actor value info. [player.getav luck]
+GetBaseActorValue,GetBaseAV,0x1115,script,0x005BE6E0,0x0059C5D0,Actor Value,Get a base actor value. [player.getbaseav luck]
+GetClassDefaultMatch,,0x10E5,script,0x005D4A40,0x005A2A50,,
+GetCombatTarget,,0x10E8,script,0x005CE480,,,
+GetCrime,,0x107A,script,0x005CC2F0,0x005A0F90,"Actor, [Crime Type (optional)]",
+GetCrimeKnown,,0x1077,script,0x005CC240,,"Crime Type, Criminal, Victim",
+GetCurrentAIPackage,,0x106E,script,0x005CB850,0x005A0B60,,
+GetCurrentAIProcedure,,0x108F,script,0x005CC400,0x005A1210,,
+GetDead,,0x102E,script,0x005C6A50,0x0059D840,,
+GetDeadCount,,0x1054,script,0x005C85C0,0x005A01F0,Actor Base,
+GetDetected,,0x102D,script,0x005C69F0,0x0059D6E0,Actor,
+GetDetectionLevel,,0x10B4,script,0x005CD990,0x005A1EE0,Actor,
+GetDialogueEmotion,,0x11B3,script,0x005D8600,0x005A4480,,
+GetDialogueEmotionValue,,0x11B4,script,0x005D8620,0x005A4540,,
+GetDisabled,,0x1023,script,0x005C48C0,0x0059CF50,,
+GetDisposition,,0x104C,script,0x005C8450,0x0059FDB0,Actor,
+GetFactionCombatReaction,,0x119B,script,0x005D75A0,0x005A4090,"Faction, Faction",
+GetFactionRank,,0x1049,script,0x005C7E00,0x0059FC50,Faction,
+GetFactionRankDifference,,0x103C,script,0x005C72E0,0x0059E510,"Faction, Actor",
+GetFactionReaction,,0x10A7,script,0x005C7FD0,,"Faction, Faction",
+GetFactionRelation,,0x11C2,script,0x005D9270,0x005A46D0,Actor,
+GetForceHitReaction,,0x1259,script,0x005DDA70,0x005A5B30,,
+GetHeadingAngle,,0x1063,script,0x005CB050,0x005A0410,ObjectReferenceID,
+GetIdleDoneOnce,,0x113E,script,0x005D2630,0x005A3570,,
+GetIgnoreCrime,,0x10C0,script,0x005DB3D0,0x005A59A0,,
+GetIgnoreFriendlyHits,gifh,0x1152,script,0x005D3DC0,0x005A3760,,See if an actor is ignoring friendly hits
+GetInFaction,,0x1047,script,0x005C79D0,0x0059F630,Faction,
+GetIsAlerted,,0x105B,script,0x005C9700,0x005A0260,,
+GetIsClass,,0x1044,script,0x005C7730,0x0059F180,Class,
+GetIsClassDefault,,0x10E4,script,0x005D4A40,0x005A2A50,Class,
+GetIsCreature,,0x1040,script,0x005C74B0,0x0059ECC0,,
+GetIsCreatureType,,0x11B6,script,0x005C78F0,0x0059F300,Integer,
+GetIsCurrentPackage,,0x10A1,script,0x005CD440,0x005A1C90,Package,
+GetIsGhost,,0x10ED,script,0x005CFF90,0x005A2A60,,Returns 1 if the actor is acting as a 'ghost'.
+GetIsPlayableRace,,0x10FE,script,0x005C79B0,0x0059F540,,
+GetIsRace,,0x1045,script,0x005C7890,0x0059F240,Race,
+GetIsVoiceType,,0x11AB,script,0x005C4A10,0x0059F450,VoiceType,
+GetKillingBlowLimb,,0x11F0,script,0x005BE830,0x005A3E10,,Which BGSBodyPart::LIMB_ENUM received the killing blow
+GetKnockedState,,0x106B,script,0x005CB780,0x005A08C0,,
+GetMajorCrimeCount,,0x1075,script,0x005D94E0,0x005A4B60,,
+GetMinorCrimeCount,,0x1074,script,0x005D94C0,0x005A4AA0,,
+GetPackageTarget,,0x10E9,script,0x005CE520,,,
+GetPCEnemyofFaction,,0x10C5,script,0x005CE130,0x005A21F0,Faction,
+GetPCFactionAttack,,0x10C7,script,0x005CE200,0x005A2290,Faction,
+GetPCFactionMurder,,0x10C3,script,0x005CE060,0x005A2150,Faction,
+GetPCInFaction,,0x1084,script,0x005C7B50,0x0059F790,Faction,
+GetPCIsClass,,0x1081,script,0x005C7A30,0x0059F730,Class,
+GetPCIsRace,,0x1082,script,0x005C7A90,0x0059F750,Race,
+GetPermanentActorValue,GetPermAV,0x11EF,script,0x005BD900,0x0059C680,Actor Value,Get an actor value ignoring temporary modifiers. [player.getav luck]
+GetPlayerTeammate,,0x11C6,script,0x005D93F0,0x005A4820,,
+GetPlayerTeammateCount,,0x11C7,script,0x005D9410,0x005A48A0,,
+GetRestrained,,0x10F4,script,0x005D09C0,0x0059FF90,,Returns 1 if is restrained.
+GetScale,,0x1018,script,0x005C1B60,0x0059C930,,
+GetSitting,,0x109F,script,0x005C6E30,0x0059DD90,,
+GetSleeping,,0x1031,script,0x005C6E10,0x0059DC90,,
+GetTalkedToPC,,0x1032,script,0x005C6F30,0x0059E0F0,,
+GetTalkedToPCParam,,0x10AC,script,0x005C6F50,0x0059E0F0,Actor,
+GetTimeDead,,0x1169,script,0x005D4B40,0x005A3A30,,
+GetTrespassWarningLevel,,0x1090,script,0x005CC430,0x005A1770,,
+GetUnconscious,,0x10F2,script,0x005D0900,0x0059FEE0,,Returns 1 if is unconscious.
+HairTint,,0x014C,console,0x005C0300,,"Integer, Integer, Integer","3 ints, RGB"
+HasFriendDisposition,,0x1193,script,0x005BE850,0x005A3E90,,
+IgnoreCrime,,0x10AB,script,0x005DB3F0,,Integer,
+IsActor,,0x1161,script,0x005D4AA0,0x005A39D0,,
+IsActorAVictim,,0x113A,script,0x005D2610,0x005A3460,,
+IsActorDetected,,0x10B5,script,0x005CDA20,,,
+IsActorEvil,,0x1139,script,0x005D25F0,0x005A3390,,
+IsActorRefEssential,,0x1272,script,0x005DFC70,,,Is an actor reference essential
+IsActorsAIOff,,0x112F,script,0x005BBEC0,,,
+IsActorTalkingThroughActivator,,0x11AE,script,0x005D8300,0x005A43B0,,
+IsActorUsingATorch,,0x1132,script,0x005D1170,0x005A2C30,,
+IsCombatTarget,,0x1203,script,0x005DB4E0,0x005A53E0,Actor,
+IsContinuingPackagePCNear,,0x1096,script,0x005CC4C0,0x005A1A40,,
+IsEssential,,0x1162,script,0x005D4A50,0x005A3980,,
+IsGreetingPlayer,,0x107B,script,0x005DB3B0,0x005A5330,,
+IsIdlePlaying,,0x1070,script,0x005CB8B0,0x005A0F10,,
+IsInCombat,,0x1121,script,0x005D1A90,0x005A3180,,
+IsKiller,,0x1199,script,0x005D74E0,0x005A3F00,Actor,
+IsKillerObject,,0x119A,script,0x005D7540,0x005A3FA0,Form List,
+IsLastIdlePlayed,,0x11C3,script,0x005D92E0,0x005A4780,Idle Form,
+IsLimbGone,,0x118E,script,0x005BE760,0x005A3DB0,"Integer, [Integer (Optional)]",Is BGSBodyPart::LIMB_ENUM been dismembered
+IsTalking,,0x108D,script,0x005CC3A0,0x005A1150,,
+IsTalkingActivatorActor,,0x1172,script,0x005D4D30,0x005A3B90,Actor,
+IsTrespassing,,0x1091,script,0x005CC460,0x005A1900,,
+KillActor,kill,0x108B,script,0x005BE2A0,,"[Actor (optional)], [Integer (Optional)], [Integer (Optional)]",
+KillAllActors,killall,0x113F,script,0x005BE4F0,,[Actor (optional)],
+MatchRace,,0x11E5,script,0x005DA810,,Actor,
+ModActorValue,ModAV,0x1010,script,0x005BDE40,,"Actor Value, Amount","Modify an actor value. [player.modav luck, -10]"
+ModDisposition,,0x1053,script,0x005C8510,,"Actor, Value",
+ModFactionRank,,0x108A,script,0x005C7F10,,"Faction, Value",
+ModFactionReaction,,0x10A9,script,0x005C82C0,,"Faction, Faction, Value",
+ModScale,,0x113D,script,0x005C1C40,,Float,Modify the scale of an object
+MoveToMarker,MoveTo,0x109E,script,0x005CCF50,,"ObjectReferenceID, [Float (Optional)], [Float (Optional)], [Float (Optional)]",
+MoveToMarkerWithFade,MoveToFade,0x124F,script,0x005CD0E0,,"ObjectReferenceID, [Float (Optional)], [Float (Optional)], [Float (Optional)]",
+MoveToQuestTarget,movetoqt,0x0157,console,0x005CD330,,[Integer (Optional)],Move player to current quest target (optional param: target number).
+OpenTeammateContainer,,0x11C8,script,0x005D9430,,[Integer (Optional)],
+PickIdle,,0x1064,script,0x005CB0C0,,,
+PlaceAtMe,,0x1025,script,0x005C4A70,,"ObjectID, [Count], [Distance], [Direction]",
+PlaceAtMeHealthPercent,,0x11BD,script,0x005D90A0,,"ObjectID, Health Percent, [Count], [Distance], [Direction]",
+PlaceLeveledActorAtMe,,0x11D1,script,0x005D9810,,"ObjectID, [LevelModifier], [ForcedZone]",
+PlayGroup,,0x1013,script,0x005C0DF0,,"Animation Group, Flags",IE: PlayGroup SEQNAME 1
+PlayIdle,,0x1190,script,0x005CB2D0,,String,Play this idle on the current actor.
+PrintNPCDialog,pdialog,0x0158,console,0x005B5D20,,,Prints NPC dialog
+PushActorAway,,0x118A,script,0x005D6B60,,"ObjectReferenceID, Integer",
+RemoveFromAllFactions,,0x1214,script,0x005C8340,,,
+RemoveFromFaction,Removefac,0x1180,script,0x005D5420,,Faction,
+RemoveScriptPackage,,0x1098,script,0x005CC7C0,,,
+ResetAI,,0x11FA,script,0x005C9530,,,
+ResetDialogueFlags,rdf,0x01AF,console,0x005D8930,,,"Debug resets SayOnce, TalkedToPc, etc."
+RestoreActorValue,RestoreAV,0x1182,script,0x005BE080,,"Actor Value, Amount",Restore an actor value.
+ResurrectActor,resurrect,0x108C,script,0x005BE5E0,,[Integer (Optional)],
+SameFaction,,0x102A,script,0x005C6840,0x0059D400,Actor,
+SameFactionAsPC,,0x1085,script,0x005C6960,0x0059D3A0,,
+SameRace,,0x102B,script,0x005C68A0,0x0059D540,Actor,
+SameRaceAsPC,,0x1086,script,0x005C6990,0x0059D3C0,,
+Say,,0x1033,script,0x005C8A50,,"Topic, [Integer (Optional)], [Actor Base], [Integer (Optional)], [Integer (Optional)]",
+SayTo,,0x1034,script,0x005C9100,,"Actor, Topic, [Integer (Optional)], [Integer (Optional)]",
+SendTrespassAlarm,,0x115C,script,0x005D47E0,,Actor,
+SetActorAlpha,SAA,0x1129,script,0x005D23D0,,Float,
+SetActorFullName,,0x111C,script,0x005D1920,,Message,
+SetActorRefEssential,,0x1273,script,0x005DFD30,,Integer,Set actor reference to essential
+SetActorRefraction,sar,0x1154,script,0x005D3F10,,Float,
+SetActorsAI,,0x118B,script,0x005D6A60,,Integer,
+SetActorValue,SetAV,0x100F,script,0x005BDCD0,,"Actor Value, Amount","Set an actor value. [player.setav luck, 75]"
+SetAlert,,0x105A,script,0x005C9670,,Integer,
+SetAlly,,0x1079,script,0x005C8120,,"Faction, Faction, [Value(Optional)], [Value(Optional)]",
+SetAngle,,0x1009,script,0x005C09C0,,"Axis, Float",
+SetClass,,0x10F0,script,0x005D06A0,,Class,
+SetCombatActionCost,scc,0x0197,console,0x005D5780,,"String, [Float(optional)]",Sets the cost on a combat action
+SetCombatStyle,setcs,0x10B1,script,0x005CD650,,[Combat Style (optional)],
+SetDisposition,SetDisp,0x1184,script,0x005D54A0,,"Actor, Value",Sets the dispostion with modifiers
+SetEnemy,,0x1078,script,0x005C81F0,,"Faction, Faction, [Value(Optional)], [Value(Optional)]",
+SetEssential,,0x1003,script,0x005CD870,,"Actor Base, [Integer (Optional)]",
+SetFactionRank,,0x1089,script,0x005C7E60,,"Faction, Value",
+SetFactionReaction,,0x10A8,script,0x005C80A0,,"Faction, Faction, Value",
+SetGhost,,0x10EC,script,0x005CFFB0,,Integer,A value of 1 will make the NPC act as a 'ghost'.
+SetIgnoreFriendlyHits,sifh,0x1151,script,0x005D3D50,,Integer,"Set whether an actor should ignore friendly hits (0-no, 1-yes)"
+SetNPCRadio,snr,0x11C4,script,0x005D8100,,"Integer, ObjectReferenceID","Enable/Disable NPC radio playback: 0-Off, 1-On "
+SetPCEnemyofFaction,,0x10C6,script,0x005CE190,,"Faction, Value",
+SetPCFactionAttack,,0x10C8,script,0x005CE260,,"Faction, Value",
+SetPCFactionMurder,,0x10C4,script,0x005CE0C0,,"Faction, Value",
+SetPlayerTeammate,,0x11C5,script,0x005D9370,,Integer,
+SetPos,,0x1007,script,0x005C05F0,,"Axis, Float",
+SetRestrained,,0x10F3,script,0x005D0920,,Integer,A value of 1 will be restrained.
+SetScale,,0x113C,script,0x005C1B80,,Float,Set the scale of an object
+SetTalkingActivatorActor,,0x1171,script,0x005D4CC0,,[Actor (optional)],
+SetTaskThreadSleep,,0x01C8,console,0x005DE3A0,,Integer,Sets the task thread sleep value (-1 to disable).
+SetTaskThreadUpdateSleep,,0x01C9,console,0x005DE420,,Integer,Sets the task thread update sleep value (-1 to disable).
+SetUnconscious,,0x10F1,script,0x005D0760,,Integer,A value of 1 will be unconscious.
+SetZoneRespawns,,0x11EA,script,0x005DAB90,,"EncounterZone, Integer",
+ShowClassMenu,,0x10D9,script,0x005D4A40,,,
+ShowHeadTrackTarget,SHeadT,0x0164,console,0x005BC310,,,Show the head track target if set from look function
+ShowRaceMenu,,0x10DA,script,0x005CEDF0,,,
+ShowWhoDetectsPlayer,SWDP,0x0174,console,0x005B5CC0,,, Show who detects the player
+StartCombat,,0x1016,script,0x005C1750,,Actor,
+StartConversation,,0x1056,script,0x005C8740,,"TESObjectREFR, [Topic], [TESObjectREFR], [TESObjectREFR], [Integer (Optional)], [Integer (Optional)]","Start a conversation [Bob.StartConversation Joe, SecretTopic]"
+StartRadioConversation,,0x11D6,script,0x005D82A0,,[Topic],
+StopCombat,,0x1017,script,0x005C1A50,,,
+StopCombatAlarmOnActor,SCAOnActor,0x1101,script,0x005C1B00,,,
+TestRaceSexTerimnal,trst,0x01B6,console,0x005D9350,,,Test race/sex menu rendered terminal
+ToggleActorMover,tam,0x01BA,console,0x005D4A40,,,Toggles actor movement through pathing system
+ToggleActorsAI,,0x112E,script,0x005BBE10,,,
+ToggleAI,TAI,0x0106,console,0x005BBF70,,[Actor (optional)],
+ToggleAiSchedules,TAIS,0x0133,console,0x005BC580,,,
+ToggleCombatAI,tcai,0x0175,console,0x005BC0D0,,,Toggles ALL Combat AI
+ToggleCombatDebug,tcd,0x0198,console,0x005D5850,,[String],Toggles combat debug info
+ToggleCombatStats,TCS,0x0104,console,0x005B5B90,,,
+ToggleConversations,TCONV,0x013C,console,0x005B9100,,,Toggle conversation stats
+ToggleDetection,TDETECT,0x012E,console,0x005BBDA0,,,
+ToggleDetectionStats,tds,0x015F,console,0x005B98A0,,[Actor (optional)],Show the detection stats of the current seletected Ref.
+ToggleEmotions,temo,0x0146,console,0x005B7420,,,Toggle NPC facial emotions.
+ToggleHighProcess,THIGHPROCESS,0x012F,console,0x005BC3B0,,,
+ToggleLowProcess,TLOWPROCESS,0x0130,console,0x005BC430,,,
+ToggleMiddleHighProcess,TMHIGHPROCESS,0x0132,console,0x005BC510,,,
+ToggleMiddleLowProcess,TMLOWPROCESS,0x0131,console,0x005BC4A0,,,
+TogglePathingInfoFunction,TPI,0x019A,console,0x005BD3C0,,,Toggle pathing information.
+TogglePathLine,TPL,0x0118,console,0x005D4A40,,[String],Toggle path display.
+ToggleRagdollAnim,tra,0x01A8,console,0x005BA560,,,Toggles Ragdoll Anim system

@@ -1,0 +1,442 @@
+group,class,bases,size,vtable,virtuals,functions,header
+(partly) 1 Spawning and population,TESDataHandler,,,,,2,
+(partly) 1 Spawning and population,TESObjectREFR,TESForm > BaseFormComponent > TESChildCell,0x68,0x0102F55C,144,44,include/TESObjectREFR.h
+(partly) 11 Cells and world loading (where NPCs live),TES,,0xC4,0x010178B4,1,31,src/fallout_shared/speedtree/bstreemanager_types_TES.h
+(partly) 11 Cells and world loading (where NPCs live),TESObjectCELL,TESForm > BaseFormComponent > TESFullName > BaseFormComponent,,0x0102E9B4,78,66,include/layout_support_rtti2_bgssaveloadgame.h
+(partly) 11 Cells and world loading (where NPCs live),TESWorldSpace,TESForm > BaseFormComponent > TESFullName > BaseFormComponent > TESTexture > BaseFormComponent,,0x0103195C,80,27,
+1 Spawning and population,BGSEncounterZone,TESForm > BaseFormComponent,0x30,0x0102CBBC,78,19,src/BGSEncounterZone.h
+1 Spawning and population,BGSLoadedReferenceCollection,,,,,5,
+1 Spawning and population,ExteriorCellNewReferencesMap,"NiTPointerMap<unsigned int,class BSSimpleList<struct ExteriorCellReferenceData *> *> > NiTMapBase<class NiTPointerAllocator<unsigned int>,unsigned int,class BSSimpleList<struct ExteriorCellReferenceData *> *>",,0x01080534,7,3,
+1 Spawning and population,ExtraEncounterZone,BSExtraData,,0x01015C54,2,2,
+1 Spawning and population,ExtraLeveledCreature,BSExtraData,,0x01015B7C,2,1,src/fallout_shared/extradatalist.cpp
+1 Spawning and population,ExtraOriginalReference,BSExtraData,,0x01015BC4,2,4,
+1 Spawning and population,ExtraPackageStartLocation,BSExtraData,,0x01015C18,2,3,
+1 Spawning and population,ExtraPersistentCell,BSExtraData,0x10,0x01015C3C,2,3,src/fallout_shared/extradataobjects.h
+1 Spawning and population,ExtraStartingPosition,BSExtraData,,0x01015B40,2,2,src/fallout_shared/extradatalist.cpp
+1 Spawning and population,ExtraStartingWorldOrCell,BSExtraData,0x10,0x01015B4C,2,1,src/fallout_shared/extradataobjects.h
+1 Spawning and population,InteriorCellNewReferencesMap,"NiTPointerMap<unsigned int,class BSSimpleList<unsigned int> *> > NiTMapBase<class NiTPointerAllocator<unsigned int>,unsigned int,class BSSimpleList<unsigned int> *>",,0x01080514,7,3,
+1 Spawning and population,LoadedReferenceMap,"NiTMap<unsigned int,class TESObjectREFR *> > NiTMapBase<class DFALL<class NiTMapItem<unsigned int,class TESObjectREFR *> >,unsigned int,class TESObjectREFR *>",0x18,0x0102CF0C,7,4,src/fallout_shared/bgsloadedreferencecollection.h
+1 Spawning and population,ModelLoader,,0x30,,,39,src/fallout/magic/magicmodelhiteffect_types_ModelLoader.h
+1 Spawning and population,QueuedActor,QueuedReference > QueuedFile > IOTask > BSTask<__int64>,,0x01016CA4,17,2,
+1 Spawning and population,QueuedCharacter,QueuedActor > QueuedReference > QueuedFile > IOTask > BSTask<__int64>,,0x01016CEC,17,5,
+1 Spawning and population,QueuedCreature,QueuedActor > QueuedReference > QueuedFile > IOTask > BSTask<__int64>,,0x01016D34,17,2,
+1 Spawning and population,QueuedFaceGenFile,QueuedFileLoad > QueuedFileEntry > QueuedFile > IOTask > BSTask<__int64>,,0x01016E1C,12,4,
+1 Spawning and population,QueuedHead,QueuedFile > IOTask > BSTask<__int64>,,0x01016B04,11,6,
+1 Spawning and population,QueuedHelmet,QueuedFile > IOTask > BSTask<__int64>,,0x01016B4C,11,7,
+1 Spawning and population,QueuedPlayer,QueuedCharacter > QueuedActor > QueuedReference > QueuedFile > IOTask > BSTask<__int64>,,0x01016D7C,17,4,
+1 Spawning and population,QueuedReference,QueuedFile > IOTask > BSTask<__int64>,,0x01016BA4,17,7,
+1 Spawning and population,ReanimateEffect,ActiveEffect,,0x0107C06C,23,7,
+1 Spawning and population,SummonCreatureEffect,AssociatedItemEffect > ActiveEffect,,0x0107C2AC,23,9,
+1 Spawning and population,TESQueuedCellManager,,,,,1,
+1 Spawning and population,TeleportableReference,,0x20,,,1,src/fallout_shared/teleportdata_types_DoorTeleportData.h
+"10 Animation, faces and bodies",AnimSequenceBase,,,0x0101D8E8,7,3,
+"10 Animation, faces and bodies",AnimSequenceMultiple,AnimSequenceBase,,0x0101D908,7,6,
+"10 Animation, faces and bodies",AnimSequenceSingle,AnimSequenceBase,,0x0101D8C8,7,4,
+"10 Animation, faces and bodies",Animation,,,,,46,src/fallout_shared/animation_decls.h
+"10 Animation, faces and bodies",BGSBipedModelList,BaseFormComponent,0x8,0x0101A4C4,4,7,src/fallout_shared/combatformulas_weapon.h
+"10 Animation, faces and bodies",BSAnimGroupSequence,NiControllerSequence > NiObject > NiRefObject > NiMemObject,0x78,0x0101DE3C,36,12,src/fallout/interface/interface_rebase_types_BSAnimGroupSequence.h
+"10 Animation, faces and bodies",BSAnimNote,NiObject > NiRefObject > NiMemObject,,0x01097BF4,36,5,
+"10 Animation, faces and bodies",BSAnimNoteListener,,,,,1,
+"10 Animation, faces and bodies",BSAnimNoteReceiver,IBSAnimNoteReceiver,,0x0101FC74,2,3,
+"10 Animation, faces and bodies",BSAnimNotes,NiObject > NiRefObject > NiMemObject,,0x01097DD4,35,7,
+"10 Animation, faces and bodies",BSFaceGenAnimationData,NiExtraData > NiObject > NiRefObject > NiMemObject,,0x01064E1C,76,31,
+"10 Animation, faces and bodies",BSFaceGenBaseMorphExtraData,NiExtraData > NiObject > NiRefObject > NiMemObject,,0x01065FAC,37,3,
+"10 Animation, faces and bodies",BSFaceGenBinaryFile,FutBinaryFileC,,0x010A2C38,6,4,
+"10 Animation, faces and bodies",BSFaceGenImage,NiRefObject > NiMemObject,,0x010653C4,2,3,
+"10 Animation, faces and bodies",BSFaceGenKeyframe,,0xC,0x010653FC,19,6,include/BSFaceGenKeyframe.h
+"10 Animation, faces and bodies",BSFaceGenKeyframeMultiple,BSFaceGenKeyframe,0x14,0x0106544C,21,15,src/fallout_shared/facegen/bsfacegenkeyframe_decls.h
+"10 Animation, faces and bodies",BSFaceGenManager,,,,,39,
+"10 Animation, faces and bodies",BSFaceGenModel,NiRefObject > NiMemObject,,0x01065AF4,2,20,
+"10 Animation, faces and bodies",BSFaceGenModelExtraData,NiExtraData > NiObject > NiRefObject > NiMemObject,,0x01065BF4,39,2,
+"10 Animation, faces and bodies",BSFaceGenModelMap,,,0x01065678,1,13,
+"10 Animation, faces and bodies",BSFaceGenModelTextureData,,,,,1,
+"10 Animation, faces and bodies",BSFaceGenMorph,,,0x01065CB8,2,3,
+"10 Animation, faces and bodies",BSFaceGenMorphData,NiRefObject > NiMemObject,,0x01065F04,18,5,
+"10 Animation, faces and bodies",BSFaceGenMorphDataHair,BSFaceGenMorphData > NiRefObject > NiMemObject,,0x01065F5C,18,3,
+"10 Animation, faces and bodies",BSFaceGenMorphDataHead,BSFaceGenMorphData > NiRefObject > NiMemObject,,0x01065EB4,18,5,src/fallout_shared/facegen/BSFaceGenMorphData.h
+"10 Animation, faces and bodies",BSFaceGenMorphDifferential,BSFaceGenMorph,,0x01065CC4,2,4,
+"10 Animation, faces and bodies",BSFaceGenMorphStatistical,BSFaceGenMorph,,0x01065CD0,2,4,
+"10 Animation, faces and bodies",BSFaceGenNiNode,NiNode > NiAVObject > NiObjectNET > NiObject > NiRefObject > NiMemObject,,0x010660DC,75,19,
+"10 Animation, faces and bodies",BipedAnim,,0x2B4,,,33,src/bsshader/bsshadertextureset_types_BipedAnim.h
+"10 Animation, faces and bodies",BodyPartDisplay,,,,,3,
+"10 Animation, faces and bodies",FaceGenBasisOwner,,,,,1,
+"10 Animation, faces and bodies",FaceGenMatrix<float>,,,,,3,
+"10 Animation, faces and bodies",FaceGenNpcData,,,,,2,
+"10 Animation, faces and bodies",FaceGenPaletteBase,,,,,2,
+"10 Animation, faces and bodies",FaceGenPaletteEntry,,,,,1,
+"10 Animation, faces and bodies",FaceGenTriData,,,,,2,
+"10 Animation, faces and bodies",QueuedAnimIdle,QueuedKF > QueuedFileEntry > QueuedFile > IOTask > BSTask<__int64>,,0x01016A80,12,5,
+"10 Animation, faces and bodies",QueuedKF,QueuedFileEntry > QueuedFile > IOTask > BSTask<__int64>,,0x01016A48,12,6,
+"10 Animation, faces and bodies",QueuedReplacementKF,QueuedKF > QueuedFileEntry > QueuedFile > IOTask > BSTask<__int64>,,0x01016AC0,12,5,
+"10 Animation, faces and bodies",QueuedReplacementKFList,QueuedFile > IOTask > BSTask<__int64>,,0x01016FC0,11,3,
+"10 Animation, faces and bodies",TESAnimGroup,NiRefObject > NiMemObject,,0x010484E8,2,30,
+11 Cells and world loading (where NPCs live),BGSCellNumericIDArrayMap,"NiTMap<unsigned int,class BSSimpleArray<unsigned int,1024> *> > NiTMapBase<class DFALL<class NiTMapItem<unsigned int,class BSSimpleArray<unsigned int,1024> *> >,unsigned int,class BSSimpleArray<unsigned int,1024> *>",,0x0107FEF4,7,4,
+11 Cells and world loading (where NPCs live),BGSReconstructCellBlocksMap,"NiTMap<unsigned int,class BGSReconstructCellSubBlocksMap *> > NiTMapBase<class DFALL<class NiTMapItem<unsigned int,class BGSReconstructCellSubBlocksMap *> >,unsigned int,class BGSReconstructCellSubBlocksMap *>",,0x0107E990,7,4,
+11 Cells and world loading (where NPCs live),BGSReconstructCellSubBlocksMap,"NiTMap<unsigned int,class BGSReconstructCellsMap *> > NiTMapBase<class DFALL<class NiTMapItem<unsigned int,class BGSReconstructCellsMap *> >,unsigned int,class BGSReconstructCellsMap *>",,0x0107E970,7,4,
+11 Cells and world loading (where NPCs live),BGSReconstructCellsMap,"NiTMap<unsigned int,class BGSReconstructFormsMap *> > NiTMapBase<class DFALL<class NiTMapItem<unsigned int,class BGSReconstructFormsMap *> >,unsigned int,class BGSReconstructFormsMap *>",,0x0107E950,7,4,
+11 Cells and world loading (where NPCs live),ExteriorCellLoaderTask,IOTask > BSTask<__int64>,,0x0102D028,8,6,
+11 Cells and world loading (where NPCs live),GridArray,,,0x01020634,10,5,
+11 Cells and world loading (where NPCs live),GridCellArray,GridArray,,0x01020698,10,13,
+2 Actor references (the NPC in the world),Actor,MobileObject > TESObjectREFR > TESForm > BaseFormComponent > TESChildCell > MagicCaster > MagicTarget > ActorValueOwner > CachedValuesOwner,0x1B4,0x01084254,311,213,include/Actor.h
+2 Actor references (the NPC in the world),ActorValue,,,,,16,
+2 Actor references (the NPC in the world),ActorValueOwner,,0x4,0x01049450,11,6,include/ActorValueOwner.h
+2 Actor references (the NPC in the world),ActorValueStore,,0x268,,,5,src/fallout/ai/actorvaluecache.h
+2 Actor references (the NPC in the world),ActorX,,,,,8,
+2 Actor references (the NPC in the world),CachedValuesOwner,,0x4,0x01084734,17,1,include/CachedValuesOwner.h
+2 Actor references (the NPC in the world),Character,Actor > MobileObject > TESObjectREFR > TESForm > BaseFormComponent > TESChildCell > MagicCaster > MagicTarget > ActorValueOwner > CachedValuesOwner,0x1C8,0x01086A6C,313,21,include/Character.h
+2 Actor references (the NPC in the world),Creature,Actor > MobileObject > TESObjectREFR > TESForm > BaseFormComponent > TESChildCell > MagicCaster > MagicTarget > ActorValueOwner > CachedValuesOwner,,0x010870AC,311,13,
+2 Actor references (the NPC in the world),MatchActor,,,,,2,
+2 Actor references (the NPC in the world),MobileObject,TESObjectREFR > TESForm > BaseFormComponent > TESChildCell,0x88,0x0108A49C,193,49,include/MobileObject.h
+2 Actor references (the NPC in the world),NonActorMagicTarget,BSExtraData > MagicTarget,,0x0107BECC,2,4,
+2 Actor references (the NPC in the world),XActor,,,,,9,
+2 Actor references (the NPC in the world),xActor,,,,,5,
+2b Player (shares the Actor code),PlayerCharacter,Character > Actor > MobileObject > TESObjectREFR > TESForm > BaseFormComponent > TESChildCell > MagicCaster > MagicTarget > ActorValueOwner > CachedValuesOwner,0xE50,0x0108AA3C,315,151,include/PlayerCharacter.h
+2b Player (shares the Actor code),PlayerMover,ActorMover,0xA0,0x0109297C,15,14,src/fallout/ai/movement/playermover.cpp
+3 Base records (what an NPC is made of),ActorValueInfo,TESForm > BaseFormComponent > TESFullName > BaseFormComponent > TESDescription > BaseFormComponent > TESIcon > TESTexture > BaseFormComponent,,0x01067A2C,78,8,src/fallout_shared/actorvalue_decls.h
+3 Base records (what an NPC is made of),BGSBodyPart,,0xB0,0x01045404,1,11,src/fallout_shared/bgsbodypartdata.h
+3 Base records (what an NPC is made of),BGSBodyPartData,TESForm > BaseFormComponent > TESModel > BaseFormComponent > BGSPreloadable > BaseFormComponent,0x74,0x01045504,78,15,src/fallout_shared/bgsbodypartdata.h
+3 Base records (what an NPC is made of),BGSEntryPointFunctionDataLeveledList,BGSEntryPointFunctionData,0x8,0x01046320,7,5,include/BGSEntryPointFunctionDataLeveledList.h
+3 Base records (what an NPC is made of),BGSHeadPart,TESForm > BaseFormComponent > TESFullName > BaseFormComponent > TESModelTextureSwap > TESModel > BaseFormComponent,,0x010464B4,78,10,
+3 Base records (what an NPC is made of),BGSRagdoll,TESForm > BaseFormComponent > TESModel > BaseFormComponent,0x148,0x010470EC,78,9,src/fallout_shared/bgsragdoll_types_BGSRagdoll.h
+3 Base records (what an NPC is made of),BGSVoiceType,TESForm > BaseFormComponent,,0x0104733C,78,8,
+3 Base records (what an NPC is made of),CreatureSounds,,,,,3,
+3 Base records (what an NPC is made of),ExtraFactionChanges,BSExtraData,0x10,0x01015F30,2,5,src/fallout_shared/extradataobjects_private_packet.h
+3 Base records (what an NPC is made of),ExtraLeveledItem,BSExtraData,0x14,0x01015950,2,3,src/fallout_shared/extradataobjects.h
+3 Base records (what an NPC is made of),TESAIForm,BaseFormComponent,0x20,0x0101BE98,7,34,src/fallout/ai/processlists_private/processlists_dead_animation_actorbase.h
+3 Base records (what an NPC is made of),TESActorBase,TESBoundAnimObject > TESBoundObject > TESObject > TESForm > BaseFormComponent > TESActorBaseData > BaseFormComponent > TESContainer > BaseFormComponent > BGSTouchSpellForm > BaseFormComponent > TESSpellList > BaseFormComponent > TESAIForm > BaseFormComponent > TESHealthForm > BaseFormComponent > TESAttributes > BaseFormComponent > TESAnimation > BaseFormComponent > TESFullName > BaseFormComponent > TESModel > BaseFormComponent > TESScriptableForm > BaseFormComponent > ActorValueOwner > BGSDestructibleObjectForm > BaseFormComponent,0x10C,0x010492AC,104,19,src/fallout/ai/processlists_private/processlists_dead_animation_actorbase.h
+3 Base records (what an NPC is made of),TESActorBaseData,BaseFormComponent,0x34,0x0101B0DC,27,52,src/fallout/ai/processlists_private/processlists_dead_animation_actorbase.h
+3 Base records (what an NPC is made of),TESAnimation,BaseFormComponent,0xC,0x0101BF50,4,7,src/fallout/ai/processlists_private/processlists_dead_animation_actorbase.h
+3 Base records (what an NPC is made of),TESAttributes,BaseFormComponent,0xC,0x0101BF84,4,17,src/fallout/interface/interface_rebase_types_TESCreature.h
+3 Base records (what an NPC is made of),TESClass,TESForm > BaseFormComponent > TESFullName > BaseFormComponent > TESDescription > BaseFormComponent > TESTexture > BaseFormComponent > TESAttributes > BaseFormComponent,0x60,0x01048BB4,78,13,src/fallout_shared/tesconditionfunctions_conditionfn_class_faction.h
+3 Base records (what an NPC is made of),TESCombatStyle,TESForm > BaseFormComponent,,0x010266E4,78,10,
+3 Base records (what an NPC is made of),TESCreature,TESActorBase > TESBoundAnimObject > TESBoundObject > TESObject > TESForm > BaseFormComponent > TESActorBaseData > BaseFormComponent > TESContainer > BaseFormComponent > BGSTouchSpellForm > BaseFormComponent > TESSpellList > BaseFormComponent > TESAIForm > BaseFormComponent > TESHealthForm > BaseFormComponent > TESAttributes > BaseFormComponent > TESAnimation > BaseFormComponent > TESFullName > BaseFormComponent > TESModel > BaseFormComponent > TESScriptableForm > BaseFormComponent > ActorValueOwner > BGSDestructibleObjectForm > BaseFormComponent > TESAttackDamageForm > BaseFormComponent > TESModelList > BaseFormComponent,0x160,0x01048F5C,104,37,src/fallout/interface/interface_rebase_types_TESCreature.h
+3 Base records (what an NPC is made of),TESEyes,TESForm > BaseFormComponent > TESFullName > BaseFormComponent > TESTexture > BaseFormComponent,,0x0104973C,78,8,
+3 Base records (what an NPC is made of),TESFaction,TESForm > BaseFormComponent > TESFullName > BaseFormComponent > TESReactionForm > BaseFormComponent,0x4C,0x010498DC,78,28,src/fallout_shared/tesfaction_types_TESFaction.h
+3 Base records (what an NPC is made of),TESHair,TESForm > BaseFormComponent > TESFullName > BaseFormComponent > TESModel > BaseFormComponent > TESTexture > BaseFormComponent,0x4C,0x01049B9C,78,7,src/fallout_shared/teshair_types_TESHair.h
+3 Base records (what an NPC is made of),TESLevCharacter,TESBoundAnimObject > TESBoundObject > TESObject > TESForm > BaseFormComponent > TESLeveledList > BaseFormComponent > TESModelTextureSwap > TESModel > BaseFormComponent,0x70,0x0102864C,96,6,src/fallout_shared/teslevcharacter_unit.h
+3 Base records (what an NPC is made of),TESLevCreature,TESBoundObject > TESObject > TESForm > BaseFormComponent > TESLeveledList > BaseFormComponent > TESModelTextureSwap > TESModel > BaseFormComponent,0x70,0x0102886C,96,7,src/fallout_shared/teslevcharacter_unit.h
+3 Base records (what an NPC is made of),TESLeveledList,BaseFormComponent,0x1C,0x0101CD04,7,22,src/fallout_shared/teslevcharacter_unit.h
+3 Base records (what an NPC is made of),TESNPC,TESActorBase > TESBoundAnimObject > TESBoundObject > TESObject > TESForm > BaseFormComponent > TESActorBaseData > BaseFormComponent > TESContainer > BaseFormComponent > BGSTouchSpellForm > BaseFormComponent > TESSpellList > BaseFormComponent > TESAIForm > BaseFormComponent > TESHealthForm > BaseFormComponent > TESAttributes > BaseFormComponent > TESAnimation > BaseFormComponent > TESFullName > BaseFormComponent > TESModel > BaseFormComponent > TESScriptableForm > BaseFormComponent > ActorValueOwner > BGSDestructibleObjectForm > BaseFormComponent > TESRaceForm > BaseFormComponent,,0x0104A2F4,104,47,src/fallout_shared/tesnpc_pc_decls.h
+3 Base records (what an NPC is made of),TESRace,TESForm > BaseFormComponent > TESFullName > BaseFormComponent > TESDescription > BaseFormComponent > TESSpellList > BaseFormComponent > TESReactionForm > BaseFormComponent,,0x0104B4BC,78,39,
+3 Base records (what an NPC is made of),TESRaceForm,BaseFormComponent,0x8,0x0101D398,4,5,src/fallout_shared/tesraceform_decls.h
+3 Base records (what an NPC is made of),TESSkill,TESForm > BaseFormComponent > TESDescription > BaseFormComponent > TESTexture > BaseFormComponent,,0x0104CC0C,78,8,
+4 Process levels and the AI update loop,AILinearTaskThread,BSLinearTaskThread > BSThread,,0x01085688,5,4,
+4 Process levels and the AI update loop,AILinearTaskThreadManager,,,,,5,
+4 Process levels and the AI update loop,AITaskManager,,,,,2,
+4 Process levels and the AI update loop,AITaskThread,BSThread,,0x01085818,2,2,
+4 Process levels and the AI update loop,AIThreadManager,,,,,3,
+4 Process levels and the AI update loop,ActorPathingMessageQueue,BSTCommonLLMessageQueue<class ActorPathingMessage> > BSTCommonMessageQueue<class ActorPathingMessage> > BSTMessageQueue<class ActorPathingMessage> > NiRefObject > NiMemObject,,0x01088158,7,2,
+4 Process levels and the AI update loop,ActorUpdateTaskData,MobileObjectTaskletData > BSWin32TaskletData > BSTaskletData,0x3C,0x01085788,7,4,src/fallout/ai/processlists_private/processlists_task_data.h
+4 Process levels and the AI update loop,ActorValueModifierList,,0x10,,,8,include/ActorValueModifierList.h
+4 Process levels and the AI update loop,ActorsScriptTaskData,MobileObjectTaskletData > BSWin32TaskletData > BSTaskletData,0x40,0x010857C8,7,5,src/fallout/ai/processlists_private/processlists_task_data.h
+4 Process levels and the AI update loop,AnimationTaskData,MobileObjectTaskletData > BSWin32TaskletData > BSTaskletData,0x38,0x01085768,7,4,src/fallout/ai/processlists_private/processlists_task_data.h
+4 Process levels and the AI update loop,BSPlayerDistanceCheckController,NiTimeController > NiObject > NiRefObject > NiMemObject,,0x010867FC,45,4,
+4 Process levels and the AI update loop,BaseProcess,,0x30,0x01085E2C,493,29,include/BaseProcess.h
+4 Process levels and the AI update loop,CachedValues,,,,,1,
+4 Process levels and the AI update loop,FurnitureProcess,,,,,1,
+4 Process levels and the AI update loop,HighActorCuller,MobIterOperator,,0x01082CC0,1,4,src/fallout/ai/highactorculler_decls.h
+4 Process levels and the AI update loop,HighProcess,MiddleHighProcess > MiddleLowProcess > LowProcess > BaseProcess,0x46C,0x01087864,541,160,src/fallout/ai/mobileobject.cpp
+4 Process levels and the AI update loop,LowProcess,BaseProcess,0xB4,0x010886E4,519,86,include/LowProcess.h
+4 Process levels and the AI update loop,MiddleHighProcess,MiddleLowProcess > LowProcess > BaseProcess,0x25C,0x0108904C,540,151,src/fallout/ai/middlehighprocess.h
+4 Process levels and the AI update loop,MiddleLowProcess,LowProcess > BaseProcess,0xC8,0x01089BCC,520,16,include/MiddleLowProcess.h
+4 Process levels and the AI update loop,MobileObjectTaskletData,BSWin32TaskletData > BSTaskletData,0x38,0x01085748,7,4,src/fallout/ai/processlists_private/processlists_task_data.h
+4 Process levels and the AI update loop,ModifierList,,,,,5,
+4 Process levels and the AI update loop,ProcessLists,,0x103E0,,,60,src/fallout/ai/processlists_private/processlists_ProcessLists.h
+5 AI packages and daily routines,ActorPackage,,,,,1,
+5 AI packages and daily routines,ActorPackageContext,,0x18,,,4,include/ActorPackageContext.h
+5 AI packages and daily routines,ActorPackageData,,0x4,0x01068AA4,6,4,src/fallout/ai/actorpackagedata.h
+5 AI packages and daily routines,ActorPackageLegacySave,,,,,1,
+5 AI packages and daily routines,ActorPackageLoad,,,,,1,
+5 AI packages and daily routines,ActorPackageSaver,,,,,1,
+5 AI packages and daily routines,ActorPackage_008ad970,,,,,1,
+5 AI packages and daily routines,ActorPackage_GetTarget_Helper,,,,,1,
+5 AI packages and daily routines,AlarmPackage,TESPackage > TESForm > BaseFormComponent,,0x01092BDC,88,6,
+5 AI packages and daily routines,AnimIdle,NiRefObject > NiMemObject,,0x0101DCD8,2,12,
+5 AI packages and daily routines,AvoidancePackage,,,,,1,
+5 AI packages and daily routines,BGSIdleCollection,BaseFormComponent,0x10,0x0101AA98,4,12,src/fallout_shared/bgsidlecollection_types_BGSIdleCollection.h
+5 AI packages and daily routines,BGSIdleMarker,TESBoundObject > TESObject > TESForm > BaseFormComponent > BGSIdleCollection > BaseFormComponent,0x40,0x0104664C,96,7,src/fallout_shared/bgsidlemarker_types_BGSIdleMarker.h
+5 AI packages and daily routines,BSFurnitureMarker,NiExtraData > NiObject > NiRefObject > NiMemObject,,0x010C2A94,37,12,
+5 AI packages and daily routines,BackUpPackage,TESPackage > TESForm > BaseFormComponent,,0x01092D84,88,6,
+5 AI packages and daily routines,CaravanAIPackage,,,,,1,
+5 AI packages and daily routines,DialoguePackage,TESPackage > TESForm > BaseFormComponent,,0x01092F6C,88,10,src/fallout_shared/bgsdehydration.cpp
+5 AI packages and daily routines,EscortActorPackageData,ActorPackageData,0x18,0x01093188,6,4,src/fallout/ai/actorpackagedata.h
+5 AI packages and daily routines,ExtraAction,BSExtraData,0x14,0x01015BAC,2,3,src/fallout_shared/extradataobjects.h
+5 AI packages and daily routines,ExtraDataListRemoveTrespassPackage,,,,,1,
+5 AI packages and daily routines,ExtraFollower,BSExtraData,,0x01015B64,2,3,src/fallout_shared/extradatalist.cpp
+5 AI packages and daily routines,ExtraGuardedRefData,BSExtraData,,0x01015B70,2,5,
+5 AI packages and daily routines,ExtraPackage,BSExtraData,,0x01015C24,2,2,
+5 AI packages and daily routines,ExtraPackageData,BSExtraData,,0x010151FC,2,2,src/fallout_shared/extradatalist.cpp
+5 AI packages and daily routines,ExtraPatrolRefInUseData,BSExtraData,0x10,0x01015F70,2,5,src/fallout_shared/extradataobjects_private_packet.h
+5 AI packages and daily routines,ExtraTresPassPackage,BSExtraData,,0x01015944,2,4,
+5 AI packages and daily routines,FleePackage,TESPackage > TESForm > BaseFormComponent,,0x010931E4,88,9,
+5 AI packages and daily routines,FleeSavePackage,,,,,1,
+5 AI packages and daily routines,GuardActorPackageData,ActorPackageData,0x14,0x010933C8,6,7,src/fallout/ai/actorpackagedata.h
+5 AI packages and daily routines,IdleAnimationManager,,,,,5,
+5 AI packages and daily routines,IdleSystem,,0x8,,,7,src/bssystemutilities/console/bsawardssystemutility_console_decls.h
+5 AI packages and daily routines,P070Package,,,,,1,
+5 AI packages and daily routines,Package,,,,,3,
+5 AI packages and daily routines,PackageEventActionData,,0x10,,,3,src/fallout/ai/lowprocess_types_TESPackage.h
+5 AI packages and daily routines,PackageList,,0x8,,,6,src/fallout/ai/processlists_private/processlists_dead_animation_actorbase.h
+5 AI packages and daily routines,PackageLocation,,,,,11,
+5 AI packages and daily routines,PackageTarget,,,,,6,
+5 AI packages and daily routines,PackageTargetRecord,,0x10,,,8,src/fallout/ai/lowprocess_types_PackageTarget.h
+5 AI packages and daily routines,PatrolActorPackageData,ActorPackageData,0x38,0x01093418,6,12,src/fallout/ai/actorpackagedata.h
+5 AI packages and daily routines,Procedure,,,,,2,
+5 AI packages and daily routines,ProcedureValue,,,,,1,
+5 AI packages and daily routines,SandBoxActorPackageData,ActorPackageData,0x64,0x010935F8,6,12,src/fallout/ai/sandboxpackage.h
+5 AI packages and daily routines,SbActorPackageData,,,,,1,
+5 AI packages and daily routines,SearchPackage,TESPackage > TESForm > BaseFormComponent,,0x01093674,88,3,
+5 AI packages and daily routines,SpectatorPackage,TESPackage > TESForm > BaseFormComponent,,0x0109381C,88,13,
+5 AI packages and daily routines,TESAmbushPackageData,TESPackageData,,0x01068860,8,4,
+5 AI packages and daily routines,TESDialoguePackageData,TESPackageData,,0x010688AC,8,8,
+5 AI packages and daily routines,TESEatPackageData,TESPackageData,,0x01068938,8,7,
+5 AI packages and daily routines,TESEscortPackageData,TESPackageData,,0x01068960,8,7,
+5 AI packages and daily routines,TESFollowPackageData,TESPackageData,,0x01068988,8,6,
+5 AI packages and daily routines,TESIdleForm,TESForm > BaseFormComponent > TESModelAnim > TESModel > BaseFormComponent,0x4C,0x01049D0C,78,22,src/fallout_shared/tesidleform_match_decls.h
+5 AI packages and daily routines,TESPackage,TESForm > BaseFormComponent,0x80,0x0106847C,88,85,src/fallout/ai/lowprocess_types_TESPackage.h
+5 AI packages and daily routines,TESPackageData,,,0x01068884,8,3,
+5 AI packages and daily routines,TESPatrolPackageData,TESPackageData,,0x010689E4,8,8,
+5 AI packages and daily routines,TESUseItemPackageData,TESPackageData,,0x01068A0C,8,6,
+5 AI packages and daily routines,TESUseWeaponPackageData,TESPackageData,0x24,0x01068A64,8,10,src/fallout_shared/packagedatauseweapon_decls.h
+5 AI packages and daily routines,TrespassPackage,TESPackage > TESForm > BaseFormComponent,,0x010939EC,88,6,
+5 AI packages and daily routines,UseWeaponActorPackageData,ActorPackageData,0x8,0x01068A88,6,4,src/fallout/ai/actorpackagedata.h
+6 Movement and pathfinding,ActorMover,,0x88,0x0109223C,15,37,src/fallout/ai/movement/playermover.cpp
+6 Movement and pathfinding,ActorPathHandler,,0x14,0x0109231C,33,5,src/fallout/ai/movement/virtualactorpathhandler_types_VirtualActorPathHandler.h
+6 Movement and pathfinding,DetailedActorPathHandler,ActorPathHandler,,0x010923EC,33,19,src/fallout/ai/movement/detailedactorpathhandler_decls.h
+6 Movement and pathfinding,PathBuilder,,0x34,,,16,src/fallout_shared/pathfinding/pathbuilder_types_PathBuilder.h
+6 Movement and pathfinding,PathManager,,,,,5,
+6 Movement and pathfinding,PathSearch,,,,,4,
+6 Movement and pathfinding,PathSmoother,,,,,10,
+6 Movement and pathfinding,PathSmootherAccess,,,,,1,
+6 Movement and pathfinding,PathSmootherPOVSearch,"AStarSearch<class PathSmootherPOVNode,class PathSmootherPOVLink>",,0x0106B9CC,3,17,
+6 Movement and pathfinding,Pathing,,,,,5,
+6 Movement and pathfinding,PathingActorData,,0xC,,,1,src/fallout/ai/movement/virtualactorpathhandler_types_PathingRequest.h
+6 Movement and pathfinding,PathingAvoidNode,,,,,3,
+6 Movement and pathfinding,PathingAvoidNodeArray,"BSSimpleArrayRefCounted<class PathingAvoidNode,1024> > BSSimpleArray<class PathingAvoidNode,1024> > NiRefObject > NiMemObject",,0x0106D1E4,4,4,
+6 Movement and pathfinding,PathingCoverLocation,PathingLocation,,0x0106CBC0,2,8,
+6 Movement and pathfinding,PathingGraphNode,,0x3C,,,1,src/fallout/ai/movement/virtualactorpathhandler_types_PathingSolution.h
+6 Movement and pathfinding,PathingGrid,,,,,1,
+6 Movement and pathfinding,PathingLOSGrid,,,,,4,
+6 Movement and pathfinding,PathingLOSGridCell,,,,,2,
+6 Movement and pathfinding,PathingLOSGridMap,NiRefObject > NiMemObject,,0x0106CEAC,2,9,
+6 Movement and pathfinding,PathingLOSGridMapX,,,,,1,
+6 Movement and pathfinding,PathingLOSMap,NiRefObject > NiMemObject,,0x0106CF5C,2,9,
+6 Movement and pathfinding,PathingLocation,,0x28,0x0102583C,2,28,include/PathingLocation.h
+6 Movement and pathfinding,PathingLocationArray,,,,,3,
+6 Movement and pathfinding,PathingLocationCheck,,,,,1,
+6 Movement and pathfinding,PathingLocationOwner,,,,,1,
+6 Movement and pathfinding,PathingLocationProxy,,,,,2,
+6 Movement and pathfinding,PathingNode,,,,,2,
+6 Movement and pathfinding,PathingRequest,NiRefObject > NiMemObject,0xB0,0x0106D030,9,25,src/fallout/ai/movement/virtualactorpathhandler_types_PathingRequest.h
+6 Movement and pathfinding,PathingRequestClosePoint,PathingRequest > NiRefObject > NiMemObject,,0x0106D230,9,5,
+6 Movement and pathfinding,PathingRequestCover,PathingRequest > NiRefObject > NiMemObject,,0x0106D29C,9,3,
+6 Movement and pathfinding,PathingRequestCoveredMove,PathingRequest > NiRefObject > NiMemObject,,0x0106D2D4,9,4,
+6 Movement and pathfinding,PathingRequestFlee,PathingRequest > NiRefObject > NiMemObject,,0x0106D300,9,6,
+6 Movement and pathfinding,PathingRequestHide,PathingRequest > NiRefObject > NiMemObject,,0x0106D32C,9,6,
+6 Movement and pathfinding,PathingRequestLOS,PathingRequest > NiRefObject > NiMemObject,,0x0106D38C,9,6,
+6 Movement and pathfinding,PathingRequestOptimalLocation,PathingRequest > NiRefObject > NiMemObject,,0x0106D3B8,9,4,
+6 Movement and pathfinding,PathingRequestSafeStraightLine,PathingRequestClosePoint > PathingRequest > NiRefObject > NiMemObject,,0x0106D414,9,5,
+6 Movement and pathfinding,PathingSearchRayCast,,,0x0106D47C,1,5,
+6 Movement and pathfinding,PathingSolution,NiRefObject > NiMemObject,0x100,0x0106D4BC,2,17,src/fallout/ai/movement/virtualactorpathhandler_types_PathingSolution.h
+6 Movement and pathfinding,PathingSpline,,,,,6,
+6 Movement and pathfinding,PathingTaskData,BSWin32TaskletData > BSTaskletData,,0x0106D550,4,6,
+6 Movement and pathfinding,PathingTaskShell,,,,,1,
+6 Movement and pathfinding,VirtualActorPathHandler,ActorPathHandler,0x20,0x010929FC,33,9,src/fallout/ai/movement/virtualactorpathhandler_types_VirtualActorPathHandler.h
+6 Movement and pathfinding,bhkCharacterController,bhkCharacterProxy > bhkSerializable > bhkRefObject > NiObject > NiRefObject > NiMemObject > hkpCharacterContext > hkReferencedObject > hkBaseObject > bhkCharacterListener > hkpCharacterProxyListener > hkpSurfaceInfo,,0x010C49C4,53,18,
+6 Movement and pathfinding,bhkCharacterProxy,bhkSerializable > bhkRefObject > NiObject > NiRefObject > NiMemObject,,0x010C45CC,49,9,
+6 Movement and pathfinding,bhkCharacterStateClimbing,bhkCharacterState > hkpCharacterState > hkReferencedObject > hkBaseObject,,0x010C4944,9,0,
+6 Movement and pathfinding,bhkCharacterStateFlying,bhkCharacterState > hkpCharacterState > hkReferencedObject > hkBaseObject,,0x010C496C,9,0,
+6 Movement and pathfinding,bhkCharacterStateInAir,bhkCharacterState > hkpCharacterState > hkReferencedObject > hkBaseObject,,0x010CB36C,9,1,
+6 Movement and pathfinding,bhkCharacterStateJumping,bhkCharacterState > hkpCharacterState > hkReferencedObject > hkBaseObject,,0x010CB398,9,1,
+6 Movement and pathfinding,bhkCharacterStateOnGround,bhkCharacterState > hkpCharacterState > hkReferencedObject > hkBaseObject,,0x010CB3F0,9,1,
+6 Movement and pathfinding,bhkCharacterStateProjectile,bhkCharacterState > hkpCharacterState > hkReferencedObject > hkBaseObject,,0x010CB344,9,1,
+6 Movement and pathfinding,bhkCharacterStateSwimming,bhkCharacterState > hkpCharacterState > hkReferencedObject > hkBaseObject,,0x010CB3C4,9,1,
+6b Navmesh (the data paths run on),NavMesh,TESForm > BaseFormComponent > TESChildCell > NiRefObject > NiMemObject,0x108,0x0106A0B4,78,44,src/fallout_shared/pathfinding/navmesh_loadsave_types_NavMesh.h
+6b Navmesh (the data paths run on),NavMeshActionController,,,,,1,
+6b Navmesh (the data paths run on),NavMeshAdjust,,,,,1,
+6b Navmesh (the data paths run on),NavMeshBounds,,,,,3,
+6b Navmesh (the data paths run on),NavMeshCollection,,,,,1,
+6b Navmesh (the data paths run on),NavMeshEdgePoint,,,,,1,
+6b Navmesh (the data paths run on),NavMeshEdgeQuery,,,,,1,
+6b Navmesh (the data paths run on),NavMeshGrid,,0x28,,,4,src/fallout_shared/pathfinding/navmesh_loadsave_types_NavMesh.h
+6b Navmesh (the data paths run on),NavMeshGridOwner,,,,,1,
+6b Navmesh (the data paths run on),NavMeshGridX,,,,,1,
+6b Navmesh (the data paths run on),NavMeshInfo,,,,,15,src/fallout_shared/pathfinding/navmeshinfomap_decls.h
+6b Navmesh (the data paths run on),NavMeshInfoMap,TESForm > BaseFormComponent,,0x0106BB8C,78,11,src/fallout_shared/pathfinding/navmeshinfomap_decls.h
+6b Navmesh (the data paths run on),NavMeshInfoProxy,,,,,1,
+6b Navmesh (the data paths run on),NavMeshInfoSaveShell,,,,,1,
+6b Navmesh (the data paths run on),NavMeshInfoSearch,"AStarSearch<class NavMeshInfo const *,class TESObjectREFR *>",,0x0106C22C,3,5,src/fallout_shared/pathfinding/navmeshinfosearch_decls.h
+6b Navmesh (the data paths run on),NavMeshListNode,,,,,1,
+6b Navmesh (the data paths run on),NavMeshObstacleCutter,,,,,6,
+6b Navmesh (the data paths run on),NavMeshObstacleManager,,,,,23,src/fallout_shared/pathfinding/navmeshrender_decls.h
+6b Navmesh (the data paths run on),NavMeshOps,,,,,1,
+6b Navmesh (the data paths run on),NavMeshPOVSearch,"AStarSearch<class NavMeshPOVSearchNode,class NavMeshPOVSearchLink>",,0x0106B39C,3,5,
+6b Navmesh (the data paths run on),NavMeshProxy,,,,,1,
+6b Navmesh (the data paths run on),NavMeshPtr,,0x4,,,4,src/fallout_shared/pathfinding/pathbuilder_types_PathBuilder.h
+6b Navmesh (the data paths run on),NavMeshRender,,,,,5,
+6b Navmesh (the data paths run on),NavMeshSearch,"AStarSearch<struct NavMeshSearchNode,struct NavMeshSearchLink>",,0x0106B63C,3,9,
+6b Navmesh (the data paths run on),NavMeshSearchClosePoint,"AStarSearch<struct NavMeshSearchNode,struct NavMeshSearchLink>",,0x0106B6FC,3,4,
+6b Navmesh (the data paths run on),NavMeshSearchEdges,,,,,1,
+6b Navmesh (the data paths run on),NavMeshSearchFlee,"AStarSearch<struct NavMeshSearchNode,struct NavMeshSearchLink>",,0x0106B78C,3,5,
+6b Navmesh (the data paths run on),NavMeshSearchHide,"NavMeshSearch > AStarSearch<struct NavMeshSearchNode,struct NavMeshSearchLink>",,0x0106B7DC,3,4,
+6b Navmesh (the data paths run on),NavMeshSearchLOS,"AStarSearch<struct NavMeshSearchNode,struct NavMeshSearchLink>",,0x0106B830,3,5,
+6b Navmesh (the data paths run on),NavMeshSearchLOSArray,,,,,5,
+6b Navmesh (the data paths run on),NavMeshSearchMaxCost,"NavMeshSearch > AStarSearch<struct NavMeshSearchNode,struct NavMeshSearchLink>",,0x0106B87C,3,5,
+6b Navmesh (the data paths run on),NavMeshSearchSLPoint,"NavMeshSearch > AStarSearch<struct NavMeshSearchNode,struct NavMeshSearchLink>",,0x0106B96C,3,5,
+6b Navmesh (the data paths run on),NavMeshTriangle,,0x10,,,10,src/fallout_shared/pathfinding/navmesh_loadsave_types_NavMesh.h
+6b Navmesh (the data paths run on),NavMeshTriangleReference,,0x14,,,1,src/fallout_shared/pathfinding/astarsearch_decls.h
+6b Navmesh (the data paths run on),ObstacleData,NiRefObject > NiMemObject,,0x0106C490,2,2,
+6b Navmesh (the data paths run on),ObstacleTaskData,BSWin32TaskletData > BSTaskletData,,0x0106C7EC,4,6,
+7 Combat,ActorCombatGroup,,,,,1,
+7 Combat,CombatAction,,,0x0108CAB8,5,14,src/fallout/ai/combat/combatactions_packet.h
+7 Combat,CombatActionAcquireLineOfSight,CombatAction,,0x0108CDBC,5,1,
+7 Combat,CombatActionActivateCombatItem,CombatAction,,0x0108CD74,5,2,
+7 Combat,CombatActionApproachTarget,CombatAction,,0x0108CDA4,5,1,
+7 Combat,CombatActionAttackGrenade,CombatAction,,0x0108CBF4,5,2,
+7 Combat,CombatActionAttackGrenadeFlushTarget,CombatAction,,0x0108CC0C,5,3,
+7 Combat,CombatActionAttackGrenadeFromCover,CombatAction,,0x0108CC24,5,2,
+7 Combat,CombatActionAttackHandToHand,CombatAction,,0x0108CBDC,5,1,
+7 Combat,CombatActionAttackMelee,CombatAction,,0x0108CBC4,5,2,
+7 Combat,CombatActionAttackRanged,CombatAction,,0x0108CB50,5,1,
+7 Combat,CombatActionAttackRangedExplosive,CombatAction,,0x0108CB94,5,2,
+7 Combat,CombatActionAttackRangedExplosiveFromCover,CombatAction,,0x0108CBAC,5,1,
+7 Combat,CombatActionAttackRangedFromCover,CombatAction,,0x0108CB7C,5,1,
+7 Combat,CombatActionAvoidThreat,CombatAction,,0x0108CCE4,5,1,
+7 Combat,CombatActionDodge,CombatAction,,0x0108CD2C,5,1,
+7 Combat,CombatActionDrawWeapon,CombatAction,,0x0108CCB4,5,1,
+7 Combat,CombatActionFlee,CombatAction,,0x0108CD5C,5,2,
+7 Combat,CombatActionHide,CombatAction,,0x0108CDD4,5,3,
+7 Combat,CombatActionIgnoreBlockedTarget,CombatAction,,0x0108CD44,5,2,
+7 Combat,CombatActionInvestigate,CombatAction,,0x0108CD14,5,1,
+7 Combat,CombatActionMove,CombatAction,,0x0108CC3C,5,4,
+7 Combat,CombatActionMoveAndAttackGrenade,CombatActionAttackGrenade > CombatAction,,0x0108CC9C,5,2,
+7 Combat,CombatActionMoveAndAttackRanged,CombatActionAttackRanged > CombatAction,,0x0108CC6C,5,1,
+7 Combat,CombatActionMoveAndAttackRangedExplosive,CombatActionAttackRangedExplosive > CombatAction,,0x0108CC84,5,1,
+7 Combat,CombatActionMoveAndSwitchToMelee,CombatActionMove > CombatAction,,0x0108CC54,5,2,
+7 Combat,CombatActionSearch,CombatAction,,0x0108CCFC,5,2,
+7 Combat,CombatActionSwitchWeapon,CombatAction,,0x0108CCCC,5,2,
+7 Combat,CombatActionUseCombatItem,CombatAction,,0x0108CD8C,5,2,
+7 Combat,CombatBox,,,,,3,
+7 Combat,CombatClock,,,,,1,
+7 Combat,CombatController,TESPackage > TESForm > BaseFormComponent,,0x0108CE74,88,40,
+7 Combat,CombatCoverLocation,,,,,3,
+7 Combat,CombatCoverMap,"NiTMap<unsigned int,class ReservedCoverLocation *> > NiTMapBase<class DFALL<class NiTMapItem<unsigned int,class ReservedCoverLocation *> >,unsigned int,class ReservedCoverLocation *>",,0x0108D0E4,7,7,
+7 Combat,CombatCoverSearchInfo,,,,,5,
+7 Combat,CombatDamageCalculator,,,,,2,
+7 Combat,CombatDecompClass,,,,,1,
+7 Combat,CombatDialogueHandler,,,,,1,
+7 Combat,CombatEntryOwner,,,,,1,
+7 Combat,CombatFlagHolder,,,,,5,
+7 Combat,CombatFormulas,,,,,11,
+7 Combat,CombatGoal,,0x1C,0x0108D440,2,4,src/fallout/ai/combat/combatgoal.h
+7 Combat,CombatGoalActivateCombatItem,CombatGoal,,0x0108D4AC,2,1,
+7 Combat,CombatGoalAdvance,CombatGoal,,0x0108D4F4,2,1,
+7 Combat,CombatGoalAmbush,CombatGoal,,0x0108D4DC,2,1,
+7 Combat,CombatGoalAvoidThreats,CombatGoal,,0x0108D494,2,1,
+7 Combat,CombatGoalCluster,CombatGoal,,0x0108D50C,2,1,
+7 Combat,CombatGoalFallBack,CombatGoal,,0x0108D4D0,2,1,
+7 Combat,CombatGoalFindTarget,CombatGoal,,0x0108D488,2,1,
+7 Combat,CombatGoalFlank,CombatGoal,,0x0108D4C4,2,1,
+7 Combat,CombatGoalFlee,CombatGoal,,0x0108D4A0,2,1,
+7 Combat,CombatGoalFlushTarget,CombatGoal,,0x0108D524,2,1,
+7 Combat,CombatGoalGuard,CombatGoal,,0x0108D500,2,1,
+7 Combat,CombatGoalHideFromTarget,CombatGoal,,0x0108D518,2,1,
+7 Combat,CombatGoalKillTarget,CombatGoal,,0x0108D47C,2,1,
+7 Combat,CombatGoalReachDestination,CombatGoal,,0x0108D4E8,2,1,
+7 Combat,CombatGoalStayInCombatArea,CombatGoal,,0x0108D530,2,1,
+7 Combat,CombatGoalUseCombatItem,CombatGoal,,0x0108D4B8,2,1,
+7 Combat,CombatGroup,,,,,33,
+7 Combat,CombatGroupCluster,,,,,2,
+7 Combat,CombatGroupData,,,,,4,
+7 Combat,CombatGroupStrategy,,,0x0108D94C,3,3,
+7 Combat,CombatGroupStrategyAdvance,CombatGroupStrategy,,0x0108D97C,3,3,
+7 Combat,CombatGroupStrategyAmbush,CombatGroupStrategy,,0x0108D96C,3,4,
+7 Combat,CombatGroupStrategyFallBack,CombatGroupStrategy,,0x0108D95C,3,3,
+7 Combat,CombatGroupStrategyFlank,CombatGroupStrategy,,0x0108D93C,3,4,
+7 Combat,CombatLOS,,,,,1,
+7 Combat,CombatLocation,,,,,5,
+7 Combat,CombatLocationTarget,,,,,4,
+7 Combat,CombatLogic,,,,,1,
+7 Combat,CombatManager,,0x3C,,,20,src/fallout/ai/combat/combatmanager_types_CombatManager.h
+7 Combat,CombatMapOwner,,,,,1,
+7 Combat,CombatMapRef,,,,,1,
+7 Combat,CombatMember,,,,,2,
+7 Combat,CombatMove,,,,,1,
+7 Combat,CombatMovementRestrictions,,,,,1,
+7 Combat,CombatNodeArray,,,,,1,
+7 Combat,CombatNodeFinder,,,,,1,
+7 Combat,CombatObj,,,,,1,
+7 Combat,CombatPlan,,,,,5,
+7 Combat,CombatPlanNode,,,,,1,
+7 Combat,CombatPlanner,"AStarSearch<class CombatPlanNode *,class CombatPlanLink *>",,0x0108CFD8,3,5,
+7 Combat,CombatPlannerData,,,,,2,
+7 Combat,CombatPosition,,,,,1,
+7 Combat,CombatProcedure,,0x10,0x01090874,17,11,include/CombatProcedure.h
+7 Combat,CombatProcedureActivateObject,CombatProcedure,,0x0109082C,17,10,src/fallout/ai/combat/combatprocedureactivateobject.cpp
+7 Combat,CombatProcedureAttackGrenade,CombatProcedure,,0x010909BC,17,9,
+7 Combat,CombatProcedureAttackLow,CombatProcedure,,0x01090AEC,17,6,
+7 Combat,CombatProcedureAttackMelee,CombatProcedure,,0x01090C04,17,17,
+7 Combat,CombatProcedureAttackRanged,CombatProcedure,,0x01090ED4,17,7,
+7 Combat,CombatProcedureBeInCover,CombatProcedure,,0x010910F4,17,6,
+7 Combat,CombatProcedureEngageTarget,CombatProcedure,,0x01091514,17,7,
+7 Combat,CombatProcedureEvade,CombatProcedure,,0x01091984,17,4,
+7 Combat,CombatProcedureEx,,,,,1,
+7 Combat,CombatProcedureHideFromTarget,CombatProcedure,,0x01091A64,17,4,
+7 Combat,CombatProcedureMove,CombatProcedure,,0x01091BB4,17,8,
+7 Combat,CombatProcedureSW,,,,,1,
+7 Combat,CombatProcedureSearch,CombatProcedure,,0x01091DB4,17,6,
+7 Combat,CombatProcedureShell,,,,,1,
+7 Combat,CombatProcedureSwitchWeapon,CombatProcedure,,0x010920CC,17,5,
+7 Combat,CombatProcedureUseCombatItem,CombatProcedure,,0x0109214C,17,6,
+7 Combat,CombatRange,,,,,1,
+7 Combat,CombatS,,,,,1,
+7 Combat,CombatSearchCls,,,,,1,
+7 Combat,CombatSearchLocation,,,,,1,
+7 Combat,CombatSearchMgr,,,,,1,
+7 Combat,CombatState,,,,,44,
+7 Combat,CombatStateArray,,,,,2,
+7 Combat,CombatStateHash,,,,,1,
+7 Combat,CombatStyleData,,,,,1,
+7 Combat,CombatTarget,,,,,3,
+7 Combat,CombatTargetMap,"NiTMap<class Actor *,class CombatTargetData *> > NiTMapBase<class DFALL<class NiTMapItem<class Actor *,class CombatTargetData *> >,class Actor *,class CombatTargetData *>",0x10,0x0108E1E8,7,6,src/fallout/misc/saveload/bgssaveloadchangesmap_types_CombatTargetMap.h
+7 Combat,CombatTargetTimestamp,,0x4,,,2,src/fallout/ai/combat/combatmanager_types_CombatManager.h
+7 Combat,CombatThing,,,,,1,
+7 Combat,CombatThreat,,,,,2,
+7 Combat,CombatThreatMap,"NiTMap<unsigned int,class CombatThreat *> > NiTMapBase<class DFALL<class NiTMapItem<unsigned int,class CombatThreat *> >,unsigned int,class CombatThreat *>",,0x0108E2E8,7,10,
+7 Combat,CombatTimeStamp,,,,,3,
+7 Combat,CombatTimer,,,,,2,
+7 Combat,CombatUpdate,,,,,1,
+7 Combat,CombatUpdater,,,,,1,
+7 Combat,CombatUtilities,,,,,25,
+7 Combat,CombatWorldState,,,,,2,
+7 Combat,CombatWorldStateArray,,,,,3,
+7 Combat,CombatWorldStateListNode,,,,,1,
+"8 Detection, crime and reactions",ActorCause,,,,,1,
+"8 Detection, crime and reactions",Crime,,,,,6,
+"8 Detection, crime and reactions",CrimeProcess,,,,,1,
+"8 Detection, crime and reactions",DetectLifeEffect,ValueModifierEffect > ActiveEffect,,0x01079E7C,26,6,
+"8 Detection, crime and reactions",DetectionList,,,,,1,
+"8 Detection, crime and reactions",DetectionLists,,,,,1,
+"8 Detection, crime and reactions",DetectionState,,,,,1,
+"8 Detection, crime and reactions",DetectionStateProxy,,,,,1,
+"8 Detection, crime and reactions",DetectionTaskData,MobileObjectTaskletData > BSWin32TaskletData > BSTaskletData,0x40,0x01085728,7,3,src/fallout/ai/processlists_private/processlists_task_data.h
+"8 Detection, crime and reactions",ExtraActorCause,BSExtraData,,0x0101598C,2,3,
+"8 Detection, crime and reactions",ExtraOwnership,BSExtraData,,0x010158B4,2,3,
+"8 Detection, crime and reactions",ExtraPlayerCrimeList,BSExtraData,,0x01015C30,2,4,
+"9 Dialogue, barks and companions",CompanionWheelMenu,Menu,,0x01071D0C,18,10,
+"9 Dialogue, barks and companions",Conversation,,,,,8,
+"9 Dialogue, barks and companions",DialogMenu,Menu,0x13C,0x0107257C,18,15,src/fallout/interface/menus/dialogmenu_decls.h
+"9 Dialogue, barks and companions",DialogueItem,,0x1C,,,9,include/DialogueItem.h
+"9 Dialogue, barks and companions",DialogueResponse,,,,,4,
+"9 Dialogue, barks and companions",ExtraInfoGeneralTopic,BSExtraData,,0x01015C00,2,4,
+"9 Dialogue, barks and companions",ExtraSayToTopicInfo,BSExtraData,,0x01015F48,2,2,
+"9 Dialogue, barks and companions",ExtraSayTopicInfoOnceADay,BSExtraData,,0x01015F3C,2,4,
+"9 Dialogue, barks and companions",LipSyncAnimation,,0x10,,,2,src/fallout_shared/lipsynchanim_decls.h
+"9 Dialogue, barks and companions",LipSynchAnim,,,,,5,
+"9 Dialogue, barks and companions",LipTask,QueuedFileEntry > QueuedFile > IOTask > BSTask<__int64>,,0x010885B8,12,2,
+"9 Dialogue, barks and companions",MenuTopic,,0x2C,,,6,src/fallout/dialogue/menutopic_types_MenuTopic.h
+"9 Dialogue, barks and companions",RadioConvTask,QueuedFileEntry > QueuedFile > IOTask > BSTask<__int64>,,0x0107CF18,13,5,
+"9 Dialogue, barks and companions",TESTopic,TESForm > BaseFormComponent > TESFullName > BaseFormComponent,0x40,0x0104D19C,78,31,include/TESTopic.h
+"9 Dialogue, barks and companions",TESTopicInfo,TESForm > BaseFormComponent,0x50,0x0104D5B4,78,37,include/TESTopicInfo.h
+"9 Dialogue, barks and companions",TESTopicInfoData,,0x18,,,2,include/TESTopicInfoData.h
+"9 Dialogue, barks and companions",TopicMenuController,,0x18,,,9,src/fallout/dialogue/menutopic_types_MenuTopicManager.h
