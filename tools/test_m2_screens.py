@@ -58,7 +58,7 @@ class Screens(unittest.TestCase):
         self.assertEqual(c.managers['bookkeeper'], 'Strict')
         tm.click(c, t, 5)
         self.assertEqual(c.managers['route'], 'Balanced')
-        tm.click(c, t, 8)                       # BACK
+        tm.click(c, t, len(tm.labels(c, t)) - 1)     # BACK (tier 3 adds the law rows)
         self.assertEqual(t.screen, tm.FRONT)
 
     def test_route_manager_waits_for_tier_3(self):

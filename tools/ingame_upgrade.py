@@ -97,8 +97,9 @@ async def step_m1(check):
         await s.console('set CCCore.iShieldTest to 0')
         await day_rows(s, 1, 3, check, want)
         await accept_contract(s)
-        check('the contract runs (M1 iConOn)', await s.value('CCCore.iConOn') == 1)
         await day_rows(s, 4, DAYS, check, want)
+        # the memo is settled (the contract signed) at the next tick
+        check('the contract runs (M1 iConOn)', await s.value('CCCore.iConOn') == 1)
         v = await ledger(s, range(12))
         v['con'] = [int(await s.value('CCCore.%s' % k)) for k in ('iConPrice', 'iConNext', 'iConDone', 'iConMissed')]
         STATE.write_text(json.dumps(v, indent=1))

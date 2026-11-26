@@ -13,6 +13,8 @@ every 7th day, the debt ladder, tier check, then the post: tomorrow's forecast, 
 """
 from dataclasses import dataclass, field
 
+from law_model import LawMixin
+
 GOODS = ('water', 'powder', 'ammo', 'dirty', 'herbs', 'materials')         # the M1 goods (price board order)
 # M2: smoked meat has markets; brahmin, stone, sand and scrap are site goods (no market: the company's
 # own sites make them for its own workshops). Game cells are town * 12 + good, in this order.
@@ -65,12 +67,16 @@ GUN_COST, GUN_COVER = 25, 30     # a hired gun for one trip: 25 caps, cover 45 -
 ROB_SHARE = 0.3                  # a robbery takes 30% of the strongbox, a wreck all of it (capped)
 AWAY_DAYS = 3                    # the while-you-were-away letter after 3 days without a terminal visit
 POST_KEEP = 3                    # the Post screen keeps the last 3 letters
-LETTER_ORDER = ('closed', 'notice', 'forecast', 'away', 'road', 'loss', 'tier')    # which letter waits first
+LETTER_ORDER = ('closed', 'notice', 'warrant', 'forecast', 'away', 'road', 'loss', 'tier')    # which letter waits first
 # Memo answers in order; the default is the cautious one (design: Memos).
 MEMO_ANSWERS = {'road': ('send as planned', 'hire a gun for 25', 'keep the wagon home'),
                 'prepay': ('pay 300 off the loan', 'keep the cash'),
                 'contract': ('accept at %d', 'counter at %d', 'decline')}
 MEMO_DEFAULT = {'road': 2, 'prepay': 1, 'contract': 2}
+# M3: the NCR's weekly bid (bid high, bid low, pass) and a warrant (pay a fixer, let them come)
+MEMO_ANSWERS.update({'ncr': ('bid %d a crate', 'bid %d a crate', 'pass'),
+                     'warrant': ('pay a fixer 300', 'let them come')})
+MEMO_DEFAULT.update({'ncr': 2, 'warrant': 1})
 SEND, GUN, HOLD = 0, 1, 2        # road memo answers
 
 # The debt ladder (plan task 1.7, design: Losing and coming back).
@@ -111,7 +117,8 @@ RUMOURS = ('Lost a cousin to the Powder Gangers.', 'Drove for the Crimson Carava
            'Talks too much at the saloon.')
 
 TIER2_WORTH, TIER2_TRUST = 1500, 50
-TIER3_WORTH, TIER3_TRUST, TIER3_TOWNS = 18000, 50, 2   # 8000 in the design; M2 wagons and sites count in worth (balance_run: good player day 29-33)
+TIER3_WORTH, TIER3_TRUST, TIER3_TOWNS = 18000, 50, 2
+from law_model import HIDE_HEAT, RAID_DAYS     # noqa: E402 (M3 names the tick uses)   # 8000 in the design; M2 wagons and sites count in worth (balance_run: good player day 29-33)
 
 # --- M2: town levels (design: Towns grow like Anno settlements; plan 2.2 my calls) -------------------
 LEVELS = ('Camp', 'Hamlet', 'Village', 'Town')
@@ -228,6 +235,9 @@ class Memo:
         if self.kind == 'contract':
             a = MEMO_ANSWERS['contract']
             return (a[0] % self.price, a[1] % half_up(self.price * (1 + COUNTER_PREMIUM)), a[2])
+        if self.kind == 'ncr':
+            a = MEMO_ANSWERS['ncr']
+            return (a[0] % half_up(1.3 * self.price), a[1] % half_up(1.2 * self.price), a[2])
         return MEMO_ANSWERS[self.kind]
 
 
@@ -244,6 +254,8 @@ class Contract:
     town: str = 'PR'    # M2: the buyer, the road that serves it and the town the crates load at
     road: int = 1
     origin: str = 'GS'
+    days: int = 28      # M3: an NCR contract runs 14 days
+    ncr: bool = False
 
 
 @dataclass
@@ -304,13 +316,24 @@ class DayReport:
     ran: int = 1                # M2: the last road whose wagon ran
     out: int = 0                # M2: crates sold on the out legs
     back: int = 0               # M2: crates sold on the back legs
+    toll: int = 0               # M3: the Outpost toll paid
+    sealed: int = 0             # M3: 1 a sealed-crate run, 2 searched
+    claim: int = 0              # M3: Crimson Cover paid back
+    rival: str = ''             # M3: 'war', 'poach' or 'poached'
+    warrant: bool = False       # M3: a warrant was served today
+    inspected: int = 0          # M3: 1 clean, 2 a fault
+    fine: int = 0               # M3: an inspection fine
+    raid: str = ''              # M3: 'won', 'seized' or 'bribed'
+    ncr: str = ''               # M3: the NCR bid 'won' or 'lost'
+    who: str = ''               # M3: the person a poach is about
+    raid_loss: int = 0          # M3: what a lost raid took
 
     @property
     def margin(self):
         return self.sales - self.costs
 
 
-class Company:
+class Company(LawMixin):
     def __init__(self, seed, sheriff=False):
         self.seed, self.sheriff = seed, sheriff
         self.auto = False            # accept the bookkeeper's plan at every tick (game: CCCore.iAuto)
@@ -359,6 +382,7 @@ class Company:
         self.carried = {g: 0 for g in BUY_FROM_PLAYER}       # bottles / powders the player carries (game: items)
         self.gangers_town = False                            # Goodsprings run by the Powder Gangers
         self.bought_today, self.bought_day = 0, 0
+        self._law_init()                                     # M3 (tools/law_model.py)
 
     # --- founding -------------------------------------------------------------------------------
     def found(self):
@@ -392,7 +416,7 @@ class Company:
         """'buy': what the company pays the town for a crate; 'sell': what the town pays the company."""
         m = ANCHOR[good] * self.mult(town, good, stock)
         s = max(0.02, spread(self.trust[town]) - self.trader_cut())
-        return half_up(m * (1 + s) if side == 'buy' else m * (1 - s))
+        return half_up(m * (1 + s) if side == 'buy' else m * (1 - s) * (1 - self.war_cut(town)))
 
     def trader_cut(self):
         """M2: the best trader's Skill takes 1 point off the spread for each 10 over 50."""
@@ -538,6 +562,8 @@ class Company:
                 pay = min(GUN_COST, self.cash)
                 self.cash -= pay
                 r.costs += pay
+            self._toll(r, road)                 # M3
+            self._sealed_run(r, road)
             sales0 = r.sales                    # the road's takings: its contract and its out leg
             loaded = self._contract(r, True, road)
             r.runs += 1
@@ -565,6 +591,7 @@ class Company:
         if d % 7 == 0:
             self._bills(r)
             self._week_people(r)
+            self._week_law(r)
         if d % 7 == 1:
             self._new_candidates()
         self._levels(r)
@@ -573,6 +600,8 @@ class Company:
                 self.staff.remove(p)
                 r.notes.append('%s left with Goodsprings' % p.name)
         self._ladder(r)
+        if not self.ended:
+            self._day_law(r)
         if self.ghost_town_done and not self.ghost_town_paid:
             self.ghost_town_paid = True
             self.trust['GS'] = min(100, self.trust['GS'] + DEED_TRUST)
@@ -617,6 +646,7 @@ class Company:
             r.sales += sale
             self.week_sales += sale
             self.stock[dest][g] += 1
+            self.sold_week[dest] += 1
             r.loads[(origin, g)] = r.loads.get((origin, g), 0) + 1
             r.sold_to[(dest, g)] = r.sold_to.get((dest, g), 0) + 1
             if g == 'materials':
@@ -679,6 +709,7 @@ class Company:
         r.costs += loss
         r.event = 'bandits_wreck' if wreck else 'bandits_took_cargo'
         r.event_loss = loss
+        self._claim(r, loss)
 
     def run_workshops(self):
         for site in self.sites:
@@ -967,8 +998,10 @@ class Company:
                 self.cash += sale
                 r.sales += sale
                 self.week_sales += sale
+                self.sold_week[c.town] += c.crates
                 self.trust[c.town] = min(100, self.trust[c.town] + 1)
                 c.done += 1
+                self._ncr_delivered(c)
                 r.contract = 'delivered'
                 r.con = (c.town, c.good)
                 loaded = c.crates
@@ -981,7 +1014,7 @@ class Company:
             r.contract = 'missed'
             r.con = (c.town, c.good)
         c.next_due += c.every
-        if c.next_due >= c.start + CONTRACT_DAYS:
+        if c.next_due >= c.start + c.days:
             self.trust[c.town] = min(100, self.trust[c.town] + 3)
             self.contracts.remove(c)
             r.contract += ' completed'
@@ -1010,11 +1043,16 @@ class Company:
 
     # --- bills and the debt ladder -------------------------------------------------------------------
     def _bills(self, r):
-        bill = {'wages': self.accrued_wages, 'duty': duty(self.week_sales), 'rent': RENT_WEEK,
+        declared, hidden = self.declared(self.week_sales)     # M3: the back room hides a share
+        self.hidden_since += hidden
+        self.heat_gain += HIDE_HEAT * self.hide
+        bill = {'wages': self.accrued_wages, 'duty': duty(declared), 'rent': RENT_WEEK,
                 'feed': self.accrued_feed, 'interest': half_up(INTEREST * self.loan),
                 'principal': min(MIN_PRINCIPAL, self.loan)}
         if self.day % 28 == 0:
-            bill['licence'] = LICENCE
+            bill['licence'] = self.licence_fee()
+        if self.premium():
+            bill['cover'] = self.premium()
         r.bills = bill
         total = sum(bill.values())
         self.accrued_wages = self.accrued_feed = self.week_sales = 0
@@ -1025,7 +1063,7 @@ class Company:
             return
         r.bills_paid = False
         paid = 0
-        for k in ('wages', 'duty', 'rent', 'feed', 'licence', 'interest', 'principal'):
+        for k in ('wages', 'duty', 'rent', 'feed', 'licence', 'cover', 'interest', 'principal'):
             amount = bill.get(k, 0)
             take = min(amount, self.cash)
             self.cash -= take
@@ -1132,7 +1170,8 @@ class Company:
         if r is not None:
             r.notes.append({'receivership': 'receivership: the office is now a Crimson Caravan branch',
                             'takeover': 'takeover: Alice took the office',
-                            'walked': 'wound up by the owner'}[reason])
+                            'walked': 'wound up by the owner',
+                            'revoked': 'licence revoked: the NCR closed the company'}[reason])
 
     # cures (design: Cures at Final notice); each one works at a terminal or from a notice letter
     def wagon_value(self):
@@ -1272,6 +1311,10 @@ class Company:
                     self._loyal(p, RAISE_LOYALTY, 'a raise')
                 elif p is not None:
                     self._loyal(p, REFUSE_LOYALTY, 'a raise refused')
+            elif m.kind == 'ncr':
+                self._settle_ncr(r, m, a)
+            elif m.kind == 'warrant':
+                self._settle_warrant(r, a)
             elif m.kind == 'prepay' and a == 0:
                 pay = min(PREPAY, self.loan, self.cash)
                 self.cash -= pay
@@ -1292,17 +1335,18 @@ class Company:
         if (r.bills_paid and self.loan > 0 and not any(m.kind == 'prepay' for m in self.memos)
                 and self.cash - PREPAY >= PREPAY_RUNWAY * self.daily_burn()):
             self.post_memo(Memo('prepay', self.day, self.day + 3))
-        if (len(self.contracts) < CONTRACTS_OPEN[min(self.tier, 3)] and self.stage == 'ok'
+        if (len([c for c in self.contracts if not c.ncr]) < CONTRACTS_OPEN[min(self.tier, 3)] and self.stage == 'ok'
                 and self.wagon_ok and self.has_driver()
                 and not any(m.kind == 'contract' for m in self.memos)
                 and self.day % 7 == OFFER_WEEKDAY and self.day - self.last_offer >= OFFER_EVERY):
             offer = self.contract_offer()
             if offer is not None:
-                town, good, road = offer
+                town, good, con_road = offer        # not `road`: that is what this returns
                 price = self.offer_price() if self.tier < 2 else self.offer_price_for(town, good)
                 if self.post_memo(Memo('contract', self.day, self.day + 1, price=price, town=town, good=good,
-                                       road=road)):
+                                       road=con_road)):
                     self.last_offer = self.day
+        self._post_ncr(r)                       # M3
         return road
 
     def notice_values(self):
@@ -1329,6 +1373,8 @@ class Company:
         elif (self.stage == 'deferred' and r.bills_paid is False) or any(
                 n == 'final notice' or n.startswith('seized') for n in r.notes):
             new.append(Letter(self.day, 'notice', self.notice_values()))
+        if r.warrant:                           # M3: right after a notice (the Post order is the priority)
+            new.append(Letter(self.day, 'warrant', (self.heat, self.day + RAID_DAYS)))
         short = self.forecast_short()
         bill_day = self.day + post_model.days_to_bills(self)
         if short and self.forecast_bill_day != bill_day:
@@ -1348,6 +1394,7 @@ class Company:
                                                  self.event_road(self.day + 1), due)))
         if r.event in ('bandits_took_cargo', 'bandits_wreck'):
             new.append(Letter(self.day, 'loss', (r.event, r.event_loss, r.ev_road)))
+
         if r.tier_up:
             new.append(Letter(self.day, 'tier', (self.tier,)))
         self.post = (self.post + new)[-POST_KEEP:]
@@ -1442,6 +1489,12 @@ class Company:
         elif self.tier_three_ready():
             self.tier = 3
             r.notes.append('tier 3: Caravan company')
+            r.tier_up = True
+            self.last_event_day = self.day
+            self._tier3_day()
+        elif self.tier_four_ready():
+            self.tier = 4
+            r.notes.append('tier 4: Trading house')
             r.tier_up = True
             self.last_event_day = self.day
 

@@ -5,6 +5,7 @@ read them back and compare. Every text is at most 200 characters (M0 0.8: Johnny
 text into a 260-byte buffer). Numbers are whole caps with no thousands separator.
 """
 import company_model as cm
+import law_model as law
 
 MAX_TEXT = 200
 ROAD_NAME = {1: 'Primm road', 2: 'Sloan road', 3: 'Outpost road'}
@@ -51,6 +52,8 @@ CLOSED_TEXT = {
                     'branch now. The company is closed.',
     'takeover': 'The lender used the takeover clause and took the office. The company is closed.',
     'walked': 'You wound the company up. The lender took what was left, and the books are closed.',
+    'revoked': 'Second raid in a month, boss. The NCR revoked our licence and sealed the office. '
+               'The company is closed.',
 }
 
 
@@ -85,6 +88,38 @@ def contract_line(r):
     if r.contract == 'walked' or r.contract == 'missed completed':
         return CONTRACT_TEXT[r.contract] % town
     return CONTRACT_TEXT[r.contract] % (town, good)
+
+
+def law_line(r):
+    """M3: the day's rival and law news for the report, in a fixed order (raid, NCR bid, inspection,
+    search, rival, cover). Empty on a quiet day."""
+    out = ''
+    if r.raid == 'won':
+        out += ' The Rangers raided the office and our guards held them off: we are outlaws now.'
+    elif r.raid == 'seized':
+        out += ' The Rangers raided the office and took %d caps.' % r.raid_loss
+    elif r.raid == 'bribed':
+        out += " A fixer lost the warrant's papers for %d." % law.FIXER
+    if r.ncr == 'won':
+        out += ' We won the NCR bid.'
+    elif r.ncr == 'lost':
+        out += ' The Crimson Caravan won the NCR bid.'
+    if r.inspected == 1:
+        out += ' The NCR inspected the books: all in order.'
+    elif r.inspected == 2:
+        out += (' The NCR inspected the books and fined us %d.' % r.fine if r.fine
+                else ' The NCR inspected the books and found a fault: a warning.')
+    if r.sealed == 2:
+        out += ' A patrol searched the wagon: fined %d.' % law.SEARCH_FINE
+    if r.rival == 'war':
+        out += ' The Crimson Caravan started a price war in %s.' % cm.TOWN_NAME[r.who]
+    elif r.rival == 'poach':
+        out += ' Alice is courting %s: they leave tomorrow unless their loyalty is 40.' % r.who
+    elif r.rival == 'poached':
+        out += ' %s left for the Crimson Caravan.' % r.who
+    if r.claim:
+        out += ' Crimson Cover paid back %d.' % r.claim
+    return out
 
 
 def report_pages(c):
@@ -125,6 +160,7 @@ def report_pages(c):
         p1 += ' We signed the %s %s contract at %d.' % (con_words(r.con) + (r.signed,))
     if r.contract:
         p1 += contract_line(r)
+    p1 += law_line(r)
     p2 = ('Day %d: sales %d, costs %d, net %d. Cash %d, runway %dd. Bills in %dd, about %d. Tomorrow: %s'
           % (r.day, r.sales, r.costs, r.margin, c.cash, c.runway(), days_to_bills(c), bill_estimate(c),
              forecast_line(c)))
@@ -139,6 +175,10 @@ def memo_title(c, m):
         return '%s WANTS %s  due %dd' % (cm.TOWN_NAME[m.town].upper(), GOOD_NAME[m.good].upper(), due)
     if m.kind == 'raise':
         return 'A RAISE FOR %s  due %dd' % (m.who.upper(), due)
+    if m.kind == 'ncr':
+        return 'NCR BID: OUTPOST AMMO  due %dd' % due
+    if m.kind == 'warrant':
+        return 'WARRANT SERVED  raid in %dd' % due
     return 'PAY DOWN THE LOAN?  due %dd' % due
 
 
@@ -158,6 +198,15 @@ def memo_text(c, m):
                 'or counter at %d (they may walk)? If you say nothing, we decline.'
                 % (poss(cm.TOWN_NAME[m.town]), cm.CONTRACT_CRATES, GOOD_NAME[m.good], cm.CONTRACT_EVERY,
                    cm.CONTRACT_DAYS, m.price, cm.half_up(m.price * (1 + cm.COUNTER_PREMIUM))))
+    if m.kind == 'ncr':
+        hi, lo = c.ncr_bids(m.price)
+        return ('The NCR at the Outpost wants %d crates of ammunition every %d days for %d days. Market is %d. '
+                'Bid %d, or %d to beat the Crimson Caravan (aggression %d)? If you say nothing, we pass.'
+                % (law.NCR_CRATES, law.NCR_EVERY, law.NCR_DAYS, m.price, hi, lo, c.aggr))
+    if m.kind == 'warrant':
+        return ('The NCR served a warrant, heat %d. Rangers come on day %d: our cover %d against %d. A fixer can '
+                'lose the papers for %d. If you say nothing, we let them come.'
+                % (c.heat, m.due, c.cover(), law.RAID_STRENGTH, law.FIXER))
     if m.kind == 'raise':
         p = next((x for x in c.staff if x.name == m.who), None)
         loyal, wage = (p.loyalty, p.wage) if p else (0, 0)
@@ -199,6 +248,8 @@ def notice_buttons(c, acts):
 
 TIER_TEXT = ('Boss, we are an Outfit now. Our office next to the Prospector Saloon is open and Primm gave us '
              'a stall. The Build screen is open at the terminal: purifier, apothecary, well rig, forager hut.')
+TIER4_TEXT = ('Boss, we are a trading house now. The NCR clerk calls us a preferred carrier: no toll at the '
+              'Outpost. The licence is 900 a season from here.')
 TIER3_TEXT = ('Boss, we are a caravan company now. Sloan and the Outpost gave us branches, the route manager '
               'can be hired, and the smokehouse and stone yard are on the Build screen.')
 
@@ -210,7 +261,9 @@ def letter_title(letter):
     else:
         word = {'away': 'while you were away', 'road': 'bandit sign', 'loss': 'robbed',
                 'forecast': 'short on bill day', 'closed': 'company closed',
-                'tier': 'an Outfit now' if letter.values[:1] != (3,) else 'a caravan company'}[letter.kind]
+                'warrant': 'warrant served',
+                'tier': {3: 'a caravan company', 4: 'a trading house'}.get(letter.values[0], 'an Outfit now')
+                }[letter.kind]
     return 'LETTER day %d  %s' % (letter.day, word)
 
 
@@ -226,7 +279,10 @@ def letter_text(letter):
     if letter.kind == 'closed':
         return CLOSED_TEXT[v[0]]
     if letter.kind == 'tier':
-        return TIER3_TEXT if v[:1] == (3,) else TIER_TEXT
+        return {3: TIER3_TEXT, 4: TIER4_TEXT}.get(v[0], TIER_TEXT)
+    if letter.kind == 'warrant':
+        return ('Boss, the NCR served a warrant: heat %d. The Rangers come on day %d unless a fixer loses the '
+                'papers. The memo is at the office.' % v)
     if letter.kind == 'road':
         danger, cover, chance, due = v[:4]
         road = v[4] if len(v) > 4 else 1

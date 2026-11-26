@@ -6,6 +6,7 @@ of labels (rows past the list are hidden by the row condition CCTerm.iRows > n) 
 (screen, row). A row shows at most 39 characters on screen (the rest is cut, seen live), so labels stay within 39.
 """
 import company_model as cm
+import law_model as law
 import post_model as pm
 from company_model import GOODS
 from post_model import bill_estimate, days_to_bills   # noqa: F401 (used by the tests and the game check)
@@ -27,7 +28,7 @@ TOWNS = ('GS', 'PR')
 STAGES = {'ok': 'none', 'deferred': 'deferred', 'grace': 'SERVED', 'final': 'FINAL', 'seized': 'SEIZED',
           'probation': 'probation', 'takeover': 'TAKEOVER'}
 CLOSED = {'receivership': 'the lender took the office', 'takeover': 'the lender took the office',
-          'walked': 'you wound it up'}
+          'walked': 'you wound it up', 'revoked': 'the NCR revoked the licence'}
 # The Build screen (tier 2): what each building does, padded as the game writes it.
 BUILD_TEXT = {'purifier': 'PURIFIER   5 dirty > 4 water  ', 'apothecary': 'APOTHECARY 1 herbs > 1 powder ',
               'well': 'WELL RIG   4 dirty water a day', 'forager': 'FORAGER    4 herbs a day      ',
@@ -162,7 +163,7 @@ def contract_row(c):
     if k is None:
         return 'CONTRACTS none running'
     import post_model as pm
-    return 'CONTRACTS %s %d/%d to %s' % (pm.GOOD_NAME[k.good], k.done, cm.CONTRACT_DAYS // k.every, k.town)
+    return 'CONTRACTS %s %d/%d to %s' % (pm.GOOD_NAME[k.good], k.done, k.days // k.every, k.town)
 
 
 def contract_rows(c):
@@ -178,7 +179,7 @@ def contract_rows(c):
     for k in c.contracts:
         rows += ['%s %d crates every %dd at %d%s' % (pm.GOOD_NAME[k.good].upper(), k.crates, k.every, k.price,
                                                      '' if k.town == 'PR' else ' to ' + k.town),
-                 'NEXT day %d  ENDS day %d' % (k.next_due, k.start + cm.CONTRACT_DAYS),
+                 'NEXT day %d  ENDS day %d' % (k.next_due, k.start + k.days),
                  'DELIVERED %d  MISSED %d' % (k.done, k.missed)]
     return rows
 
@@ -233,8 +234,26 @@ def chains_row(c):
 
 
 def towns_row(c):
-    return 'TOWNS    %d trusted, managers %d of 2' % (sum(1 for t in cm.TOWNS if c.trust[t] >= cm.TIER3_TRUST),
-                                                     len(c.managers))
+    liked = sum(1 for t in cm.TOWNS if c.trust[t] >= cm.TIER3_TRUST)
+    if c.tier >= 3:                     # M3: heat and NCR standing (the front page has no room left)
+        return 'TOWNS    %d trusted, heat %d, NCR %d' % (liked, c.heat, c.ncr_standing)
+    return 'TOWNS    %d trusted, managers %d of 2' % (liked, len(c.managers))
+
+
+def law_rows(c):
+    """M3 (tier 3): the rival, the back room, Crimson Cover and the NCR, under the Towns screen's sell rows."""
+    if c.tier < 3:
+        return []
+    war = ('  war %s to day %d' % (c.war_town, c.war_until)) if c.war_town and c.day <= c.war_until else ''
+    on = {True: 'ON', False: 'OFF'}
+    return ['RIVAL    anger %d%s' % (c.aggr, war),
+            'DECLARE  %d%% of sales (select)' % round(100 * (1 - law.HIDE[c.hide])),
+            'SEALED   crates %s, %d a run' % (on[c.sealed], law.SEALED_PAY),
+            'COVER    Crimson Cover %s, %d a wagon' % (on[c.insured], law.COVER_PREMIUM),
+            'NCR      standing %d, inspect day %d' % (c.ncr_standing, c.inspect_next)]
+
+
+LAW_CLICK = {1: 'cycle_hide', 2: 'toggle_sealed', 3: 'toggle_cover'}
 
 
 def wagon_rows(c):
@@ -416,7 +435,7 @@ def labels(c, t):
             rows.append('DAY %d  net %d%s' % (r.day, r.margin, ev))
         return rows + ['BACK']
     if t.screen == TOWNS_SCREEN:
-        return town_rows(c) + manager_rows(c) + sell_rows(c) + ['BACK']
+        return town_rows(c) + manager_rows(c) + sell_rows(c) + law_rows(c) + ['BACK']
     if t.screen == SETTINGS:
         return ['PLAN EVERY DAY   %s' % ('ON' if c.auto else 'OFF'), 'BACK']
     if t.screen == POST:
@@ -505,8 +524,10 @@ def click(c, t, row):
         k = row - len(cm.TOWNS)
         if k < len(cm.MANAGERS):
             manager_click(c, list(cm.MANAGERS)[k])
-        else:
+        elif k < len(cm.MANAGERS) + len(sell_rows(c)):
             sell_click(c, list(cm.BUY_FROM_PLAYER)[k - len(cm.MANAGERS)])
+        elif k - len(cm.MANAGERS) - len(sell_rows(c)) in LAW_CLICK:
+            getattr(c, LAW_CLICK[k - len(cm.MANAGERS) - len(sell_rows(c))])()
     elif t.screen == NOTICE:
         act = notice_rows(c, t)[row][2]
         if act == 'rescue':

@@ -40,11 +40,13 @@ class Session:
         return out['data'].get('output') or []
 
     async def value(self, expr):
-        out = await self.console('printc "v=%%g" (%s)' % expr)
-        got = [line[2:] for line in out if line.startswith('v=')]
-        if not got:
-            raise RuntimeError('no value for %s: %s' % (expr, out))
-        return float(got[-1])
+        for attempt in range(3):
+            out = await self.console('printc "v=%%g" (%s)' % expr)
+            got = [line[2:] for line in out if line.startswith('v=')]
+            if got:
+                return float(got[-1])
+            await asyncio.sleep(0.5)
+        raise RuntimeError('no value for %s: %s' % (expr, out))
 
     async def wait_for(self, expr, want=True, tries=80, pause=0.25):
         for _ in range(tries):

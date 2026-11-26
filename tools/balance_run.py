@@ -10,6 +10,9 @@ balance targets (docs/design.md, Balance targets). Prints one table; no game nee
             buys the Sloan wagon and hires its driver and clerk; at tier 3 buys the Outpost wagon,
             hires the route manager (Balanced) and builds the tier 3 buildings it can
   careful   M2: buys the Sloan wagon at tier 2 (driver and clerk), no managers, no sheriff
+  good      M3: bids low on every NCR offer, takes Crimson Cover, pays a fixer for any warrant
+  dodgy     M3: the good player who also declares 80% of sales and runs sealed crates from tier 3,
+            stopping both while heat is 50 or more
 
 A week's net is the change in cash and owner money, not counting loan repaid or buildings bought:
 the trade margin after the weekly bills. 'worth 28' is earned worth on day 28 (tier 3 asks 8,000 by
@@ -21,7 +24,7 @@ import sys
 
 import company_model as cm
 
-PLAYERS = ('passive', 'careful', 'good')
+PLAYERS = ('passive', 'careful', 'good', 'dodgy')
 
 
 def play(kind, days=100, seed=1234):
@@ -29,9 +32,10 @@ def play(kind, days=100, seed=1234):
     c.found()
     c.auto = True
     c.ghost_town_done = True
-    c.sheriff = kind == 'good'
+    c.sheriff = kind in ('good', 'dodgy')
     out = {'tier3': None, 'kind': kind, 'day1': None, 'tier2': None, 'loan_paid': None, 'ended': None,
-           'worst_event_runway': 0.0, 'weeks': [], 'contract_income': 0, 'income': 0, 'worth28': None}
+           'worst_event_runway': 0.0, 'weeks': [], 'contract_income': 0, 'income': 0, 'worth28': None,
+           'tier4': None, 'heat': 0, 'warrants': 0}
     # a week's net: the change in cash and owner money, not counting loan repaid or buildings bought:
     # trade margin after the weekly bills (wages, feed, rent, interest, duty, licence)
     week_start = c.cash + c.owner_funds - c.loan + c.buildings
@@ -55,6 +59,10 @@ def play(kind, days=100, seed=1234):
             out['tier2'] = d
         if c.tier >= 3 and out['tier3'] is None:
             out['tier3'] = d
+        if c.tier >= 4 and out['tier4'] is None:
+            out['tier4'] = d
+        out['heat'] = max(out['heat'], c.heat)
+        out['warrants'] += int(r.warrant)
         if c.loan == 0 and out['loan_paid'] is None:
             out['loan_paid'] = d
         if c.ended:
@@ -67,28 +75,39 @@ def play(kind, days=100, seed=1234):
                 c.answer(m, 0)
             elif m.kind == 'road':
                 c.answer(m, cm.GUN)
-            elif m.kind == 'prepay' and (kind == 'good' or c.cash - cm.PREPAY >= 28 * c.daily_burn()):
+            elif m.kind == 'prepay' and (kind in ('good', 'dodgy') or c.cash - cm.PREPAY >= 28 * c.daily_burn()):
                 c.answer(m, 0)
+            elif m.kind == 'ncr' and kind in ('good', 'dodgy'):
+                c.answer(m, 1)
+            elif m.kind == 'warrant' and kind in ('good', 'dodgy'):
+                c.answer(m, 0)
+        if kind in ('good', 'dodgy') and c.tier >= 3 and not c.insured:
+            c.toggle_cover()
+        if kind == 'dodgy' and c.tier >= 3:
+            c.hide = 0 if c.heat >= 50 else 2
+            c.sealed = c.heat < 50
         if c.tier >= 2:
-            wanted = cm.BUILD_ORDER if kind == 'good' else ('well', 'purifier')
-            if kind == 'good' and c.tier >= 3:
+            wanted = cm.BUILD_ORDER if kind in ('good', 'dodgy') else ('well', 'purifier')
+            if kind in ('good', 'dodgy') and c.tier >= 3:
                 wanted = wanted + ('corral', 'smokehouse', 'sandpit', 'scrapyard')
             for b in wanted:
                 if c.can_build(b) and c.cash + c.owner_funds - c.build_cost(b) >= 14 * c.daily_burn():
                     c.build(b)
             m2(c, kind)
     out['cash'], out['loan'], out['tier'], out['worth'] = c.cash, c.loan, c.tier, c.earned_worth()
+    out['raids'], out['standing'], out['aggr'], out['ncr'] = c.raids, c.ncr_standing, c.aggr, c.ncr_done
     out['built'] = c.workshops + c.sites
     return out
 
 
 def m2(c, kind):
     """The M2 moves: wagons, their drivers and clerks, managers."""
-    if kind == 'good' and c.can_hire_manager('bookkeeper'):
+    good = kind in ('good', 'dodgy')
+    if good and c.can_hire_manager('bookkeeper'):
         c.hire_manager('bookkeeper', 'Normal')
-    if kind == 'good' and c.can_hire_manager('route'):
+    if good and c.can_hire_manager('route'):
         c.hire_manager('route', 'Balanced')
-    for road in (2, 3) if kind == 'good' else (2,):
+    for road in (2, 3) if good else (2,):
         if c.can_buy_road(road) and c.cash + c.owner_funds - cm.WAGON - cm.BRAHMIN_PAIR >= 14 * c.daily_burn():
             c.buy_road(road)
     drivers = sum(1 for p in c.staff if p.role == 'driver')
@@ -114,6 +133,9 @@ def main(argv):
             ' '.join('%d' % w for w in o['weeks'])))
         print('%-8s built %s, contract share of sales %.0f%%' % ('', o['built'] or '-',
                                                                100.0 * o['contract_income'] / max(1, o['income'])))
+        print('%-8s M3: tier 4 day %s, heat max %d, warrants %d, raids %s, NCR standing %d, deliveries %d, '
+              'aggression %d' % ('', o['tier4'], o['heat'], o['warrants'], o['raids'], o['standing'], o['ncr'],
+                                 o['aggr']))
     return 0
 
 
