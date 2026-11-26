@@ -1,0 +1,116 @@
+scn CCTermScript
+
+; The office terminal's state and clicks (tools/terminal_model.py Terminal and click).
+; iRows must stay the first variable: each CCOfficeTerm row n shows while GetQuestVariable CCTerm
+; (variable 1) > n. Clicked rows are found by polling row flag 4 (route C) while the terminal is up.
+
+int iRows
+int iScreen
+int iDir
+int iClick
+int iK
+int iN
+int iOpenNow
+ref rTerm
+array_var aQ
+array_var aP
+int iFounded
+int iAuto
+
+begin GameMode
+	; dev and test switch: place a terminal at the player (once) and open it
+	; (a reference made this frame skips its OnActivate: activate it on the next run)
+	if iOpenNow
+		if IsFormValid rTerm == 0
+			set rTerm to player.PlaceAtMe CCOfficeTerm 1
+		else
+			set iOpenNow to 0
+			rTerm.Activate player 1
+		endif
+	endif
+end
+
+begin MenuMode 1057
+	; a terminal opened without its OnActivate (no rows drawn yet): draw the front page now
+	if iRows == 0
+		set iScreen to 0
+		call CCTermDraw
+		RefreshTerminalMenu
+	endif
+	set iClick to -1
+	set iK to 0
+	while iK < 14
+		if GetTerminalMenuItemFlags CCOfficeTerm iK
+			SetTerminalMenuItemFlags CCOfficeTerm iK 0
+			if iClick < 0 && iK < iRows
+				set iClick to iK
+			endif
+		endif
+		set iK to iK + 1
+	loop
+	; the running game's compiler cannot resolve Quest.variable: CCCore is read by name
+	let iFounded := GetVariable "iFounded" CCCore
+	if iClick >= 0 && iFounded
+		let aQ := GetArrayVariable "aQueue" CCCore
+		if iScreen == 0
+			if iClick == 1
+				ar_Resize aQ 0
+				let aP := call CCPlanFn
+				set iK to 0
+				while iK < ar_Size aP
+					ar_Append aQ aP[iK]
+					set iK to iK + 1
+				loop
+			elseif iClick == 4
+				set iScreen to 4
+			elseif iClick == 5
+				set iScreen to 1
+			elseif iClick == 9
+				set iScreen to 2
+			elseif iClick == 10
+				set iScreen to 3
+			elseif iClick == 11
+				set iScreen to 5
+			endif
+		elseif iClick == iRows - 1
+			set iScreen to 0
+		elseif iScreen == 1
+			if iClick == 0
+				set iDir to 1 - iDir
+			else
+				set iN to 0
+				set iK to 0
+				while iK < ar_Size aQ
+					if eval (Floor (aQ[iK] / 10) == iDir)
+						set iN to iN + 1
+					endif
+					set iK to iK + 1
+				loop
+				if iN < 8
+					ar_Append aQ (iDir * 10 + iClick - 1)
+				endif
+			endif
+		elseif iScreen == 3
+			if iClick == 2
+				ar_Resize aQ 0
+				let aP := call CCPlanFn
+				set iK to 0
+				while iK < ar_Size aP
+					ar_Append aQ aP[iK]
+					set iK to iK + 1
+				loop
+			elseif iClick == 3
+				ar_Resize aQ 0
+			endif
+		elseif iScreen == 5
+			if iClick == 0
+				let iAuto := 1 - (GetVariable "iAuto" CCCore)
+				SetVariable "iAuto" iAuto CCCore
+			endif
+		endif
+	endif
+	if iClick >= 0
+		call CCTermDraw
+		RefreshTerminalMenu
+	endif
+end

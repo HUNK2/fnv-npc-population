@@ -1,0 +1,323 @@
+scn CCTermDraw
+
+; Writes the row labels of the screen that is up (tools/terminal_model.py labels) and the row count.
+; Every label is under 56 characters. Strings reach JohnnyGuitar through JIP Console (%q is a quote).
+
+int iCash
+int iDay
+int iLoan
+int iWeek
+int iDtb
+int iEst
+int iBurn
+int iRun
+int iWages
+int iInt
+int iPrin
+int iN
+int iK
+int iG
+int iO
+int iD
+int iB
+int iS
+int iBest
+int iBestG
+int iRow
+int iEv
+int iSales
+int iCosts
+int iNw
+int iQ0
+int iQ1
+float fM
+array_var aQ
+array_var aP
+int iFounded
+int iHands
+int iScreen
+int iDirT
+int iWagonOk
+int iOwner
+int iArrears
+int iStage
+int iAssets
+int iOwnerPaidIn
+int iAuto
+array_var aStock
+array_var aUse
+array_var aTrust
+array_var aAnchor
+array_var aWh
+array_var aHistSales
+array_var aHistCosts
+array_var aHistEvent
+array_var aHistLoss
+
+begin Function {}
+	; the running game's compiler cannot resolve Quest.variable: read and write the quests by name
+	let iFounded := GetVariable "iFounded" CCCore
+	if iFounded == 0
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qNo company yet: see Alice's agent.%q"
+		SetVariable "iRows" 1 CCTerm
+		return
+	endif
+	let iCash := GetVariable "iCash" CCCore
+	let iDay := GetVariable "iDay" CCCore
+	let iLoan := GetVariable "iLoan" CCCore
+	let iWeek := GetVariable "iWeekSales" CCCore
+	let iHands := GetVariable "iHands" CCCore
+	let iWagonOk := GetVariable "iWagonOk" CCCore
+	let iOwner := GetVariable "iOwner" CCCore
+	let iArrears := GetVariable "iArrears" CCCore
+	let iStage := GetVariable "iStage" CCCore
+	let iAssets := GetVariable "iAssets" CCCore
+	let iOwnerPaidIn := GetVariable "iOwnerPaidIn" CCCore
+	let iAuto := GetVariable "iAuto" CCCore
+	let aQ := GetArrayVariable "aQueue" CCCore
+	let aStock := GetArrayVariable "aStock" CCCore
+	let aUse := GetArrayVariable "aUse" CCCore
+	let aTrust := GetArrayVariable "aTrust" CCCore
+	let aAnchor := GetArrayVariable "aAnchor" CCCore
+	let aWh := GetArrayVariable "aWh" CCCore
+	let aHistSales := GetArrayVariable "aHistSales" CCCore
+	let aHistCosts := GetArrayVariable "aHistCosts" CCCore
+	let aHistEvent := GetArrayVariable "aHistEvent" CCCore
+	let aHistLoss := GetArrayVariable "aHistLoss" CCCore
+	let iScreen := GetVariable "iScreen" CCTerm
+	let iDirT := GetVariable "iDir" CCTerm
+
+	if iScreen == 0
+		; bills: a quiet week's running costs, the duty on this week's sales, the licence every 28 days
+		let iDtb := 7 - iDay % 7
+		set iWages to 22 + 14 * iHands
+		let iInt := Floor (0.04 * iLoan + 0.5)
+		set iPrin to 300
+		if iLoan < 300
+			set iPrin to iLoan
+		endif
+		let fM := 0.02 * iWeek
+		if iWeek > 5000
+			let fM := 0.02 * 5000 + 0.035 * ((iWeek < 20000) * iWeek + (iWeek >= 20000) * 20000 - 5000)
+		endif
+		if iWeek > 20000
+			let fM := fM + 0.05 * (iWeek - 20000)
+		endif
+		let iEst := 7 * iWages + 42 + 70 + iInt + iPrin + Floor (fM + 0.5)
+		if eval ((iDay + iDtb) % 28 == 0)
+			set iEst to iEst + 150
+		endif
+		let iBurn := Floor (iWages + 6 + (70 + iInt + iPrin) / 7 + 0.5)
+		if iBurn < 1
+			set iBurn to 1
+		endif
+		let iRun := Floor (iCash / iBurn)
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qCASH %.0f BILLS %.0fd:%.0f RUNWAY %.0fd%q" iCash iDtb iEst iRun
+		let aP := call CCPlanFn
+		let iN := ar_Size aP
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qPLAN     accept the plan (%.0f crates)%q" iN
+		set iSales to 0
+		set iCosts to 0
+		if iDay > 0
+			let iSales := aHistSales[iDay - 1]
+			let iCosts := aHistCosts[iDay - 1]
+			set iN to iSales - iCosts
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qPOST     day %.0f: net %.0f%q" iDay iN
+		else
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qPOST     nothing yet%q"
+		endif
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 3 %qMEMOS    none waiting%q"
+		if iWagonOk
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 4 %qROUTES   wagon home%q"
+		else
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 4 %qROUTES   wagon seized%q"
+		endif
+		; the best crate Goodsprings > Primm at today's stock (first good on a tie)
+		set iBestG to -1
+		set iG to 0
+		while iG < 6
+			let iS := call CCPriceFn aAnchor[iG], aStock[6 + iG], aUse[6 + iG], aTrust[1], 1
+			let iB := call CCPriceFn aAnchor[iG], aStock[iG], aUse[iG], aTrust[0], 0
+			if iBestG < 0 || iS - iB > iBest
+				set iBest to iS - iB
+				set iBestG to iG
+			endif
+			set iG to iG + 1
+		loop
+		if iBestG == 0
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 5 %qPRICES   best GS>PR: water %.0f%q" iBest
+		elseif iBestG == 1
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 5 %qPRICES   best GS>PR: powder %.0f%q" iBest
+		elseif iBestG == 2
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 5 %qPRICES   best GS>PR: ammo %.0f%q" iBest
+		elseif iBestG == 3
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 5 %qPRICES   best GS>PR: dirty water %.0f%q" iBest
+		elseif iBestG == 4
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 5 %qPRICES   best GS>PR: herbs %.0f%q" iBest
+		else
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 5 %qPRICES   best GS>PR: materials %.0f%q" iBest
+		endif
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 6 %qCHAINS   none yet (tier 2)%q"
+		set iN to 2 + iHands
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 7 %qSTAFF    %.0f on the books%q" iN
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 8 %qCONTRACTS none running%q"
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 9 %qLEDGER   loan %.0f, week sales %.0f%q" iLoan iWeek
+		let iN := ar_Size aQ
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 10 %qORDERS   %.0f pending (apply at 06:00)%q" iN
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 11 %qSETTINGS%q"
+		SetVariable "iRows" 12 CCTerm
+
+	elseif iScreen == 1
+		set iO to iDirT
+		set iD to 1 - iO
+		if iO == 0
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qGS > PR  buy/sell  (select to switch)%q"
+		else
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qPR > GS  buy/sell  (select to switch)%q"
+		endif
+		set iG to 0
+		while iG < 6
+			let iB := call CCPriceFn aAnchor[iG], aStock[iO * 6 + iG], aUse[iO * 6 + iG], aTrust[iO], 0
+			let iS := call CCPriceFn aAnchor[iG], aStock[iD * 6 + iG], aUse[iD * 6 + iG], aTrust[iD], 1
+			set iN to 0
+			set iK to 0
+			while iK < ar_Size aQ
+				if eval (aQ[iK] == iO * 10 + iG)
+					set iN to iN + 1
+				endif
+				set iK to iK + 1
+			loop
+			set iRow to iG + 1
+			set iK to iS - iB
+			if iG == 0
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qwater       %.0f/%.0f  margin %.0f  [%.0f]%q" iRow iB iS iK iN
+			elseif iG == 1
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qpowder      %.0f/%.0f  margin %.0f  [%.0f]%q" iRow iB iS iK iN
+			elseif iG == 2
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qammo        %.0f/%.0f  margin %.0f  [%.0f]%q" iRow iB iS iK iN
+			elseif iG == 3
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qdirty water %.0f/%.0f  margin %.0f  [%.0f]%q" iRow iB iS iK iN
+			elseif iG == 4
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qherbs       %.0f/%.0f  margin %.0f  [%.0f]%q" iRow iB iS iK iN
+			else
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qmaterials   %.0f/%.0f  margin %.0f  [%.0f]%q" iRow iB iS iK iN
+			endif
+			set iG to iG + 1
+		loop
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 7 %qBACK%q"
+		SetVariable "iRows" 8 CCTerm
+
+	elseif iScreen == 2
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qDAY %.0f  CASH %.0f  OWNER %.0f%q" iDay iCash iOwner
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qLOAN %.0f  ARREARS %.0f%q" iLoan iArrears
+		if iStage == 0
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qNOTICE none%q"
+		elseif iStage == 1
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qNOTICE deferred%q"
+		elseif iStage == 2
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qNOTICE SERVED%q"
+		elseif iStage == 3
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qNOTICE FINAL%q"
+		elseif iStage == 4
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qNOTICE SEIZED%q"
+		else
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qNOTICE probation%q"
+		endif
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 3 %qWEEK SALES %.0f%q" iWeek
+		let iDtb := 7 - iDay % 7
+		set iWages to 22 + 14 * iHands
+		let iInt := Floor (0.04 * iLoan + 0.5)
+		set iPrin to 300
+		if iLoan < 300
+			set iPrin to iLoan
+		endif
+		let fM := 0.02 * iWeek
+		if iWeek > 5000
+			let fM := 0.02 * 5000 + 0.035 * ((iWeek < 20000) * iWeek + (iWeek >= 20000) * 20000 - 5000)
+		endif
+		if iWeek > 20000
+			let fM := fM + 0.05 * (iWeek - 20000)
+		endif
+		let iEst := 7 * iWages + 42 + 70 + iInt + iPrin + Floor (fM + 0.5)
+		if eval ((iDay + iDtb) % 28 == 0)
+			set iEst to iEst + 150
+		endif
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 4 %qNEXT BILLS in %.0fd: about %.0f%q" iDtb iEst
+		let iBurn := Floor (iWages + 6 + (70 + iInt + iPrin) / 7 + 0.5)
+		let iN := 7 * iWages + 42 + 70 + iInt
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 5 %qCOSTS %.0f a week, %.0f a day%q" iN iBurn
+		; net worth: cash + owner's pot + warehouse at anchor prices + wagon and brahmin - loan - arrears
+		set iNw to iCash + iOwner + iAssets - iLoan - iArrears
+		set iG to 0
+		while iG < 6
+			let iNw += aAnchor[iG] * aWh[iG]
+			set iG to iG + 1
+		loop
+		set iN to iNw - iOwnerPaidIn
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 6 %qNET WORTH %.0f  EARNED %.0f%q" iNw iN
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 7 %qBACK%q"
+		SetVariable "iRows" 8 CCTerm
+
+	elseif iScreen == 3
+		set iQ0 to 0
+		set iQ1 to 0
+		set iK to 0
+		while iK < ar_Size aQ
+			if eval (aQ[iK] < 10)
+				set iQ0 to iQ0 + 1
+			else
+				set iQ1 to iQ1 + 1
+			endif
+			set iK to iK + 1
+		loop
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qGS > PR  %.0f crates%q" iQ0
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qPR > GS  %.0f crates%q" iQ1
+		let aP := call CCPlanFn
+		let iN := ar_Size aP
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 2 %qACCEPT the plan (%.0f crates)%q" iN
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 3 %qCANCEL all pending orders%q"
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 4 %qBACK%q"
+		SetVariable "iRows" 5 CCTerm
+
+	elseif iScreen == 4
+		if iWagonOk
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qWAGON 1  home  driver and guard%q"
+		else
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qWAGON 1  SEIZED  driver and guard%q"
+		endif
+		; the last three days, newest first
+		set iRow to 1
+		set iK to iDay - 1
+		while iK >= 0 && iRow <= 3
+			set iN to iK + 1
+			let iSales := aHistSales[iK]
+			let iCosts := aHistCosts[iK]
+			let iEv := aHistEvent[iK]
+			let iD := aHistLoss[iK]
+			set iB to iSales - iCosts
+			if iEv == 1
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qDAY %.0f  net %.0f  driven off%q" iRow iN iB
+			elseif iEv == 2
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qDAY %.0f  net %.0f  bandits -%.0f%q" iRow iN iB iD
+			elseif iEv == 3
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qDAY %.0f  net %.0f  WRECKED -%.0f%q" iRow iN iB iD
+			else
+				Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qDAY %.0f  net %.0f%q" iRow iN iB
+			endif
+			set iRow to iRow + 1
+			set iK to iK - 1
+		loop
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 %.0f %qBACK%q" iRow
+		set iN to iRow + 1
+		SetVariable "iRows" iN CCTerm
+
+	else
+		if iAuto
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qPLAN EVERY DAY   ON%q"
+		else
+			Console "SetTerminalMenuItemText CCOfficeTerm 1 0 %qPLAN EVERY DAY   OFF%q"
+		endif
+		Console "SetTerminalMenuItemText CCOfficeTerm 1 1 %qBACK%q"
+		SetVariable "iRows" 2 CCTerm
+	endif
+end

@@ -61,6 +61,232 @@
      ]
     }
    ]
+  },
+  "CCPlanFn": {
+   "type": "SCPT",
+   "source": "scripts/CCPlanFn.gek",
+   "script_type": "object"
+  },
+  "CCTermDraw": {
+   "type": "SCPT",
+   "source": "scripts/CCTermDraw.gek",
+   "script_type": "object"
+  },
+  "CCTermScript": {
+   "type": "SCPT",
+   "source": "scripts/CCTermScript.gek",
+   "script_type": "quest"
+  },
+  "CCTerm": {
+   "type": "QUST",
+   "fields": [
+    {
+     "tag": "SCRI",
+     "form": "@CCTermScript"
+    },
+    {
+     "tag": "FULL",
+     "text": "Company terminal"
+    },
+    {
+     "tag": "DATA",
+     "pack": "<BBBBf",
+     "values": [
+      1,
+      50,
+      0,
+      0,
+      0.1
+     ]
+    }
+   ]
+  },
+  "CCOfficeTermScript": {
+   "type": "SCPT",
+   "source": "scripts/CCOfficeTermScript.gek",
+   "script_type": "object"
+  },
+  "CCOfficeTerm": {
+   "type": "TERM",
+   "template": "@TerminalDesk01",
+   "set": {
+    "name": "Mojave Caravan Company",
+    "welcome_text": "MOJAVE CARAVAN CO.  -  company office\nSelect a row. Orders apply at 06:00.",
+    "flags": [
+     "unlocked"
+    ],
+    "script": "@CCOfficeTermScript",
+    "menu": [
+     {
+      "text": "Row 01",
+      "conditions": [
+       {
+        "function": "GetQuestVariable",
+        "param1": "@CCTerm",
+        "param2": 1,
+        "op": ">",
+        "value": 0
+       }
+      ]
+     },
+     {
+      "text": "Row 02",
+      "conditions": [
+       {
+        "function": "GetQuestVariable",
+        "param1": "@CCTerm",
+        "param2": 1,
+        "op": ">",
+        "value": 1
+       }
+      ]
+     },
+     {
+      "text": "Row 03",
+      "conditions": [
+       {
+        "function": "GetQuestVariable",
+        "param1": "@CCTerm",
+        "param2": 1,
+        "op": ">",
+        "value": 2
+       }
+      ]
+     },
+     {
+      "text": "Row 04",
+      "conditions": [
+       {
+        "function": "GetQuestVariable",
+        "param1": "@CCTerm",
+        "param2": 1,
+        "op": ">",
+        "value": 3
+       }
+      ]
+     },
+     {
+      "text": "Row 05",
+      "conditions": [
+       {
+        "function": "GetQuestVariable",
+        "param1": "@CCTerm",
+        "param2": 1,
+        "op": ">",
+        "value": 4
+       }
+      ]
+     },
+     {
+      "text": "Row 06",
+      "conditions": [
+       {
+        "function": "GetQuestVariable",
+        "param1": "@CCTerm",
+        "param2": 1,
+        "op": ">",
+        "value": 5
+       }
+      ]
+     },
+     {
+      "text": "Row 07",
+      "conditions": [
+       {
+        "function": "GetQuestVariable",
+        "param1": "@CCTerm",
+        "param2": 1,
+        "op": ">",
+        "value": 6
+       }
+      ]
+     },
+     {
+      "text": "Row 08",
+      "conditions": [
+       {
+        "function": "GetQuestVariable",
+        "param1": "@CCTerm",
+        "param2": 1,
+        "op": ">",
+        "value": 7
+       }
+      ]
+     },
+     {
+      "text": "Row 09",
+      "conditions": [
+       {
+        "function": "GetQuestVariable",
+        "param1": "@CCTerm",
+        "param2": 1,
+        "op": ">",
+        "value": 8
+       }
+      ]
+     },
+     {
+      "text": "Row 10",
+      "conditions": [
+       {
+        "function": "GetQuestVariable",
+        "param1": "@CCTerm",
+        "param2": 1,
+        "op": ">",
+        "value": 9
+       }
+      ]
+     },
+     {
+      "text": "Row 11",
+      "conditions": [
+       {
+        "function": "GetQuestVariable",
+        "param1": "@CCTerm",
+        "param2": 1,
+        "op": ">",
+        "value": 10
+       }
+      ]
+     },
+     {
+      "text": "Row 12",
+      "conditions": [
+       {
+        "function": "GetQuestVariable",
+        "param1": "@CCTerm",
+        "param2": 1,
+        "op": ">",
+        "value": 11
+       }
+      ]
+     },
+     {
+      "text": "Row 13",
+      "conditions": [
+       {
+        "function": "GetQuestVariable",
+        "param1": "@CCTerm",
+        "param2": 1,
+        "op": ">",
+        "value": 12
+       }
+      ]
+     },
+     {
+      "text": "Row 14",
+      "conditions": [
+       {
+        "function": "GetQuestVariable",
+        "param1": "@CCTerm",
+        "param2": 1,
+        "op": ">",
+        "value": 13
+       }
+      ]
+     }
+    ]
+   }
   }
  }
 }

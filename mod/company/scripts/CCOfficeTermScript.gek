@@ -1,0 +1,12 @@
+scn CCOfficeTermScript
+
+; Every company terminal is a reference of CCOfficeTerm. Opening one starts at the front page; the
+; rows are written before Activate opens the menu, so the first draw shows them (M0 0.7).
+
+begin OnActivate
+	if IsActionRef player
+		SetVariable "iScreen" 0 CCTerm
+		call CCTermDraw
+	endif
+	Activate
+end

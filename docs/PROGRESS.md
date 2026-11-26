@@ -11,7 +11,12 @@ calls are mine and are marked "my call" here and in the plans.
   `MojaveCaravanCompany.esp`; in game `CCVersion` = 101 read from the core's `LIMVersion`).
   1.3 the day tick in game (`CCCoreScript`, `CCPriceFn`): `tools/ingame_run.py 14` matches the model
   on all 14 days (cash, sales, costs, events, losses), no script errors.
-- Next: 1.4 the terminal with virtual screens.
+  1.4 the office terminal (`CCOfficeTerm`, `CCTermScript`, `CCTermDraw`, `CCPlanFn`; model
+  `tools/terminal_model.py`, 14 tests): `tools/ingame_terminal.py` reads every row back after 22
+  clicks over all six screens (front, prices, ledger, orders, routes, settings) and matches the
+  model each time; the orders queued on the terminal run at the next tick as modelled; no script
+  errors. Screenshots: `docs/evidence/m1/m1_terminal_screen0..5.png`.
+- Next: 1.5 founding (Alice's agent, letter of credit, terminal at the agent's table).
 
 ## Done
 
@@ -37,6 +42,15 @@ calls are mine and are marked "my call" here and in the plans.
   MCP server's project file, because the server did not pick up the change.
 - Clicked rows are found by polling row flag 4 (route C), not by row result scripts or JIP's
   click event: it needs no tool change and no event handler.
+- Company terminals are placed by script at run time (`PlaceAtMe`), not as references in vanilla
+  cells: fnv-mcp cannot add references to vanilla interior cells yet.
+- A terminal row shows at most 39 characters on screen (seen live; the rest is cut), so every
+  label is written to fit 39.
+- Company scripts read the core quest with `GetVariable`/`GetArrayVariable`/`SetVariable`, not
+  `CCCore.var`: in-game compile cannot resolve `Quest.variable`.
+- The plan is a function (`CCPlanFn`) used both by the daily plan and by the terminal's accept row.
+- Open: the terminal types about one character a frame (about 10 s for a 12-row page). Left for
+  later; the vanilla display-rate setting looks frame-limited.
 - Terminal text is cut to 200 characters before it is set (JohnnyGuitar has no length check).
 - G4: towns are **plugin-first** (no engine plugin). The crowd test hit no engine limit; the only
   near-player cap (20 actors) only stops face animation.

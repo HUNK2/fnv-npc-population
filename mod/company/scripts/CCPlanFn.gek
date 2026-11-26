@@ -1,0 +1,89 @@
+scn CCPlanFn
+
+; The bookkeeper's plan (tools/company_model.py Company.plan): for each leg the best crate by margin
+; while it pays at least 20, up to 8 a leg; own warehouse crates load free and go first when they pay.
+; Returns the order codes in pick order: origin * 10 + good (0 Goodsprings, 1 Primm).
+
+array_var aQ
+array_var aSo
+array_var aSd
+array_var aWhPlan
+array_var aStock
+array_var aWh
+array_var aAnchor
+array_var aUse
+array_var aTrust
+int iPlanCash
+int iLeg
+int iOrigin
+int iDest
+int iK
+int iG
+int iSale
+int iCost
+int iOwn
+int iBest
+int iBestG
+int iBestOwn
+int iBestCost
+
+begin Function {}
+	let aQ := Ar_Construct "array"
+	; the running game's compiler cannot resolve Quest.variable: read CCCore by name
+	let iPlanCash := GetVariable "iCash" CCCore
+	let aStock := GetArrayVariable "aStock" CCCore
+	let aWh := GetArrayVariable "aWh" CCCore
+	let aAnchor := GetArrayVariable "aAnchor" CCCore
+	let aUse := GetArrayVariable "aUse" CCCore
+	let aTrust := GetArrayVariable "aTrust" CCCore
+	set iLeg to 0
+	while iLeg < 2
+		set iOrigin to iLeg
+		set iDest to 1 - iLeg
+		let aSo := Ar_Copy aStock
+		let aSd := Ar_Copy aStock
+		if iOrigin == 0
+			let aWhPlan := Ar_Copy aWh
+		else
+			let aWhPlan := Ar_List 0, 0, 0, 0, 0, 0
+		endif
+		set iK to 0
+		while iK < 8
+			set iBestG to -1
+			set iG to 0
+			while iG < 6
+				let iSale := call CCPriceFn aAnchor[iG], aSd[iDest * 6 + iG], aUse[iDest * 6 + iG], aTrust[iDest], 1
+				let iOwn := aWhPlan[iG] > 0
+				if iOwn
+					set iCost to 0
+				else
+					let iCost := call CCPriceFn aAnchor[iG], aSo[iOrigin * 6 + iG], aUse[iOrigin * 6 + iG], aTrust[iOrigin], 0
+				endif
+				if iOwn || iCost <= iPlanCash
+					if iBestG < 0 || iSale - iCost > iBest
+						set iBest to iSale - iCost
+						set iBestG to iG
+						set iBestOwn to iOwn
+						set iBestCost to iCost
+					endif
+				endif
+				set iG to iG + 1
+			loop
+			if iBestG < 0 || iBest < 20
+				set iK to 8
+			else
+				if iBestOwn
+					let aWhPlan[iBestG] -= 1
+				else
+					let aSo[iOrigin * 6 + iBestG] -= 1
+					set iPlanCash to iPlanCash - iBestCost
+				endif
+				let aSd[iDest * 6 + iBestG] += 1
+				ar_Append aQ (iOrigin * 10 + iBestG)
+				set iK to iK + 1
+			endif
+		loop
+		set iLeg to iLeg + 1
+	loop
+	SetFunctionValue aQ
+end

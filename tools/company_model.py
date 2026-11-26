@@ -104,6 +104,7 @@ class DayReport:
 class Company:
     def __init__(self, seed, sheriff=False, present=True):
         self.seed, self.sheriff, self.present = seed, sheriff, present
+        self.auto = False            # accept the bookkeeper's plan at every tick (game: CCCore.iAuto)
         self.use = {t: {g: float(u) for g, (u, n) in goods.items()} for t, goods in STARTER.items()}
         self.normal = {t: {g: float(n) for g, (u, n) in goods.items()} for t, goods in STARTER.items()}
         if not sheriff:
@@ -196,6 +197,8 @@ class Company:
         r = DayReport(d)
         if self.ended:
             return r
+        if self.auto:
+            self.queue_list = self.plan()
         self._pay_arrears(r)
         if self.wagon_ok:
             for origin, dest in (ROUTE, ROUTE[::-1]):
