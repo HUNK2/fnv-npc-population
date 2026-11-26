@@ -16,7 +16,14 @@ calls are mine and are marked "my call" here and in the plans.
   clicks over all six screens (front, prices, ledger, orders, routes, settings) and matches the
   model each time; the orders queued on the terminal run at the next tick as modelled; no script
   errors. Screenshots: `docs/evidence/m1/m1_terminal_screen0..5.png`.
-- Next: 1.5 founding (Alice's agent, letter of credit, terminal at the agent's table).
+  1.5 founding: Hollis Webb (Alice's agent) and the company terminal wait in a holding cell and are
+  moved to a corner booth of the Prospector Saloon by `CCFounding`; topic "You lend money to
+  traders?" with the plain, Jason Tagg (Alice dead) and Powder Ganger landlord pitches, the terms,
+  and signing (500 of the player's caps); the wagon yard (cart, two pack brahmin) behind Chet's store
+  and a chalkboard on his porch are enabled at founding. `tools/ingame_founding.py`: 13 checks pass
+  (day 0 cash 2,500, loan 3,000, owner funds 0), no script errors. Pictures:
+  `docs/evidence/m1/m1_founding_*.png`.
+- Next: 1.6 post, morning report, memos and field letters.
 
 ## Done
 
@@ -42,6 +49,14 @@ calls are mine and are marked "my call" here and in the plans.
   MCP server's project file, because the server did not pick up the change.
 - Clicked rows are found by polling row flag 4 (route C), not by row result scripts or JIP's
   click event: it needs no tool change and no event handler.
+- Hollis and his terminal are references in the mod's own holding cell, moved into the saloon once
+  with JIP `MoveToCell` (FNV has no `PositionCell`): no vanilla interior cell is edited. The wagon
+  yard and chalkboard are new persistent references in the Goodsprings exterior cells, initially
+  disabled.
+- Hollis is essential and uses `DefaultSandboxCurrentLocation256` (he sits in the booths near his
+  table); his look and inventory come from the vanilla Crimson Caravan trader, without its factions.
+- Signing needs 500 caps in the player's pocket (the doc's owner funds); with less, Hollis refuses.
+  The landlord pitch only changes the words in M1; its heat and sealed-crate jobs come with M3.
 - Company terminals are placed by script at run time (`PlaceAtMe`), not as references in vanilla
   cells: fnv-mcp cannot add references to vanilla interior cells yet.
 - A terminal row shows at most 39 characters on screen (seen live; the rest is cut), so every

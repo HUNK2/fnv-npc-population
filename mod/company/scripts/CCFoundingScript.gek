@@ -1,0 +1,33 @@
+scn CCFoundingScript
+
+; M1 1.5 founding. Alice's agent, Hollis Webb, and the company terminal at his table wait in a
+; holding cell and are moved into the Prospector Saloon once (no vanilla cell is edited). The
+; dialogue conditions read iAliceDead and iGangLandlord, so keep the first three variables in order.
+; Once the company is founded, the wagon yard behind Chet's store is enabled.
+
+int iPlaced
+int iAliceDead
+int iGangLandlord
+int iYardOn
+int iK
+
+begin GameMode
+	if iPlaced == 0
+		set iPlaced to 1
+		CCAgentHollisRef.MoveToCell GSProspectorSaloonInterior -400 -600 3460
+		CCAgentTermRef.MoveToCell GSProspectorSaloonInterior -470 -592 3511.21
+		CCAgentTermRef.SetAngle Z 0
+	endif
+	set iAliceDead to AliceMcLaffertyREF.GetDead
+	set iGangLandlord to GetStageDone VMS16b 100
+	if iYardOn == 0
+		let iK := GetVariable "iFounded" CCCore
+		if iK
+			set iYardOn to 1
+			CCWagonCartRef.Enable
+			CCBrahmin1Ref.Enable
+			CCBrahmin2Ref.Enable
+			CCChalkboardRef.Enable
+		endif
+	endif
+end

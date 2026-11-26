@@ -287,6 +287,556 @@
      }
     ]
    }
+  },
+  "CCFoundingScript": {
+   "type": "SCPT",
+   "source": "scripts/CCFoundingScript.gek",
+   "script_type": "quest"
+  },
+  "CCFounding": {
+   "type": "QUST",
+   "fields": [
+    {
+     "tag": "SCRI",
+     "form": "@CCFoundingScript"
+    },
+    {
+     "tag": "FULL",
+     "text": "Mojave Caravan Company: the letter of credit"
+    },
+    {
+     "tag": "DATA",
+     "pack": "<BBBBf",
+     "values": [
+      1,
+      80,
+      0,
+      0,
+      1.0
+     ]
+    }
+   ]
+  },
+  "CCAgentHollis": {
+   "type": "NPC_",
+   "template": "@CrimsonCaravanTraderCM",
+   "fields": [
+    {
+     "tag": "FULL",
+     "text": "Hollis Webb"
+    },
+    {
+     "tag": "TPLT",
+     "remove": true
+    },
+    {
+     "tag": "SNAM",
+     "remove": true
+    },
+    {
+     "tag": "PKID",
+     "remove": true
+    },
+    {
+     "tag": "PKID",
+     "form": "@DefaultSandboxCurrentLocation256",
+     "after": "AIDT"
+    },
+    {
+     "tag": "ACBS",
+     "patch": [
+      [
+       0,
+       "<I",
+       530
+      ],
+      [
+       22,
+       "<H",
+       0
+      ]
+     ]
+    }
+   ]
+  },
+  "CCFoundAsk": {
+   "type": "DIAL",
+   "fields": [
+    {
+     "tag": "FULL",
+     "text": "You lend money to traders?"
+    },
+    {
+     "tag": "DATA",
+     "hex": "0002"
+    }
+   ],
+   "infos": [
+    {
+     "key": "pitch_tagg",
+     "quest": "@CCFounding",
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@CCAgentHollis",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@CCCore",
+       "param2": 2,
+       "op": "==",
+       "value": 0
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@CCFounding",
+       "param2": 2,
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "choices": [
+      "@CCFoundTerms",
+      "@CCFoundSign",
+      "@CCFoundNo"
+     ],
+     "responses": [
+      "Miss McLafferty is gone, but the Crimson Caravan Company still lends. Jason Tagg runs her desk now, and I write his paper.",
+      "Three thousand caps at four percent a week on what is left, three hundred of the principal every week. You put in five hundred of your own.",
+      "That buys a wagon, two brahmin, a driver, a guard and a trade licence. The rest is yours to trade with. Interested?"
+     ]
+    },
+    {
+     "key": "pitch_gang",
+     "quest": "@CCFounding",
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@CCAgentHollis",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@CCCore",
+       "param2": 2,
+       "op": "==",
+       "value": 0
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@CCFounding",
+       "param2": 3,
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "choices": [
+      "@CCFoundTerms",
+      "@CCFoundSign",
+      "@CCFoundNo"
+     ],
+     "responses": [
+      "Miss McLafferty lends to people who move goods. Three thousand caps at four percent a week, three hundred of the principal weekly.",
+      "The Powder Gangers run Goodsprings now. They will want their cut, but they leave paying wagons alone. You put in five hundred of your own.",
+      "That buys a wagon, two brahmin, a driver, a guard and a trade licence. The rest is yours to trade with. Interested?"
+     ]
+    },
+    {
+     "key": "pitch",
+     "quest": "@CCFounding",
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@CCAgentHollis",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@CCCore",
+       "param2": 2,
+       "op": "==",
+       "value": 0
+      }
+     ],
+     "choices": [
+      "@CCFoundTerms",
+      "@CCFoundSign",
+      "@CCFoundNo"
+     ],
+     "responses": [
+      "Miss McLafferty lends to people who move goods between towns. Three thousand caps, four percent a week on what is left.",
+      "Three hundred of the principal is due every week, and paying early costs nothing. You put in five hundred of your own.",
+      "That buys a wagon, two brahmin, a driver, a guard and a trade licence. The rest is yours to trade with. Interested?"
+     ]
+    },
+    {
+     "key": "owner",
+     "quest": "@CCFounding",
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@CCAgentHollis",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@CCCore",
+       "param2": 2,
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "The loan is signed. Orders go out from the terminal on my table, and the wagon leaves at six."
+     ]
+    }
+   ]
+  },
+  "CCFoundTerms": {
+   "type": "DIAL",
+   "fields": [
+    {
+     "tag": "FULL",
+     "text": "What happens if I miss a payment?"
+    },
+    {
+     "tag": "DATA",
+     "hex": "0000"
+    }
+   ],
+   "infos": [
+    {
+     "key": "terms",
+     "quest": "@CCFounding",
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@CCAgentHollis",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@CCCore",
+       "param2": 2,
+       "op": "==",
+       "value": 0
+      }
+     ],
+     "choices": [
+      "@CCFoundSign",
+      "@CCFoundNo"
+     ],
+     "responses": [
+      "Miss a bill and you get a notice. Three days later a final one, then we take assets. Three strikes in eight weeks and the company is ours.",
+      "Your own pocket stays yours. Your money can rescue you once after a miss, but the strike stands."
+     ]
+    }
+   ]
+  },
+  "CCFoundSign": {
+   "type": "DIAL",
+   "fields": [
+    {
+     "tag": "FULL",
+     "text": "I'll sign. Here are my 500 caps."
+    },
+    {
+     "tag": "DATA",
+     "hex": "0000"
+    }
+   ],
+   "infos": [
+    {
+     "key": "sign_ok",
+     "quest": "@CCFounding",
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@CCAgentHollis",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@CCCore",
+       "param2": 2,
+       "op": "==",
+       "value": 0
+      },
+      {
+       "function": "GetItemCount",
+       "param1": "@Caps001",
+       "op": ">=",
+       "value": 500,
+       "run_on": "target"
+      }
+     ],
+     "result": "player.RemoveItem Caps001 500\nSetVariable \"iFoundNow\" 1 CCCore",
+     "responses": [
+      "Signed and witnessed. Your wagon and brahmin are behind Chet's store, and the board on his porch shows today's goods.",
+      "The terminal on my table is your office. Orders go out at six in the morning. Do not make me come looking for you."
+     ]
+    },
+    {
+     "key": "sign_poor",
+     "quest": "@CCFounding",
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@CCAgentHollis",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@CCCore",
+       "param2": 2,
+       "op": "==",
+       "value": 0
+      }
+     ],
+     "responses": [
+      "Five hundred of your own, friend. The company does not lend to people with nothing in the pot."
+     ]
+    }
+   ]
+  },
+  "CCFoundNo": {
+   "type": "DIAL",
+   "fields": [
+    {
+     "tag": "FULL",
+     "text": "Not now."
+    },
+    {
+     "tag": "DATA",
+     "hex": "0000"
+    }
+   ],
+   "infos": [
+    {
+     "key": "later",
+     "quest": "@CCFounding",
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@CCAgentHollis",
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "flags": [
+      "goodbye"
+     ],
+     "responses": [
+      "The offer stands. I am at this table most days."
+     ]
+    }
+   ]
+  },
+  "GREETING": {
+   "type": "DIAL",
+   "override": true,
+   "infos": [
+    {
+     "key": "cc_hello_tagg",
+     "quest": "@CCFounding",
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@CCAgentHollis",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@CCCore",
+       "param2": 2,
+       "op": "==",
+       "value": 0
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@CCFounding",
+       "param2": 2,
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Hollis Webb. I write loans for the Crimson Caravan Company, out of Mr. Tagg's office these days. Going into business?"
+     ]
+    },
+    {
+     "key": "cc_hello",
+     "quest": "@CCFounding",
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@CCAgentHollis",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@CCCore",
+       "param2": 2,
+       "op": "==",
+       "value": 0
+      }
+     ],
+     "responses": [
+      "Hollis Webb, Crimson Caravan Company. Miss McLafferty sends me down the roads looking for people worth lending to."
+     ]
+    },
+    {
+     "key": "cc_hello_owner",
+     "quest": "@CCFounding",
+     "conditions": [
+      {
+       "function": "GetIsID",
+       "param1": "@CCAgentHollis",
+       "op": "==",
+       "value": 1
+      },
+      {
+       "function": "GetQuestVariable",
+       "param1": "@CCCore",
+       "param2": 2,
+       "op": "==",
+       "value": 1
+      }
+     ],
+     "responses": [
+      "Boss. Your terminal is on my table, and the books do not keep themselves."
+     ]
+    }
+   ]
+  }
+ },
+ "cells": {
+  "CCHoldingCell": {
+   "name": "Caravan Company Holding",
+   "objects": [
+    {
+     "ref_id": "hollis",
+     "base": "@CCAgentHollis",
+     "editor_id": "CCAgentHollisRef",
+     "persistent": true,
+     "position": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "ref_id": "agentterm",
+     "base": "@CCOfficeTerm",
+     "editor_id": "CCAgentTermRef",
+     "persistent": true,
+     "position": [
+      200,
+      0,
+      0
+     ]
+    }
+   ]
+  }
+ },
+ "worlds": {
+  "WastelandNV": {
+   "cells": {
+    "wagonyard": {
+     "grid": [
+      -17,
+      1
+     ],
+     "objects": [
+      {
+       "ref_id": "cart",
+       "base": "@NVWoodCart",
+       "editor_id": "CCWagonCartRef",
+       "persistent": true,
+       "disabled": true,
+       "position": [
+        -69389.57,
+        4775.37,
+        8354.59
+       ],
+       "rotation": [
+        -2.77,
+        -0.05,
+        0
+       ]
+      },
+      {
+       "ref_id": "brahmin1",
+       "base": "@CrBrahminPackA",
+       "editor_id": "CCBrahmin1Ref",
+       "persistent": true,
+       "disabled": true,
+       "position": [
+        -69300,
+        4920,
+        8380
+       ],
+       "rotation": [
+        0,
+        0,
+        200
+       ]
+      },
+      {
+       "ref_id": "brahmin2",
+       "base": "@CrBrahminPackA",
+       "editor_id": "CCBrahmin2Ref",
+       "persistent": true,
+       "disabled": true,
+       "position": [
+        -69500,
+        4930,
+        8380
+       ],
+       "rotation": [
+        0,
+        0,
+        160
+       ]
+      }
+     ]
+    },
+    "storefront": {
+     "grid": [
+      -17,
+      0
+     ],
+     "objects": [
+      {
+       "ref_id": "board",
+       "base": "@Chalkboard02",
+       "editor_id": "CCChalkboardRef",
+       "persistent": true,
+       "disabled": true,
+       "position": [
+        -69169.57,
+        3255.37,
+        8461.6
+       ],
+       "rotation": [
+        0,
+        0,
+        180
+       ]
+      }
+     ]
+    }
+   }
   }
  }
 }
