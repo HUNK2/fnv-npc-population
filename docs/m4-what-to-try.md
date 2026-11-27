@@ -79,5 +79,6 @@ Worth trying:
 
 ## Known limits
 
-- The side you took at Hoover Dam is not read yet, so the ending's side line never shows.
+- The side you took at Hoover Dam is read from the battle itself, so the ending's side line only
+  shows for a company still open when the Battle of Hoover Dam starts.
 - A seed whose candidates never include a clerk never runs a second wagon (seed 77, an M2 limit).
